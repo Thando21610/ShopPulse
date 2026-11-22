@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShopPulse — Solution Design &amp; Technical Specification | Samsung Innovation Internship 2027</title>
+<style>
+  :root{
+    --ink:#1a2332;
+    --muted:#5b6779;
+    --accent:#0b5f8a;
+    --accent-2:#0e7c66;
+    --line:#d7dee8;
+    --bg-soft:#f4f7fa;
+    --warn-bg:#fff7e6;
+    --warn-line:#e0a800;
+    --note-bg:#eef6fb;
+    --note-line:#0b5f8a;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:#fff;
+    color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size:15px;
+    line-height:1.6;
+  }
+  .page{max-width:940px;margin:0 auto;padding:48px 32px 80px;}
+  /* Cover */
+  .cover{
+    border-top:6px solid var(--accent);
+    padding-top:32px;
+    margin-bottom:8px;
+  }
+  .cover .kicker{
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    font-size:12px;
+    font-weight:700;
+    color:var(--accent);
+  }
+  .cover h1{
+    font-size:44px;
+    line-height:1.1;
+    margin:12px 0 6px;
+    letter-spacing:-.02em;
+  }
+  .cover h2{
+    font-size:19px;
+    font-weight:500;
+    color:var(--muted);
+    margin:0 0 28px;
+  }
+  .meta{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:12px;
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:18px 20px;
+    margin-bottom:24px;
+  }
+  .meta div{font-size:13.5px;}
+  .meta strong{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;}
+  .status-note{
+    border-left:4px solid var(--warn-line);
+    background:var(--warn-bg);
+    padding:14px 18px;
+    border-radius:0 6px 6px 0;
+    font-size:13.5px;
+    margin-bottom:36px;
+  }
+  /* Headings */
+  h2{
+    font-size:25px;
+    margin:52px 0 6px;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--line);
+    letter-spacing:-.01em;
+  }
+  h2 .num{color:var(--accent);font-weight:800;margin-right:10px;}
+  h3{font-size:17px;margin:30px 0 8px;color:var(--accent);}
+  h4{font-size:14.5px;margin:20px 0 6px;}
+  p{margin:10px 0;}
+  ul,ol{margin:10px 0 14px;padding-left:24px;}
+  li{margin:4px 0;}
+  /* Tables */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:14px 0 22px;
+    font-size:13.8px;
+  }
+  th,td{
+    border:1px solid var(--line);
+    padding:9px 12px;
+    text-align:left;
+    vertical-align:top;
+  }
+  th{background:var(--bg-soft);font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;}
+  tbody tr:nth-child(even){background:#fafbfd;}
+  /* Callouts */
+  .note,.warn{
+    padding:14px 18px;
+    border-radius:0 6px 6px 0;
+    margin:18px 0;
+    font-size:14px;
+  }
+  .note{background:var(--note-bg);border-left:4px solid var(--note-line);}
+  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-line);}
+  .note strong,.warn strong{display:block;margin-bottom:4px;}
+  /* Code / diagrams */
+  pre{
+    background:#0f1b2a;
+    color:#d8e4f0;
+    padding:18px 20px;
+    border-radius:8px;
+    overflow-x:auto;
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:12.8px;
+    line-height:1.5;
+    margin:14px 0 22px;
+  }
+  code.inline{
+    background:#eef2f7;
+    padding:1px 6px;
+    border-radius:4px;
+    font-family:Consolas,Menlo,monospace;
+    font-size:13px;
+  }
+  /* Wireframe grid */
+  .wf-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:16px;
+    margin:18px 0 26px;
+  }
+  .wf{
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    background:#fff;
+    break-inside:avoid;
+  }
+  .wf .wf-title{
+    background:var(--bg-soft);
+    border-bottom:1px solid var(--line);
+    font-size:11.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    padding:7px 12px;
+    color:var(--muted);
+  }
+  .wf pre{
+    margin:0;
+    border-radius:0;
+    background:#fff;
+    color:var(--ink);
+    font-size:11.5px;
+    padding:12px;
+  }
+  /* TOC */
+  .toc{
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:20px 26px;
+    margin-bottom:8px;
+  }
+  .toc h3{margin:0 0 10px;color:var(--ink);font-size:14px;text-transform:uppercase;letter-spacing:.08em;}
+  .toc ol{columns:2;column-gap:36px;margin:0;padding-left:20px;font-size:13.5px;}
+  .toc a{color:var(--accent);text-decoration:none;}
+  .toc a:hover{text-decoration:underline;}
+  /* Checklist */
+  .check{list-style:none;padding-left:0;}
+  .check li{padding-left:26px;position:relative;margin:7px 0;}
+  .check li::before{
+    content:"☐";
+    position:absolute;
+    left:0;
+    font-size:16px;
+    color:var(--accent);
+  }
+  footer{
+    margin-top:60px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    font-size:12.5px;
+    color:var(--muted);
+  }
+  /* Print */
+  @media print{
+    body{font-size:10.5pt;}
+    .page{max-width:100%;padding:0 6mm;}
+    h2{page-break-after:avoid;margin-top:26px;}
+    h3,h4{page-break-after:avoid;}
+    table,.wf,pre{page-break-inside:avoid;}
+    .toc ol{columns:2;}
+    a{color:inherit;text-decoration:none;}
+    pre{background:#f0f3f7;color:#111;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ================= COVER ================= -->
+<header class="cover">
+  <div class="kicker">Samsung Innovation Internship 2027 · Stage 1 Entry Assignment</div>
+  <h1>ShopPulse</h1>
+  <h2>Smart Retail Operations &amp; Inventory Intelligence for Small Spaza Shops</h2>
+
+  <div class="meta">
+    <div><strong>Project</strong>ShopPulse (working name)</div>
+    <div><strong>Pilot establishment</strong>Thandabantu Spaza Shop</div>
+    <div><strong>Route</strong>Route A — Real establishment</div>
+    <div><strong>Currency</strong>South African Rand (ZAR)</div>
+    <div><strong>Deadline</strong>30 November 2026</div>
+    <div><strong>Document type</strong>Solution Design &amp; Technical Specification</div>
+  </div>
+
+  <div class="status-note">
+    <strong>Document status: proposed solution — pending establishment discovery and validation.</strong>
+    The operational observations recorded in this document are hypotheses based on initial informal observation. They must be confirmed through a direct interview with the owner or staff of Thandabantu Spaza Shop before they are presented as confirmed problems. Business name, owner name and contact details will only be included in the final submission with the owner's explicit permission.
+  </div>
+</header>
+
+<!-- ================= TOC ================= -->
+<nav class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#s1">Executive Summary</a></li>
+    <li><a href="#s2">Assignment Requirements Mapping</a></li>
+    <li><a href="#s3">Problem Statement &amp; Discovery</a></li>
+    <li><a href="#s4">Solution Overview</a></li>
+    <li><a href="#s5">Users &amp; Roles</a></li>
+    <li><a href="#s6">Functional Requirements</a></li>
+    <li><a href="#s7">Core Use Cases</a></li>
+    <li><a href="#s8">End-to-End Processes</a></li>
+    <li><a href="#s9">Business Rules</a></li>
+    <li><a href="#s10">System Architecture</a></li>
+    <li><a href="#s11">Technology Stack</a></li>
+    <li><a href="#s12">SOLID &amp; ACID</a></li>
+    <li><a href="#s13">Database Design</a></li>
+    <li><a href="#s14">API Design</a></li>
+    <li><a href="#s15">Security &amp; POPIA</a></li>
+    <li><a href="#s16">Audit Trail</a></li>
+    <li><a href="#s17">Financial Rules (ZAR)</a></li>
+    <li><a href="#s18">UX/UI &amp; Wireframes</a></li>
+    <li><a href="#s19">Stock Rescue</a></li>
+    <li><a href="#s20">Reporting</a></li>
+    <li><a href="#s21">Testing Strategy</a></li>
+    <li><a href="#s22">Synthetic Test Data</a></li>
+    <li><a href="#s23">Deployment &amp; Free Hosting</a></li>
+    <li><a href="#s24">Development Roadmap</a></li>
+    <li><a href="#s25">Risks &amp; Mitigation</a></li>
+    <li><a href="#s26">Success Measures</a></li>
+    <li><a href="#s27">Submission Checklist</a></li>
+    <li><a href="#s28">Conclusion</a></li>
+  </ol>
+</nav>
+
+<!-- ================= 1. EXEC SUMMARY ================= -->
+<h2 id="s1"><span class="num">1.</span>Executive Summary</h2>
+
+<p>ShopPulse is a lightweight retail operations and inventory intelligence platform for small South African spaza shops. The proposed pilot establishment is <strong>Thandabantu Spaza Shop</strong>, a small, one-operator retail business.</p>
+
+<p>Initial informal observation suggests three connected operational pressures: customer congestion during busy periods when a single person handles serving, payment and stock; perishable stock — especially bread — that can expire before it sells; and the absence of a structured daily management process for sales, stock and cash. These observations are the <em>starting hypothesis</em>, not confirmed findings. They will be validated in a structured owner interview before development priorities are locked.</p>
+
+<p>ShopPulse addresses the three pressures with one connected system. The central design idea is simple: <strong>one completed sale should update everything that depends on it</strong> — the transaction record, stock levels, batch allocation, expiry exposure, daily financial summaries and the audit trail — without the operator doing repeated manual administration.</p>
+
+<h3>Product vision</h3>
+<p>To make small retail businesses easier to run by giving owners and operators a simple, affordable and intelligent way to manage sales, stock, expiry dates and daily financial activity.</p>
+
+<h3>Tagline</h3>
+<p><strong>ShopPulse — Smarter operations. Less waste. Better business.</strong></p>
+
+<div class="note">
+  <strong>Design principle</strong>
+  A small tool one shop owner uses every day beats an impressive application nobody needs. Scope is deliberately constrained to what the owner confirms is useful. Polish and reliability are prioritised over technical complexity.
+</div>
+
+<!-- ================= 2. REQUIREMENTS MAPPING ================= -->
+<h2 id="s2"><span class="num">2.</span>Assignment Requirements Mapping</h2>
+
+<p>The Samsung brief allocates 55% of the marks to problem understanding and solution fit. Technical complexity counts for less. This document is structured to make the problem-first reasoning traceable.</p>
+
+<table>
+  <thead>
+    <tr><th>Criterion</th><th>Weight</th><th>Where this document responds</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Problem understanding</td><td>30%</td><td>§3 Problem statement and discovery plan; §19 Stock Rescue grounded in a specific perishable-stock problem</td></tr>
+    <tr><td>Solution and innovation</td><td>25%</td><td>§4 Solution overview; §7 use cases; §19 demand-aware Stock Rescue</td></tr>
+    <tr><td>Working product</td><td>20%</td><td>§10–§14 architecture and API; §23 deployment; §27 checklist</td></tr>
+    <tr><td>Quality and judgement</td><td>15%</td><td>§12 SOLID/ACID; §13 database design; §15 security; §16 audit; §21 testing</td></tr>
+    <tr><td>Communication</td><td>10%</td><td>Walkthrough deliverable (video ≤5 min or document ≤2 pages) — see §27</td></tr>
+  </tbody>
+</table>
+
+<h3>Required submission items</h3>
+<table>
+  <thead><tr><th>#</th><th>Requirement</th><th>Plan</th></tr></thead>
+  <tbody>
+    <tr><td>01</td><td>Live, publicly reachable link</td><td>Blazor WASM on Cloudflare Pages + API on Google Cloud Run (see §23)</td></tr>
+    <tr><td>02</td><td>Test access for every role</td><td>Owner, operator and (if implemented) anonymous queue access — credentials and setup steps documented</td></tr>
+    <tr><td>03</td><td>Code in a Git repository</td><td>Private GitHub repository, progressive commits; read access within 48 hours of request</td></tr>
+    <tr><td>04</td><td>Walkthrough</td><td>≤5-minute video or ≤2-page written document covering who, what, why, evidence and next steps</td></tr>
+  </tbody>
+</table>
+
+<h3>Rules that shape the build</h3>
+<ul>
+  <li><strong>Permission (Route A):</strong> ask the owner before studying the business or using its name; include name and contact only if they agree.</li>
+  <li><strong>No real personal data:</strong> synthetic test data only. No customer names, ID numbers, phone numbers or health information.</li>
+  <li><strong>Own work:</strong> research, decisions and build must be the applicant's.</li>
+  <li><strong>Free tier only:</strong> no paid hosting or tools required to run or assess the solution.</li>
+</ul>
+
+<!-- ================= 3. PROBLEM ================= -->
+<h2 id="s3"><span class="num">3.</span>Problem Statement &amp; Discovery</h2>
+
+<h3>3.1 Business context</h3>
+<p>Small spaza shops frequently operate with limited staff, limited technology and heavy dependence on manual processes. One operator may simultaneously be responsible for serving customers, handling cash, locating products, monitoring stock, receiving deliveries, checking expiry dates and closing the day's books. When these responsibilities overlap, service slows and errors become more likely.</p>
+
+<h3>3.2 Initial observations (hypotheses)</h3>
+<table>
+  <thead><tr><th>Observation</th><th>Potential business impact</th><th>Must be validated by</th></tr></thead>
+  <tbody>
+    <tr><td>The shop becomes congested during busy periods.</td><td>Longer waiting times; customers may leave without buying.</td><td>Owner interview + observation of a peak period</td></tr>
+    <tr><td>One person manages several activities at once.</td><td>Sales and admin tasks compete for attention; errors.</td><td>Observation of daily workflow</td></tr>
+    <tr><td>Bread and other perishables can expire before selling.</td><td>Direct, avoidable stock losses.</td><td>Owner confirmation of frequency and value</td></tr>
+    <tr><td>Stock monitoring is not structured.</td><td>Difficulty spotting low or excess stock before it matters.</td><td>Walkthrough of current stock method</td></tr>
+    <tr><td>No central daily management process.</td><td>Limited visibility into performance and staff activity.</td><td>Owner review of current records (if any)</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>Validation rule</strong>
+  None of the above will be presented to Samsung as a confirmed problem until the owner interview has taken place and notes have been recorded. The final walkthrough will clearly separate "observed" from "confirmed by the owner".
+</div>
+
+<h3>3.3 Problem statement</h3>
+<p>Small retail establishments with limited staff may struggle to manage customer service, sales transactions and inventory simultaneously. Without an integrated management process, the business can experience unnecessary waiting times, inconsistent stock monitoring, expired products, avoidable financial losses and limited visibility into daily operations.</p>
+
+<h3>3.4 Discovery questions for the owner</h3>
+<ol>
+  <li>What happens when several customers arrive at the same time?</li>
+  <li>How do you currently record daily sales?</li>
+  <li>How do you know when a product is running low?</li>
+  <li>How do you monitor bread and other perishable products?</li>
+  <li>How often do products expire before being sold, and roughly what value is lost?</li>
+  <li>How do you record damaged, expired or missing stock?</li>
+  <li>How do you decide how much stock to order?</li>
+  <li>How do you reconcile cash at the end of the day?</li>
+  <li>Which daily activity consumes the most time?</li>
+  <li>Would a phone-based tool fit how you already work?</li>
+</ol>
+
+<h3>3.5 Discovery outputs</h3>
+<ul>
+  <li>Signed/verbal permission to reference the establishment, with name and contact details only if consented.</li>
+  <li>Interview notes separating confirmed problems from hypotheses.</li>
+  <li>A ranked shortlist of problems, from which the first build scope is chosen.</li>
+  <li>Owner feedback on early prototypes, recorded for the walkthrough.</li>
+</ul>
+
+<!-- ================= 4. SOLUTION ================= -->
+<h2 id="s4"><span class="num">4.</span>Solution Overview</h2>
+
+<table>
+  <thead><tr><th>Module</th><th>Purpose</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>Authentication &amp; roles</td><td>Secure sign-in; owner vs operator permissions</td><td>Core</td></tr>
+    <tr><td>Product catalogue</td><td>Products, SKUs, prices (ZAR), minimum stock levels</td><td>Core</td></tr>
+    <tr><td>Stock receiving</td><td>Record deliveries as batches with cost and expiry</td><td>Core</td></tr>
+    <tr><td>Sales / checkout</td><td>Fast sale capture with automatic stock deduction</td><td>Core</td></tr>
+    <tr><td>Rush Mode</td><td>Simplified, large-button checkout for peak periods</td><td>Core</td></tr>
+    <tr><td>Expiry intelligence</td><td>Batch expiry tracking, "expiring soon" alerts, FEFO guidance</td><td>Core</td></tr>
+    <tr><td>Waste register</td><td>Record expired/damaged stock with a reason and actor</td><td>Core</td></tr>
+    <tr><td>Cash reconciliation</td><td>Shift open/close, expected vs actual cash, variance</td><td>Core</td></tr>
+    <tr><td>Reporting</td><td>Daily sales, stock health, waste, staff activity</td><td>Core</td></tr>
+    <tr><td>Audit trail</td><td>Append-only record of important actions</td><td>Core</td></tr>
+    <tr><td>Stock Rescue</td><td>Flags stock likely to expire before it sells</td><td>Core (rules-based)</td></tr>
+    <tr><td>Demand forecasting</td><td>Simple sales-pattern recommendations</td><td>Later phase</td></tr>
+    <tr><td>Queue management</td><td>Anonymous queue ticket and "now serving" display</td><td>Optional — only if validated</td></tr>
+  </tbody>
+</table>
+
+<h3>4.1 Unique value proposition</h3>
+<p>A single sale, committed once, automatically:</p>
+<ol>
+  <li>Records the sale and its line items with historical price snapshots.</li>
+  <li>Calculates the total and change in ZAR on the server.</li>
+  <li>Records the payment method and amounts.</li>
+  <li>Deducts stock from the correct batch using FEFO.</li>
+  <li>Writes stock movement ledger entries.</li>
+  <li>Updates reporting projections.</li>
+  <li>Records the responsible user.</li>
+  <li>Writes an audit event.</li>
+</ol>
+<p>This removes the repeated manual administration that a paper-based or spreadsheet process requires.</p>
+
+<h3>4.2 Deliberately out of scope</h3>
+<ul>
+  <li>Full accounting, VAT submissions or payroll — outside the validated problem.</li>
+  <li>Customer accounts, loyalty and marketing — introduces personal data without a validated need.</li>
+  <li>Multi-branch franchise management — unnecessary for a single shop pilot.</li>
+  <li>Microservices, message brokers and Kubernetes — complexity without benefit at this scale.</li>
+  <li>AI/ML forecasting — replaced by transparent, rules-based recommendations until enough data exists.</li>
+</ul>
+
+<!-- ================= 5. ROLES ================= -->
+<h2 id="s5"><span class="num">5.</span>Users &amp; Roles</h2>
+
+<h3>5.1 Role definitions</h3>
+<table>
+  <thead><tr><th>Role</th><th>Description</th><th>Key responsibilities</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Owner</strong></td><td>Full control of the business account.</td><td>Manage staff and products; view all sales and reports; approve adjustments; review audit history; configure settings.</td></tr>
+    <tr><td><strong>Operator / Cashier</strong></td><td>Runs daily shop activity.</td><td>Process sales; search products; view stock; receive stock if authorised; record approved adjustments; open/close own shift.</td></tr>
+    <tr><td><strong>Customer (optional)</strong></td><td>Anonymous queue participant, only if queue feature is validated.</td><td>Hold a random ticket number; view "now serving". No account and no personal data.</td></tr>
+    <tr><td><strong>Platform administrator</strong></td><td>Technical maintenance only.</td><td>Operational support. No automatic access to a shop's financial data.</td></tr>
+  </tbody>
+</table>
+
+<h3>5.2 Role-based access control matrix</h3>
+<table>
+  <thead><tr><th>Function</th><th>Owner</th><th>Operator</th><th>Customer</th></tr></thead>
+  <tbody>
+    <tr><td>Sign in</td><td>Yes</td><td>Yes</td><td>Anonymous (no login)</td></tr>
+    <tr><td>Process sales</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Refund a sale</td><td>Yes</td><td>If authorised</td><td>No</td></tr>
+    <tr><td>View inventory</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Receive stock</td><td>Yes</td><td>If authorised</td><td>No</td></tr>
+    <tr><td>Record waste</td><td>Yes</td><td>If authorised</td><td>No</td></tr>
+    <tr><td>Manage staff</td><td>Yes</td><td>No</td><td>No</td></tr>
+    <tr><td>View financial reports</td><td>Yes</td><td>Restricted</td><td>No</td></tr>
+    <tr><td>Cash reconciliation</td><td>Yes</td><td>Own shift</td><td>No</td></tr>
+    <tr><td>View audit history</td><td>Yes</td><td>Restricted</td><td>No</td></tr>
+    <tr><td>Queue status</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>Enforcement</strong>
+  Every permission is enforced server-side by the API. The Blazor client may hide controls for usability, but hiding a button is never treated as security.
+</div>
+
+<!-- ================= 6. FUNCTIONAL REQUIREMENTS ================= -->
+<h2 id="s6"><span class="num">6.</span>Functional Requirements</h2>
+
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>FR-01</td><td>Secure authentication</td><td>Password hashing, rate limiting, account deactivation, session expiry</td></tr>
+    <tr><td>FR-02</td><td>Product management</td><td>SKU unique per business; price in ZAR; minimum stock threshold; active flag</td></tr>
+    <tr><td>FR-03</td><td>Stock receiving</td><td>Creates a batch with quantity, unit cost, supplier, expiry date</td></tr>
+    <tr><td>FR-04</td><td>Sales</td><td>Server-calculated totals; payment method; change for cash</td></tr>
+    <tr><td>FR-05</td><td>Automatic stock deduction</td><td>FEFO batch allocation; ledger entries written atomically with the sale</td></tr>
+    <tr><td>FR-06</td><td>Expiry management</td><td>Classifies batches as expired / expiring soon / safe</td></tr>
+    <tr><td>FR-07</td><td>Waste management</td><td>Quantity, reason, batch, actor; never silently deletes stock</td></tr>
+    <tr><td>FR-08</td><td>Cash reconciliation</td><td>Expected vs actual; variance with explanation</td></tr>
+    <tr><td>FR-09</td><td>Reporting</td><td>Daily sales, inventory, waste, staff activity</td></tr>
+    <tr><td>FR-10</td><td>Audit trail</td><td>Append-only through the application</td></tr>
+    <tr><td>FR-11</td><td>Queue management</td><td>Only if validated with the owner</td></tr>
+    <tr><td>FR-12</td><td>Rush Mode</td><td>Simplified checkout layout toggled by the operator</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 7. USE CASES ================= -->
+<h2 id="s7"><span class="num">7.</span>Core Use Cases</h2>
+
+<h3>UC-05 · Process a sale (primary flow)</h3>
+<p><strong>Actors:</strong> Operator. <strong>Goal:</strong> complete a purchase while keeping stock, cash and records consistent.</p>
+<ol>
+  <li>Operator opens <em>New Sale</em> (optionally with Rush Mode on).</li>
+  <li>Operator searches products by name or SKU and adds them to the cart.</li>
+  <li>Backend retrieves current prices and checks stock availability.</li>
+  <li>Backend calculates subtotal, any authorised discount, and the grand total in ZAR.</li>
+  <li>Operator selects the payment method and, for cash, enters the amount tendered.</li>
+  <li>Backend calculates change.</li>
+  <li>Operator confirms. Backend opens a database transaction and:</li>
+</ol>
+<ol type="a" style="margin-top:-6px;">
+  <li>Creates the sale and its line items (with price snapshots).</li>
+  <li>Creates the payment record.</li>
+  <li>Deducts stock from the correct batches using FEFO.</li>
+  <li>Writes stock movement ledger entries.</li>
+  <li>Writes the audit event.</li>
+  <li>Commits.</li>
+</ol>
+<p>Only after commit does the UI display the successful receipt.</p>
+
+<h4>Alternative paths</h4>
+<table>
+  <thead><tr><th>Condition</th><th>System behaviour</th></tr></thead>
+  <tbody>
+    <tr><td>Product out of stock</td><td>Sale blocked; clear message; no partial record</td></tr>
+    <tr><td>Product deactivated</td><td>Cannot be added to cart</td></tr>
+    <tr><td>Price changed before confirmation</td><td>Backend recalculates; operator sees the updated total before confirming</td></tr>
+    <tr><td>Cash tendered insufficient</td><td>Sale blocked; change not calculated</td></tr>
+    <tr><td>Duplicate submission (double tap / retry)</td><td>Idempotency key prevents a second sale</td></tr>
+    <tr><td>Two operators sell the last unit</td><td>Concurrency control ensures only one succeeds</td></tr>
+    <tr><td>Database transaction fails</td><td>Full rollback; no sale, no stock deduction</td></tr>
+  </tbody>
+</table>
+
+<h3>UC-03 · Receive stock</h3>
+<p><strong>Actors:</strong> Owner / authorised operator. Creates a new stock batch and updates inventory.</p>
+<ol>
+  <li>Operator selects product and enters quantity, unit cost (ZAR), supplier (optional), batch reference and expiry date (where relevant).</li>
+  <li>Backend validates quantity, cost, date and authorisation.</li>
+  <li>Batch is created, stock movement recorded, inventory updated, audit event written — all in one transaction.</li>
+</ol>
+<p><strong>Failure rule:</strong> a stock receipt is never partially saved.</p>
+
+<h3>UC-07 · Record expired or damaged stock</h3>
+<p><strong>Actors:</strong> Owner / authorised operator. <strong>Goal:</strong> account for stock that cannot be sold.</p>
+<ol>
+  <li>Select product and batch; enter quantity and reason (Expired / Damaged / Missing / Spoiled / Other).</li>
+  <li>Backend checks the batch has enough remaining quantity.</li>
+  <li>Waste record and stock movement are written; audit event created.</li>
+  <li>Inventory and the waste report update.</li>
+</ol>
+
+<h3>UC-09 · Open and close a cash shift</h3>
+<p><strong>Opening:</strong> operator enters the opening float; the shift becomes active.</p>
+<p><strong>Closing:</strong> the system calculates expected cash, the operator counts physical cash and enters the actual amount, the system calculates the variance, and the operator explains any difference.</p>
+
+<pre>Expected Cash = Opening Float + Cash Sales − Cash Refunds + Cash In − Cash Out
+Variance      = Actual Cash − Expected Cash</pre>
+
+<table>
+  <thead><tr><th>Item</th><th>Amount (ZAR)</th></tr></thead>
+  <tbody>
+    <tr><td>Opening float</td><td>R 300,00</td></tr>
+    <tr><td>Cash sales</td><td>R 920,00</td></tr>
+    <tr><td>Cash refunds</td><td>R 20,00</td></tr>
+    <tr><td>Cash in / out</td><td>R 0,00</td></tr>
+    <tr><td><strong>Expected cash</strong></td><td><strong>R 1 200,00</strong></td></tr>
+    <tr><td>Actual cash counted</td><td>R 1 200,00</td></tr>
+    <tr><td><strong>Variance</strong></td><td><strong>R 0,00</strong></td></tr>
+  </tbody>
+</table>
+
+<h3>UC-08 · Monitor expiry dates</h3>
+<p>The Expiry Dashboard retrieves batches with expiry dates, calculates days remaining and groups them as <em>Expired</em>, <em>Expiring Soon</em> or <em>Safe</em>. It recommends FEFO rotation but <strong>never</strong> silently deletes or adjusts stock — a human records waste.</p>
+
+<h3>Other use cases (summary)</h3>
+<table>
+  <thead><tr><th>ID</th><th>Use case</th><th>Actor</th></tr></thead>
+  <tbody>
+    <tr><td>UC-01</td><td>Authenticate</td><td>Owner, Operator</td></tr>
+    <tr><td>UC-02</td><td>Manage products</td><td>Owner, authorised Operator</td></tr>
+    <tr><td>UC-04</td><td>View inventory</td><td>Owner, Operator</td></tr>
+    <tr><td>UC-06</td><td>Refund a sale</td><td>Owner, authorised Operator</td></tr>
+    <tr><td>UC-10</td><td>Anonymous queue (optional)</td><td>Customer, Operator</td></tr>
+    <tr><td>UC-11</td><td>View reports</td><td>Owner</td></tr>
+    <tr><td>UC-12</td><td>Review audit history</td><td>Owner</td></tr>
+    <tr><td>UC-13</td><td>Manage staff</td><td>Owner</td></tr>
+    <tr><td>UC-14</td><td>Configure business</td><td>Owner</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 8. PROCESSES ================= -->
+<h2 id="s8"><span class="num">8.</span>End-to-End Processes</h2>
+
+<h3>8.1 Sales</h3>
+<pre>START
+  |
+  v
+Operator opens New Sale (Rush Mode optional)
+  |
+  v
+Search and select products  ->  add to cart
+  |
+  v
+Backend checks prices and stock availability
+  |
+  v
+Calculate total in ZAR
+  |
+  v
+Select payment method  ->  enter cash tendered (if cash)
+  |
+  v
+Confirm  ->  BEGIN TRANSACTION
+  |
+  +--> Create Sale + Sale Items
+  +--> Create Payment
+  +--> Deduct Stock (FEFO)
+  +--> Write Stock Movements
+  +--> Write Audit Event
+  |
+  v
+COMMIT
+  |
+  v
+Display receipt confirmation
+  |
+  v
+END</pre>
+
+<h3>8.2 Stock receiving</h3>
+<pre>START
+  |
+  v
+Select product
+  |
+  v
+Enter quantity, unit cost (ZAR), batch ref, expiry date
+  |
+  v
+Validate input and authorisation
+  |
+  v
+Create Stock Batch
+  |
+  v
+Record Stock Movement
+  |
+  v
+Update Inventory
+  |
+  v
+Write Audit Record
+  |
+  v
+COMMIT  ->  END</pre>
+
+<h3>8.3 Expiry monitoring</h3>
+<pre>START
+  |
+  v
+Retrieve stock batches with expiry dates
+  |
+  v
+Calculate days remaining
+  |
+  +--> Expired
+  +--> Expiring Soon
+  +--> Safe
+  |
+  v
+Display stock health
+  |
+  v
+Recommend FEFO rotation
+  |
+  v
+Operator takes action (sell first / record waste)
+  |
+  v
+END</pre>
+
+<!-- ================= 9. BUSINESS RULES ================= -->
+<h2 id="s9"><span class="num">9.</span>Business Rules</h2>
+<ol>
+  <li>All monetary values are in ZAR and stored as decimals with two decimal places.</li>
+  <li>Prices and totals are always validated and calculated on the server.</li>
+  <li>Completed sales cannot be deleted; corrections are compensating refunds.</li>
+  <li>Refunds must reference the original sale.</li>
+  <li>Stock movements are traceable — every quantity change has a ledger entry.</li>
+  <li>Stock cannot become negative unless an explicitly approved policy permits it.</li>
+  <li>Expired stock is flagged, never auto-deleted.</li>
+  <li>FEFO (first-expiry-first-out) is used for perishables; FIFO where no expiry exists.</li>
+  <li>Every important action generates an audit event.</li>
+  <li>Every tenant-owned record must belong to the authenticated business.</li>
+  <li>Permissions are enforced by the backend, not the client.</li>
+  <li>No real customer personal data appears anywhere in the demonstration.</li>
+  <li>The application must remain usable on a mid-range Android phone.</li>
+</ol>
+
+<!-- ================= 10. ARCHITECTURE ================= -->
+<h2 id="s10"><span class="num">10.</span>System Architecture</h2>
+
+<h3>10.1 Style: Clean Architecture modular monolith</h3>
+<p>A single deployable API organised into layers. This gives separation of concerns and testability without the operational cost of distributed systems.</p>
+
+<pre>+--------------------------------------------------------------+
+|  PRESENTATION   Blazor WebAssembly (separate deployment)     |
+|  Login · Dashboard · Sell · Stock · Reports · Audit          |
++--------------------------------------------------------------+
+                     HTTPS / JSON (REST)
++--------------------------------------------------------------+
+|  API            ASP.NET Core Web API  (.NET 10 LTS)          |
+|  Controllers · Auth · Validation · Error handling            |
++--------------------------------------------------------------+
+|  APPLICATION    Use cases, commands, queries, DTOs           |
+|  CreateSale · ReceiveStock · RecordWaste · CloseShift        |
++--------------------------------------------------------------+
+|  DOMAIN         Entities, value objects, business rules      |
+|  Sale · StockBatch · StockMovement · CashShift · Policy      |
++--------------------------------------------------------------+
+|  INFRASTRUCTURE EF Core 10 · PostgreSQL · Identity           |
+|  Repositories · Migrations · Audit writer                    |
++--------------------------------------------------------------+
+                     Npgsql / TCP (private)
++--------------------------------------------------------------+
+|  DATABASE       Neon PostgreSQL  (single source of truth)    |
++--------------------------------------------------------------+</pre>
+
+<div class="note">
+  <strong>Dependency rule</strong>
+  Domain and Application never reference EF Core, PostgreSQL, Blazor or HTTP. Infrastructure and API depend inward. This is what makes the business rules testable without a database.
+</div>
+
+<h3>10.2 Deployment topology</h3>
+<pre>        User (Android phone / tablet / desktop browser)
+                          |
+                       HTTPS
+                          |
+        +-----------------+------------------+
+        |                                    |
+  Cloudflare Pages                   Google Cloud Run
+  Blazor WASM static files           ASP.NET Core Web API (.NET 10)
+  HTML · CSS · WASM · assemblies     Auth · business rules · EF Core
+        |                                    |
+        |          HTTPS REST / JSON         |
+        +------------------------------------+
+                                             |
+                                       Neon PostgreSQL
+                                   (reachable only by the API)</pre>
+
+<h3>10.3 Request flow</h3>
+<ol>
+  <li>The browser loads the Blazor WASM application from Cloudflare Pages.</li>
+  <li>Blazor sends an HTTPS request to the API on Cloud Run.</li>
+  <li>The API authenticates the user and authorises the action.</li>
+  <li>The API reads or writes PostgreSQL through EF Core inside a transaction where required.</li>
+  <li>The API returns a JSON response; Blazor updates the interface.</li>
+</ol>
+
+<div class="warn">
+  <strong>Critical security boundary</strong>
+  The Blazor WebAssembly application must <em>never</em> connect directly to PostgreSQL. Connection strings and database credentials live only in the API's server-side configuration (Cloud Run environment variables / secret store) and are never committed to Git or shipped in WebAssembly.
+</div>
+
+<!-- ================= 11. STACK ================= -->
+<h2 id="s11"><span class="num">11.</span>Technology Stack</h2>
+
+<table>
+  <thead><tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr></thead>
+  <tbody>
+    <tr><td>Frontend</td><td>Blazor WebAssembly</td><td>Single C# ecosystem; strong fit with existing .NET experience</td></tr>
+    <tr><td>UI components</td><td>Razor components</td><td>Reusable, testable screens</td></tr>
+    <tr><td>Backend</td><td>ASP.NET Core Web API</td><td>Mature, performant REST API</td></tr>
+    <tr><td>Framework</td><td><strong>.NET 10 LTS</strong></td><td>.NET 8 support ends 10 November 2026; .NET 10 LTS is supported to November 2028</td></tr>
+    <tr><td>Language</td><td>C#</td><td>Frontend and backend</td></tr>
+    <tr><td>Database</td><td>PostgreSQL (Neon)</td><td>Managed free tier; relational integrity for financial data</td></tr>
+    <tr><td>ORM</td><td>Entity Framework Core 10</td><td>Migrations, LINQ, transaction support</td></tr>
+    <tr><td>Authentication</td><td>ASP.NET Core Identity + JWT</td><td>Battle-tested password hashing and token issuance</td></tr>
+    <tr><td>Authorisation</td><td>Role/policy-based</td><td>Owner vs operator permissions enforced server-side</td></tr>
+    <tr><td>Validation</td><td>FluentValidation / DataAnnotations</td><td>Clear, centralised input rules</td></tr>
+    <tr><td>Testing</td><td>xUnit</td><td>Unit and integration tests</td></tr>
+    <tr><td>Version control</td><td>GitHub (private)</td><td>Progressive commit history</td></tr>
+    <tr><td>Frontend hosting</td><td>Cloudflare Pages</td><td>Free static hosting with global CDN</td></tr>
+    <tr><td>Backend hosting</td><td>Google Cloud Run</td><td>Free monthly allowance; containerised API</td></tr>
+    <tr><td>Database hosting</td><td>Neon PostgreSQL</td><td>Free managed Postgres tier</td></tr>
+  </tbody>
+</table>
+
+<h3>11.1 Why .NET 10 rather than .NET 8</h3>
+<p>.NET 8 reaches end of support on <strong>10 November 2026</strong> — one day after this document's baseline date and before the assignment deadline. Starting a new build on an almost-unsupported framework would be poor judgement. .NET 10 is an LTS release supported until <strong>14 November 2028</strong>, which comfortably covers the internship period (January–December 2027).</p>
+
+<!-- ================= 12. SOLID / ACID ================= -->
+<h2 id="s12"><span class="num">12.</span>SOLID &amp; ACID</h2>
+
+<h3>12.1 SOLID</h3>
+<table>
+  <thead><tr><th>Principle</th><th>Application in ShopPulse</th></tr></thead>
+  <tbody>
+    <tr><td>Single Responsibility</td><td><code class="inline">SaleService</code> orchestrates sales; <code class="inline">PricingService</code> pricing; <code class="inline">StockService</code> stock; <code class="inline">ExpiryService</code> classification; <code class="inline">AuditService</code> audit</td></tr>
+    <tr><td>Open/Closed</td><td>New payment methods added through an abstraction without editing sale logic</td></tr>
+    <tr><td>Liskov Substitution</td><td>Repository implementations honour their contracts consistently</td></tr>
+    <tr><td>Interface Segregation</td><td>Focused interfaces — sale repository, audit writer, current-business accessor</td></tr>
+    <tr><td>Dependency Inversion</td><td>Domain and Application depend on abstractions, not EF Core or HTTP</td></tr>
+  </tbody>
+</table>
+
+<pre>public interface ISaleRepository
+{
+    Task&lt;Sale?&gt; GetByIdAsync(Guid id, CancellationToken ct);
+    Task AddAsync(Sale sale, CancellationToken ct);
+}
+
+public interface IAuditWriter
+{
+    Task WriteAsync(AuditEvent auditEvent, CancellationToken ct);
+}
+
+public interface ICurrentBusiness
+{
+    Guid BusinessId { get; }
+}</pre>
+
+<h3>12.2 ACID</h3>
+<table>
+  <thead><tr><th>Principle</th><th>How ShopPulse implements it</th></tr></thead>
+  <tbody>
+    <tr><td>Atomicity</td><td>Sale, payment, stock deduction, movements and audit commit together or roll back together</td></tr>
+    <tr><td>Consistency</td><td>Constraints and business rules prevent negative stock, invalid payments, duplicate receipt numbers and cross-business references</td></tr>
+    <tr><td>Isolation</td><td>Row versions / conditional updates ensure only one concurrent sale can take the last unit</td></tr>
+    <tr><td>Durability</td><td>Committed data survives browser refresh, API restart and redeployment</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 13. DATABASE ================= -->
+<h2 id="s13"><span class="num">13.</span>Database Design</h2>
+
+<p>Normalised relational model. Denormalised read projections are added only where a measured need exists.</p>
+
+<h3>13.1 Core entities</h3>
+<table>
+  <thead><tr><th>Entity</th><th>Key fields</th></tr></thead>
+  <tbody>
+    <tr><td>Business</td><td>BusinessId, Name, CurrencyCode (ZAR), TimeZone, CreatedAtUtc</td></tr>
+    <tr><td>User</td><td>UserId, Email, PasswordHash, IsActive</td></tr>
+    <tr><td>BusinessUser</td><td>BusinessUserId, BusinessId, UserId, RoleId, CreatedAtUtc</td></tr>
+    <tr><td>Role / Permission</td><td>RoleId, Name; PermissionId; RolePermission junction</td></tr>
+    <tr><td>Category</td><td>CategoryId, BusinessId, Name</td></tr>
+    <tr><td>Supplier</td><td>SupplierId, BusinessId, Name</td></tr>
+    <tr><td>Product</td><td>ProductId, BusinessId, SKU, Name, CategoryId, UnitOfMeasure, CurrentSellingPrice, MinimumStockLevel, IsActive</td></tr>
+    <tr><td>StockBatch</td><td>StockBatchId, ProductId, SupplierId, BatchReference, ReceivedAtUtc, ExpiryDate, UnitCost, InitialQuantity</td></tr>
+    <tr><td>StockMovement</td><td>StockMovementId, ProductId, StockBatchId, MovementType, QuantityDelta, ReferenceType, ReferenceId, Reason, ActorId, CreatedAtUtc</td></tr>
+    <tr><td>Sale</td><td>SaleId, BusinessId, ReceiptNumber, Status, Subtotal, DiscountTotal, GrandTotal, CurrencyCode, CreatedBy, CreatedAtUtc, IdempotencyKey</td></tr>
+    <tr><td>SaleItem</td><td>SaleItemId, SaleId, ProductId, ProductNameSnapshot, SKUSnapshot, Quantity, UnitPriceSnapshot, DiscountAmount, LineTotal</td></tr>
+    <tr><td>Payment</td><td>PaymentId, SaleId, PaymentMethod, Amount, TenderedAmount, ChangeAmount, Status</td></tr>
+    <tr><td>CashShift</td><td>CashShiftId, BusinessId, OperatorId, OpeningFloat, ExpectedCash, ActualCash, Variance, OpenedAtUtc, ClosedAtUtc, Status</td></tr>
+    <tr><td>CashMovement</td><td>CashMovementId, CashShiftId, MovementType, Amount, Reason, CreatedAtUtc</td></tr>
+    <tr><td>WasteRecord</td><td>WasteRecordId, ProductId, StockBatchId, Quantity, Reason, ActorId, CreatedAtUtc</td></tr>
+    <tr><td>AuditLog</td><td>AuditLogId, BusinessId, ActorId, Action, EntityType, EntityId, Reason, CorrelationId, CreatedAtUtc</td></tr>
+    <tr><td>QueueTicket (optional)</td><td>QueueTicketId, BusinessId, TicketNumber, Status, CreatedAtUtc, ServedAtUtc — no customer identity</td></tr>
+  </tbody>
+</table>
+
+<h3>13.2 Entity relationships</h3>
+<pre>BUSINESS
+   |
+   |-- BUSINESS_USER ---- USER
+   |
+   |-- PRODUCT ---- CATEGORY
+   |      |
+   |      |-- STOCK_BATCH
+   |      |      |
+   |      |      |-- STOCK_MOVEMENT
+   |      |
+   |      |-- SALE_ITEM ---- SALE
+   |                        |
+   |                        |-- PAYMENT
+   |
+   |-- CASH_SHIFT
+   |      |
+   |      |-- CASH_MOVEMENT
+   |
+   |-- AUDIT_LOG
+   |
+   |-- QUEUE_TICKET (optional)
+
+BUSINESS_USER ---- ROLE ---- ROLE_PERMISSION ---- PERMISSION
+PRODUCT ---- WASTE_RECORD
+STOCK_BATCH ---- WASTE_RECORD</pre>
+
+<h3>13.3 Normalisation</h3>
+<ul>
+  <li><strong>1NF:</strong> no comma-separated multi-value fields; permissions use a junction table.</li>
+  <li><strong>2NF:</strong> non-key attributes depend on the whole key; role assignments live in their own table.</li>
+  <li><strong>3NF:</strong> supplier details stored once, not repeated on every batch.</li>
+  <li><strong>Denormalisation:</strong> read projections (<code class="inline">StockBalance</code>, <code class="inline">DailySalesSummary</code>) may be added for dashboards, but the movement ledger and sale records remain authoritative.</li>
+</ul>
+
+<h3>13.4 Recommended indexes</h3>
+<ul>
+  <li><code class="inline">BusinessId + CreatedAtUtc</code></li>
+  <li><code class="inline">BusinessId + SKU</code> (unique)</li>
+  <li><code class="inline">BusinessId + ExpiryDate</code></li>
+  <li><code class="inline">BusinessId + Status</code></li>
+  <li><code class="inline">SaleId</code>, <code class="inline">StockBatchId + CreatedAtUtc</code></li>
+  <li>Unique idempotency key on <code class="inline">Sale</code></li>
+</ul>
+
+<h3>13.5 Money in the database</h3>
+<p>Use <code class="inline">numeric(18,2)</code> / .NET <code class="inline">decimal</code>. Never <code class="inline">float</code> or <code class="inline">double</code>.</p>
+
+<!-- ================= 14. API ================= -->
+<h2 id="s14"><span class="num">14.</span>API Design</h2>
+
+<table>
+  <thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td>POST</td><td>/api/auth/login</td><td>Authenticate</td><td>Any</td></tr>
+    <tr><td>POST</td><td>/api/auth/refresh</td><td>Refresh token</td><td>Authenticated</td></tr>
+    <tr><td>GET</td><td>/api/products</td><td>List/search products</td><td>Owner, Operator</td></tr>
+    <tr><td>POST</td><td>/api/products</td><td>Create product</td><td>Owner</td></tr>
+    <tr><td>PATCH</td><td>/api/products/{id}</td><td>Update product</td><td>Owner</td></tr>
+    <tr><td>GET</td><td>/api/inventory</td><td>Stock levels and health</td><td>Owner, Operator</td></tr>
+    <tr><td>POST</td><td>/api/stock/receipts</td><td>Receive stock</td><td>Owner / authorised</td></tr>
+    <tr><td>POST</td><td>/api/sales</td><td>Create sale</td><td>Owner, Operator</td></tr>
+    <tr><td>POST</td><td>/api/sales/{id}/refunds</td><td>Refund</td><td>Owner / authorised</td></tr>
+    <tr><td>POST</td><td>/api/stock/adjustments</td><td>Waste / adjustment</td><td>Owner / authorised</td></tr>
+    <tr><td>POST</td><td>/api/shifts/open</td><td>Open shift</td><td>Operator</td></tr>
+    <tr><td>POST</td><td>/api/shifts/close</td><td>Close shift</td><td>Operator</td></tr>
+    <tr><td>GET</td><td>/api/reports/daily</td><td>Daily report</td><td>Owner</td></tr>
+    <tr><td>GET</td><td>/api/audit</td><td>Audit history</td><td>Owner</td></tr>
+    <tr><td>GET</td><td>/api/queue/status</td><td>Queue status (optional)</td><td>Public (anonymous)</td></tr>
+  </tbody>
+</table>
+
+<h3>14.1 API standards</h3>
+<ul>
+  <li>DTOs only — never expose EF entities.</li>
+  <li>Server-side validation and authorisation on every request.</li>
+  <li>Pagination for list endpoints; cancellation tokens throughout.</li>
+  <li>Consistent error contract (problem details).</li>
+  <li>Idempotency key required on sale creation.</li>
+  <li>Cross-business access attempts rejected with 403/404 — never leaked.</li>
+  <li>HTTPS only; no secrets in query strings.</li>
+</ul>
+
+<!-- ================= 15. SECURITY ================= -->
+<h2 id="s15"><span class="num">15.</span>Security &amp; POPIA</h2>
+
+<h3>15.1 Authentication</h3>
+<ul>
+  <li>Passwords hashed with ASP.NET Core Identity's default (PBKDF2).</li>
+  <li>Short-lived access tokens with refresh; logout invalidates the refresh token.</li>
+  <li>Login rate limiting and lockout on repeated failure.</li>
+  <li>Account deactivation without deleting history.</li>
+</ul>
+
+<h3>15.2 Authorisation &amp; tenant isolation</h3>
+<ul>
+  <li>Role and policy checks on every endpoint.</li>
+  <li>Every business-owned record carries <code class="inline">BusinessId</code>, resolved server-side from the authenticated user — never accepted from the client.</li>
+  <li>Queries are filtered by the resolved business ID at the repository/global-query-filter level.</li>
+</ul>
+
+<h3>15.3 Data protection</h3>
+<ul>
+  <li>No real customer personal data in the demo or test data.</li>
+  <li>No passwords or tokens in logs.</li>
+  <li>Secrets in Cloud Run environment variables / secret manager, never in Git or the WASM bundle.</li>
+  <li>HTTPS end-to-end; restrictive CORS limited to the Cloudflare Pages origin.</li>
+  <li>Database not publicly reachable — only the API connects.</li>
+</ul>
+
+<h3>15.4 POPIA-aligned principles</h3>
+<ul>
+  <li>Collect only what is needed — the anonymous queue requires no personal information.</li>
+  <li>Explain why any information is required.</li>
+  <li>Restrict access by role.</li>
+  <li>Protect stored information.</li>
+  <li>Define retention periods; the demo dataset is synthetic and disposable.</li>
+</ul>
+
+<!-- ================= 16. AUDIT ================= -->
+<h2 id="s16"><span class="num">16.</span>Audit Trail</h2>
+
+<p>The audit trail answers: <em>who did what, to which record, when, and why</em>.</p>
+
+<h3>16.1 Audited events</h3>
+<ul>
+  <li>Login/security events where appropriate</li>
+  <li>Product creation and price changes</li>
+  <li>Stock receipts and stock adjustments</li>
+  <li>Sales and refunds</li>
+  <li>Waste records</li>
+  <li>Staff account changes</li>
+  <li>Shift opening and closing</li>
+  <li>Business settings changes</li>
+</ul>
+
+<h3>16.2 Record shape</h3>
+<table>
+  <thead><tr><th>Field</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td>Actor</td><td>Operator 01</td></tr>
+    <tr><td>Action</td><td>Stock adjustment</td></tr>
+    <tr><td>Entity</td><td>Bread batch</td></tr>
+    <tr><td>Quantity</td><td>2 units</td></tr>
+    <tr><td>Reason</td><td>Expired</td></tr>
+    <tr><td>Timestamp</td><td>09 November 2026, 15:30</td></tr>
+    <tr><td>Business</td><td>Synthetic Pilot Shop</td></tr>
+  </tbody>
+</table>
+
+<h3>16.3 Audit integrity</h3>
+<ul>
+  <li>Append-only through the application — no edit or delete endpoints.</li>
+  <li>Written in the same transaction as the business change it records.</li>
+  <li>Read access restricted to the owner (and platform admin for operational support, without financial detail).</li>
+</ul>
+
+<!-- ================= 17. ZAR ================= -->
+<h2 id="s17"><span class="num">17.</span>Financial Rules (ZAR)</h2>
+
+<h3>17.1 Display convention</h3>
+<p>South African rand throughout: <code class="inline">R 5,00</code>, <code class="inline">R 12,50</code>, <code class="inline">R 99,99</code>, <code class="inline">R 1 250,00</code> (space as thousands separator, comma as decimal separator).</p>
+
+<h3>17.2 Storage and calculation</h3>
+<pre>public decimal UnitPrice { get; set; }
+public decimal GrandTotal { get; set; }
+public decimal AmountPaid { get; set; }
+public decimal ChangeAmount { get; set; }</pre>
+<ul>
+  <li>Database precision: <code class="inline">numeric(18,2)</code>.</li>
+  <li>No floating-point arithmetic for money, ever.</li>
+  <li>All totals computed server-side; the client only displays.</li>
+  <li>Historical prices snapshotted onto sale items.</li>
+  <li>Discounts recorded explicitly, not baked into the price.</li>
+</ul>
+
+<h3>17.3 Worked example</h3>
+<table>
+  <thead><tr><th>Product</th><th>Qty</th><th>Unit price</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Bread</td><td>2</td><td>R 15,00</td><td>R 30,00</td></tr>
+    <tr><td>Milk</td><td>1</td><td>R 18,00</td><td>R 18,00</td></tr>
+    <tr><td>Sugar</td><td>1</td><td>R 22,00</td><td>R 22,00</td></tr>
+    <tr><td colspan="3"><strong>Total</strong></td><td><strong>R 70,00</strong></td></tr>
+    <tr><td colspan="3">Cash received</td><td>R 100,00</td></tr>
+    <tr><td colspan="3"><strong>Change</strong></td><td><strong>R 30,00</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>VAT and tax</strong>
+  Tax treatment is not assumed. Whether the shop is VAT-registered and how prices are displayed will be confirmed with the owner before any tax logic is added.
+</div>
+
+<!-- ================= 18. UX ================= -->
+<h2 id="s18"><span class="num">18.</span>UX/UI &amp; Wireframes</h2>
+
+<h3>18.1 Design principles</h3>
+<ul>
+  <li><strong>Mobile-first:</strong> designed for a mid-range Android phone first, then tablet and desktop.</li>
+  <li><strong>Large touch targets:</strong> minimum 44–48 px.</li>
+  <li><strong>Minimal steps:</strong> the sale path should be fast under pressure.</li>
+  <li><strong>Clear states:</strong> loading, saving, success, validation error, network failure, empty.</li>
+  <li><strong>Never lie:</strong> a sale is not shown as successful until the server has committed it.</li>
+</ul>
+
+<h3>18.2 Wireframes (structural, not final visuals)</h3>
+
+<div class="wf-grid">
+
+  <div class="wf">
+    <div class="wf-title">1 · Login</div>
+    <pre>+------------------------------+
+|          SHOPPULSE           |
+|    Smart Retail Management   |
+|                              |
+| Email / Username             |
+| [__________________________] |
+|                              |
+| Password                     |
+| [__________________________] |
+|                              |
+| [         SIGN IN         ]  |
+|                              |
+| Need access? Contact owner   |
++------------------------------+</pre>
+  </div>
+
+  <div class="wf">
+    <div class="wf-title">2 · Operator Dashboard</div>
+    <pre>+------------------------------+
+| SHOPPULSE        SHIFT OPEN  |
++------------------------------+
+| Good morning                 |
+|                              |
+| [        NEW SALE         ]  |
+|                              |
+| TODAY'S SUMMARY              |
+| Sales:           R 2 450,00  |
+| Transactions:    38          |
+|                              |
+| ATTENTION                    |
+| Low stock:       3 products  |
+| Expiring soon:   2 batches   |
+|                              |
+| [ REVIEW STOCK ]             |
++------------------------------+
+| Home | Sell | Stock | More   |
++------------------------------+</pre>
+  </div>
+
+  <div class="wf">
+    <div class="wf-title">3 · Rush Mode / Fast Sale</div>
+    <pre>+------------------------------+
+| NEW SALE           RUSH MODE |
++------------------------------+
+| [ Search product / SKU     ] |
+|                              |
+| QUICK PRODUCTS               |
+| [Bread] [Milk] [Eggs]        |
+| [Sugar] [Rice] [Soap]        |
+|                              |
+| CURRENT CART                 |
+| Bread x2          R 30,00    |
+| Milk  x1          R 18,00    |
+|                              |
+| TOTAL             R 48,00    |
+|                              |
+| [ REVIEW &amp; TAKE PAYMENT ]    |
++------------------------------+</pre>
+  </div>
+
+  <div class="wf">
+    <div class="wf-title">4 · Payment</div>
+    <pre>+------------------------------+
+|         TAKE PAYMENT         |
++------------------------------+
+| Amount due:       R 48,00    |
+|                              |
+| Payment method               |
+| [ Cash                   v ] |
+|                              |
+| Cash received                |
+| [ R 50,00                 ]  |
+|                              |
+| Change due:       R 2,00     |
+|                              |
+| [       CONFIRM SALE      ]  |
+|                              |
+| Status: Saving / Confirmed   |
++------------------------------+</pre>
+  </div>
+
+  <div class="wf">
+    <div class="wf-title">5 · Inventory Health</div>
+    <pre>+------------------------------+
+| STOCK HEALTH                 |
++------------------------------+
+| [ Search stock...          ] |
+|                              |
+| [All] [Low] [Expiring] [Out] |
+|                              |
+| BREAD                        |
+| Available: 14 units          |
+| Batch B12 · Expires 10 Nov   |
+| PRIORITISE THIS BATCH        |
+|                              |
+| MILK                         |
+| Available: 6 units           |
+| Batch M04 · Expires 11 Nov   |
+|                              |
+| [ RECEIVE STOCK ]            |
++------------------------------+</pre>
+  </div>
+
+  <div class="wf">
+    <div class="wf-title">6 · Receive Stock</div>
+    <pre>+------------------------------+
+| RECEIVE STOCK                |
++------------------------------+
+| Product                      |
+| [ Bread                   v] |
+|                              |
+| Quantity                     |
+| [ 24                      ]  |
+|                              |
+| Unit cost                    |
+| [ R 9,50                  ]  |
+|                              |
+| Batch reference              |
+| [ B-2026-11               ]  |
+|                              |
+| Expiry date                  |
+| [ 12/11/2026              ]  |
+|                              |
+| [ SAVE STOCK RECEIPT ]       |
++------------------------------+</pre>
+  </div>
+
+  <div class="wf">
+    <div class="wf-title">7 · Cash Reconciliation</div>
+    <pre>+------------------------------+
+| CLOSE CASH SHIFT             |
++------------------------------+
+| Opening float:    R 300,00   |
+| Cash sales:       R 920,00   |
+| Cash refunds:     R 20,00    |
+| Cash in/out:      R 0,00     |
+|                              |
+| Expected cash:  R 1 200,00   |
+|                              |
+| Actual cash                  |
+| [ R 1 200,00              ]  |
+|                              |
+| Variance:         R 0,00     |
+|                              |
+| Reason if variance:          |
+| [__________________________] |
+|                              |
+| [ SUBMIT RECONCILIATION ]    |
++------------------------------+</pre>
+  </div>
+
+  <div class="wf">
+    <div class="wf-title">8 · Owner Dashboard</div>
+    <pre>+------------------------------+
+| SHOPPULSE       OWNER VIEW   |
++------------------------------+
+| Today: 09 November 2026      |
+|                              |
+| SALES            WASTE       |
+| R 2 450,00       R 45,00     |
+|                              |
+| TRANSACTIONS     CASH VAR.   |
+| 38               R 0,00      |
+|                              |
+| STOCK ALERTS     SHIFT       |
+| Bread: Expiring  Operator:Open|
+| Milk: Low        Sync: 16:20 |
+|                              |
+| [SALES] [STOCK] [STAFF]      |
+| [AUDIT] [SETTINGS]           |
++------------------------------+</pre>
+  </div>
+
+  <div class="wf">
+    <div class="wf-title">9 · Audit History</div>
+    <pre>+------------------------------+
+| AUDIT HISTORY                |
++------------------------------+
+| [ Date filter ] [ Actor ]    |
+|                              |
+| 16:20  SALE CREATED          |
+| Operator 02 · Receipt 00128  |
+|                              |
+| 15:55  WASTE RECORDED        |
+| Owner · Bread batch B12      |
+| Reason: Expired              |
+|                              |
+| 15:10  STOCK RECEIVED        |
+| Operator 02 · Milk batch M04 |
+|                              |
+| Audit entries are read-only. |
++------------------------------+</pre>
+  </div>
+
+</div>
+
+<!-- ================= 19. STOCK RESCUE ================= -->
+<h2 id="s19"><span class="num">19.</span>Stock Rescue</h2>
+
+<h3>19.1 The problem it solves</h3>
+<p>Traditional stock tracking tells an owner <em>how many</em> products remain. It does not tell them whether those products will <em>sell before they expire</em>. Twenty loaves of bread on the shelf is good news at 07:00 and bad news at 17:00.</p>
+
+<h3>19.2 The concept</h3>
+<p>ShopPulse combines four inputs:</p>
+<ol>
+  <li>Current stock quantity per batch</li>
+  <li>Expiry dates and days remaining</li>
+  <li>Recent sales history per product</li>
+  <li>Time-of-day demand patterns</li>
+</ol>
+<p>It then flags batches that are at risk of expiring before they sell, and recommends an action: prioritise the oldest batch, discount it, or reduce the next order quantity.</p>
+
+<h3>19.3 Worked example (illustrative test data)</h3>
+<table>
+  <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Product</td><td>Bread</td></tr>
+    <tr><td>Total stock</td><td>12 loaves</td></tr>
+    <tr><td>Earliest-expiry batch</td><td>4 loaves (Batch B12)</td></tr>
+    <tr><td>Units sold today</td><td>8</td></tr>
+    <tr><td>Earliest expiry</td><td>10 November 2026</td></tr>
+    <tr><td>Suggested action</td><td>Prioritise the 4 loaves from Batch B12; review the next order quantity</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>Honesty over hype</strong>
+  With a small dataset, this is a transparent rules-based recommendation — not AI forecasting. The UI will show the reasoning and the data behind each suggestion. Demand-pattern learning is a later phase, and will always display its assumptions and limitations.
+</div>
+
+<h3>19.4 Later: demand-aware recommendations</h3>
+<p>Once enough reliable sales history exists, the system can estimate average daily sales, morning versus afternoon demand and weekly patterns, then recommend order quantities. This remains an enhancement, not a dependency of the core solution.</p>
+
+<!-- ================= 20. REPORTING ================= -->
+<h2 id="s20"><span class="num">20.</span>Reporting</h2>
+
+<table>
+  <thead><tr><th>Report</th><th>Contents</th></tr></thead>
+  <tbody>
+    <tr><td>Daily sales</td><td>Total sales (ZAR), transaction count, average transaction value, payment-method breakdown, refund totals</td></tr>
+    <tr><td>Inventory</td><td>Current stock, low-stock products, expiring batches, expired stock, stock received, stock sold, adjustments</td></tr>
+    <tr><td>Waste</td><td>Product, quantity, reason, estimated cost value (ZAR), date, responsible user</td></tr>
+    <tr><td>Staff activity</td><td>Sales processed, stock received, adjustments made, shifts opened and closed</td></tr>
+    <tr><td>Cash</td><td>Opening float, cash sales, refunds, expected vs actual, variance and explanation</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>Revenue ≠ profit</strong>
+  Reports show revenue and stock cost separately. Profit is only shown where reliable unit costs exist, and expenses are treated explicitly — not silently assumed.
+</div>
+
+<!-- ================= 21. TESTING ================= -->
+<h2 id="s21"><span class="num">21.</span>Testing Strategy</h2>
+
+<table>
+  <thead><tr><th>Level</th><th>What is tested</th></tr></thead>
+  <tbody>
+    <tr><td>Unit</td><td>Price and discount calculations, cash change, cash reconciliation, expiry classification, FEFO allocation, stock validation, role permissions</td></tr>
+    <tr><td>Integration</td><td>PostgreSQL persistence, transaction rollback, concurrent sales, stock movements, refunds, tenant isolation, audit creation, EF migrations</td></tr>
+    <tr><td>API</td><td>Valid/invalid requests, auth failures, permission failures, duplicate sale idempotency, insufficient stock, cross-business access attempts</td></tr>
+    <tr><td>UI</td><td>Phone/tablet/desktop layouts, touch interaction, loading/empty/error states, network interruption</td></tr>
+  </tbody>
+</table>
+
+<h3>21.1 End-to-end scenario (the demo script)</h3>
+<ol>
+  <li>Owner signs in and creates products.</li>
+  <li>Operator signs in and receives stock.</li>
+  <li>Operator processes a sale; stock decreases; sales report updates.</li>
+  <li>Operator records expired stock; waste report updates.</li>
+  <li>Operator closes the shift and reconciles cash.</li>
+  <li>Owner reviews reports and audit history.</li>
+</ol>
+<p>Every step uses synthetic data.</p>
+
+<!-- ================= 22. TEST DATA ================= -->
+<h2 id="s22"><span class="num">22.</span>Synthetic Test Data</h2>
+
+<table>
+  <thead><tr><th>Dataset</th><th>Quantity</th></tr></thead>
+  <tbody>
+    <tr><td>Products</td><td>40</td></tr>
+    <tr><td>Stock batches</td><td>60</td></tr>
+    <tr><td>Fictional suppliers</td><td>5</td></tr>
+    <tr><td>Sales</td><td>150</td></tr>
+    <tr><td>Sale items</td><td>350</td></tr>
+    <tr><td>Stock movements</td><td>120</td></tr>
+    <tr><td>Waste records</td><td>12</td></tr>
+    <tr><td>Test users</td><td>3 (owner, operator, optional customer queue)</td></tr>
+    <tr><td>Audit events</td><td>200</td></tr>
+  </tbody>
+</table>
+
+<h3>22.1 Sample products (illustrative prices only)</h3>
+<table>
+  <thead><tr><th>Product</th><th>Selling price</th></tr></thead>
+  <tbody>
+    <tr><td>Bread</td><td>R 15,00</td></tr>
+    <tr><td>Milk</td><td>R 18,00</td></tr>
+    <tr><td>Sugar</td><td>R 22,00</td></tr>
+    <tr><td>Rice</td><td>R 28,00</td></tr>
+    <tr><td>Eggs</td><td>R 45,00</td></tr>
+    <tr><td>Cooking oil</td><td>R 35,00</td></tr>
+    <tr><td>Soap</td><td>R 12,00</td></tr>
+    <tr><td>Maize meal</td><td>R 32,00</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>Not real prices</strong>
+  These prices are placeholders for the demo. They are not confirmed prices from Thandabantu Spaza Shop and must not be presented as such.
+</div>
+
+<!-- ================= 23. DEPLOYMENT ================= -->
+<h2 id="s23"><span class="num">23.</span>Deployment &amp; Free Hosting</h2>
+
+<h3>23.1 Recommended free-tier combination</h3>
+<table>
+  <thead><tr><th>Component</th><th>Provider</th><th>Suitability</th><th>Watch-outs</th></tr></thead>
+  <tbody>
+    <tr><td>Blazor WASM frontend</td><td>Cloudflare Pages</td><td>Free static hosting with global CDN; ideal for WASM assets</td><td>Build output size; caching headers on redeploy</td></tr>
+    <tr><td>ASP.NET Core API</td><td>Google Cloud Run</td><td>Free monthly allowance; containerised, scales to zero</td><td>Cold starts; requires billing account on file; free allowance limits</td></tr>
+    <tr><td>PostgreSQL</td><td>Neon</td><td>Free managed Postgres tier</td><td>Storage and compute limits; connection limits; possible scale-to-zero</td></tr>
+    <tr><td>Source control</td><td>GitHub</td><td>Private repository, progressive commits</td><td>None for this use</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>Free is not a permanent guarantee</strong>
+  Cloud Run, Cloudflare Pages and Neon all have plan-specific limits and may require a billing account to be on file. Before deployment, verify current free-tier limits, storage and connection caps, sleep/scale-to-zero behaviour and public access settings. The demo is designed to fit comfortably within free allowances, but the provider terms must be checked at deployment time.
+</div>
+
+<h3>23.2 Deployment sequence</h3>
+<ol>
+  <li>Create the private GitHub repository.</li>
+  <li>Configure the API project and EF Core migrations.</li>
+  <li>Provision the Neon PostgreSQL database; store the connection string as a Cloud Run environment variable / secret.</li>
+  <li>Apply migrations; seed synthetic test data.</li>
+  <li>Containerise and deploy the API to Cloud Run; verify health endpoint.</li>
+  <li>Configure the Blazor WASM build to point at the Cloud Run API URL.</li>
+  <li>Deploy the static WASM output to Cloudflare Pages.</li>
+  <li>Set restrictive CORS on the API to the Cloudflare Pages origin.</li>
+  <li>Test the public URL in an incognito browser.</li>
+  <li>Test every role and every critical workflow.</li>
+  <li>Confirm data persists after a restart/redeploy.</li>
+  <li>Record the walkthrough using the deployed application.</li>
+</ol>
+
+<h3>23.3 What not to do</h3>
+<ul>
+  <li>Do not put the PostgreSQL connection string in the Blazor WASM app or any client-visible configuration.</li>
+  <li>Do not enable public access to the database.</li>
+  <li>Do not commit secrets, tokens or real data to Git.</li>
+  <li>Do not introduce Redis or other infrastructure unless a measured problem justifies it.</li>
+</ul>
+
+<!-- ================= 24. ROADMAP ================= -->
+<h2 id="s24"><span class="num">24.</span>Development Roadmap</h2>
+
+<table>
+  <thead><tr><th>Phase</th><th>Activity</th><th>Deliverable</th></tr></thead>
+  <tbody>
+    <tr><td>0</td><td>Discovery</td><td>Owner interview notes; validated problem; ranked scope</td></tr>
+    <tr><td>1</td><td>Foundation</td><td>Solution structure, database, authentication, roles</td></tr>
+    <tr><td>2</td><td>Products &amp; inventory</td><td>Catalogue, stock receiving, batches</td></tr>
+    <tr><td>3</td><td>Sales</td><td>Fast checkout, Rush Mode, automatic stock deduction</td></tr>
+    <tr><td>4</td><td>Expiry &amp; waste</td><td>Expiry dashboard, waste register, Stock Rescue rules</td></tr>
+    <tr><td>5</td><td>Financial</td><td>Cash shifts, reconciliation, reports</td></tr>
+    <tr><td>6</td><td>Security</td><td>Permissions, audit trail, POPIA checks</td></tr>
+    <tr><td>7</td><td>UX/UI</td><td>Responsive screens, Rush Mode polish, error states</td></tr>
+    <tr><td>8</td><td>Testing</td><td>Automated tests, manual end-to-end script</td></tr>
+    <tr><td>9</td><td>Deployment</td><td>Public Cloudflare Pages + Cloud Run + Neon</td></tr>
+    <tr><td>10</td><td>Submission</td><td>Walkthrough, test accounts, checklist complete</td></tr>
+  </tbody>
+</table>
+
+<h3>24.1 First working version must include</h3>
+<p>Authentication · products · stock receiving · sales · stock deduction · expiry monitoring · waste register · cash reconciliation · audit history · reports. Queue management is added only if the owner confirms it is useful.</p>
+
+<!-- ================= 25. RISKS ================= -->
+<h2 id="s25"><span class="num">25.</span>Risks &amp; Mitigation</h2>
+
+<table>
+  <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+  <tbody>
+    <tr><td>Queue congestion may not be the most important problem</td><td>Validate through observation and interview before building queue features</td></tr>
+    <tr><td>Operator finds data entry inconvenient</td><td>Keep checkout minimal; test with the actual operator</td></tr>
+    <tr><td>Expiry dates recorded inconsistently</td><td>Simple batch receiving; expiry optional where it does not apply</td></tr>
+    <tr><td>Poor connectivity interrupts sales</td><td>Show network state; never show a false success; retry safely with idempotency</td></tr>
+    <tr><td>Stock entry errors</td><td>Validation, movement history and audit records</td></tr>
+    <tr><td>Small datasets produce misleading forecasts</td><td>Start with transparent rules; disclose limitations</td></tr>
+    <tr><td>Free-tier limits change or run out</td><td>Verify provider terms; keep the app deployable elsewhere; monitor usage</td></tr>
+    <tr><td>Staff share accounts</td><td>Individual accounts per role; audit trail by user</td></tr>
+    <tr><td>Scope creep</td><td>Discovery-ranked scope; out-of-scope list in §4.2</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 26. SUCCESS ================= -->
+<h2 id="s26"><span class="num">26.</span>Success Measures</h2>
+
+<table>
+  <thead><tr><th>Area</th><th>Measurement</th></tr></thead>
+  <tbody>
+    <tr><td>Customer service</td><td>Waiting-time band during peak periods (before vs after)</td></tr>
+    <tr><td>Checkout</td><td>Time to complete a sale</td></tr>
+    <tr><td>Inventory</td><td>Time to check stock</td></tr>
+    <tr><td>Expiry</td><td>Number and value of expired products recorded</td></tr>
+    <tr><td>Waste</td><td>Reduction in avoidable stock losses</td></tr>
+    <tr><td>Financial</td><td>Time to reconcile cash at close</td></tr>
+    <tr><td>Accountability</td><td>Percentage of adjustments with a recorded reason</td></tr>
+    <tr><td>Usability</td><td>Operator feedback and task completion</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>Baseline first</strong>
+  A baseline must be recorded during discovery before any improvement is claimed. The walkthrough will report what was measured and what was only observed.
+</div>
+
+<!-- ================= 27. CHECKLIST ================= -->
+<h2 id="s27"><span class="num">27.</span>Submission Checklist</h2>
+
+<h3>Application</h3>
+<ul class="check">
+  <li>Publicly accessible live link</li>
+  <li>Works in a private / incognito browser window</li>
+  <li>Responsive on a mobile device</li>
+  <li>All critical workflows work end-to-end</li>
+  <li>Data persists after restart</li>
+  <li>No real customer personal information anywhere</li>
+</ul>
+
+<h3>Access</h3>
+<ul class="check">
+  <li>Owner test account (username and password)</li>
+  <li>Operator test account (username and password)</li>
+  <li>Optional customer queue access, if implemented</li>
+  <li>Setup steps documented</li>
+</ul>
+
+<h3>Source code</h3>
+<ul class="check">
+  <li>Private GitHub repository</li>
+  <li>Progressive commit history (not one bulk commit)</li>
+  <li>README with setup and run instructions</li>
+  <li>Environment configuration instructions</li>
+  <li>Database migration instructions</li>
+  <li>Repository link included in the submission</li>
+</ul>
+
+<h3>Discovery evidence</h3>
+<ul class="check">
+  <li>Owner permission obtained</li>
+  <li>Interview completed and notes captured</li>
+  <li>Feedback and quotes recorded</li>
+  <li>Establishment name and contact included only with consent</li>
+</ul>
+
+<h3>Walkthrough</h3>
+<ul class="check">
+  <li>Video ≤ 5 minutes or document ≤ 2 pages</li>
+  <li>Explains who has the problem and why it matters</li>
+  <li>Demonstrates the solution</li>
+  <li>Shows evidence of feedback or testing</li>
+  <li>States what would be built next</li>
+</ul>
+
+<!-- ================= 28. CONCLUSION ================= -->
+<h2 id="s28"><span class="num">28.</span>Conclusion</h2>
+
+<p>ShopPulse is a deliberately small, practical solution to a specific operational problem: a one-person spaza shop that must serve customers, manage stock and account for cash at the same time.</p>
+
+<p>Its central idea is integration over accumulation. One committed sale updates the transaction record, stock levels, batch allocation, expiry exposure, daily financials and the audit trail — so the operator does not repeat work the system can do once.</p>
+
+<p>The architecture uses Clean Architecture, SOLID principles and ACID transactions to keep that promise reliable. Financial operations use ZAR with decimal precision and server-side validation. Security is enforced on the backend, with tenant isolation and a POPIA-conscious approach that avoids collecting customer personal data entirely.</p>
+
+<p>Most importantly, the final product will be shaped by what the owner of Thandabantu Spaza Shop confirms is genuinely useful. The queue, expiry and management features are prioritised only according to that feedback.</p>
+
+<p><strong>The objective is not to build the biggest application. It is to build a solution that solves a real problem, works reliably, and can be demonstrated with confidence.</strong></p>
+
+<footer>
+  ShopPulse — Solution Design &amp; Technical Specification · Samsung Innovation Internship 2027 · Stage 1 Entry Assignment · Document status: proposed, pending establishment validation.
+</footer>
+
+</div>
+</body>
+</html>

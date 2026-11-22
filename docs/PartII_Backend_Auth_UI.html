@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShopPulse — Part II: Backend Flows, Authentication &amp; UI Feedback Specification</title>
+<style>
+  :root{
+    --ink:#1a2332;
+    --muted:#5b6779;
+    --accent:#0b5f8a;
+    --accent-2:#0e7c66;
+    --line:#d7dee8;
+    --bg-soft:#f4f7fa;
+    --warn-bg:#fff7e6;
+    --warn-line:#e0a800;
+    --note-bg:#eef6fb;
+    --note-line:#0b5f8a;
+    --danger:#c62828;
+    --danger-bg:#fdecea;
+    --ok:#1b7a3d;
+    --ok-bg:#e8f5ec;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:#fff;
+    color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size:15px;
+    line-height:1.6;
+  }
+  .page{max-width:980px;margin:0 auto;padding:48px 32px 80px;}
+  .cover{border-top:6px solid var(--accent-2);padding-top:32px;margin-bottom:8px;}
+  .cover .kicker{
+    text-transform:uppercase;letter-spacing:.18em;font-size:12px;
+    font-weight:700;color:var(--accent-2);
+  }
+  .cover h1{font-size:42px;line-height:1.1;margin:12px 0 6px;letter-spacing:-.02em;}
+  .cover h2{font-size:18px;font-weight:500;color:var(--muted);margin:0 0 28px;}
+  .meta{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:12px;background:var(--bg-soft);border:1px solid var(--line);
+    border-radius:8px;padding:18px 20px;margin-bottom:24px;
+  }
+  .meta div{font-size:13.5px;}
+  .meta strong{
+    display:block;color:var(--muted);font-size:11px;
+    text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;
+  }
+  .status-note{
+    border-left:4px solid var(--warn-line);background:var(--warn-bg);
+    padding:14px 18px;border-radius:0 6px 6px 0;font-size:13.5px;margin-bottom:36px;
+  }
+  h2{
+    font-size:24px;margin:52px 0 6px;padding-bottom:8px;
+    border-bottom:2px solid var(--line);letter-spacing:-.01em;
+  }
+  h2 .num{color:var(--accent-2);font-weight:800;margin-right:10px;}
+  h3{font-size:17px;margin:30px 0 8px;color:var(--accent);}
+  h4{font-size:14.5px;margin:20px 0 6px;}
+  p{margin:10px 0;}
+  ul,ol{margin:10px 0 14px;padding-left:24px;}
+  li{margin:4px 0;}
+  table{width:100%;border-collapse:collapse;margin:14px 0 22px;font-size:13.6px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--bg-soft);font-weight:700;font-size:12.2px;text-transform:uppercase;letter-spacing:.04em;}
+  tbody tr:nth-child(even){background:#fafbfd;}
+  .note,.warn{
+    padding:14px 18px;border-radius:0 6px 6px 0;margin:18px 0;font-size:14px;
+  }
+  .note{background:var(--note-bg);border-left:4px solid var(--note-line);}
+  .warn{background:var(--warn-bg);border-left:4px solid var(--warn-line);}
+  .note strong,.warn strong{display:block;margin-bottom:4px;}
+  pre{
+    background:#0f1b2a;color:#d8e4f0;padding:18px 20px;border-radius:8px;
+    overflow-x:auto;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:12.6px;line-height:1.5;margin:14px 0 22px;
+  }
+  code.inline{
+    background:#eef2f7;padding:1px 6px;border-radius:4px;
+    font-family:Consolas,Menlo,monospace;font-size:13px;
+  }
+  .toc{
+    background:var(--bg-soft);border:1px solid var(--line);
+    border-radius:8px;padding:20px 26px;margin-bottom:8px;
+  }
+  .toc h3{margin:0 0 10px;color:var(--ink);font-size:14px;text-transform:uppercase;letter-spacing:.08em;}
+  .toc ol{columns:2;column-gap:36px;margin:0;padding-left:20px;font-size:13.4px;}
+  .toc a{color:var(--accent);text-decoration:none;}
+  .toc a:hover{text-decoration:underline;}
+  .check{list-style:none;padding-left:0;}
+  .check li{padding-left:26px;position:relative;margin:7px 0;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:16px;color:var(--accent-2);}
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);}
+  .pill{
+    display:inline-block;padding:2px 9px;border-radius:999px;
+    font-size:11px;font-weight:700;letter-spacing:.04em;
+    text-transform:uppercase;vertical-align:middle;
+  }
+  .pill.req{background:#e3f0f8;color:#0b5f8a;}
+  .pill.opt{background:#f0f0f0;color:#666;}
+  .pill.rec{background:var(--ok-bg);color:var(--ok);}
+  .pill.alt{background:#fdf0e3;color:#a35a00;}
+  .demo-field{margin:14px 0;}
+  .demo-field label{display:block;font-weight:600;font-size:13px;margin-bottom:4px;}
+  .demo-field input{
+    display:block;width:100%;max-width:340px;padding:9px 12px;
+    border:2px solid var(--danger);border-radius:6px;font-size:14px;background:#fff;
+  }
+  .demo-error{
+    display:block;text-align:center;color:var(--danger);
+    font-size:13px;margin-top:6px;max-width:340px;
+  }
+  .demo-error::before{content:"⚠ ";font-weight:700;}
+  @media print{
+    body{font-size:10.5pt;}
+    .page{max-width:100%;padding:0 6mm;}
+    h2{page-break-after:avoid;margin-top:26px;}
+    h3,h4{page-break-after:avoid;}
+    table,pre{page-break-inside:avoid;}
+    .toc ol{columns:2;}
+    a{color:inherit;text-decoration:none;}
+    pre{background:#f0f3f7;color:#111;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ================= COVER ================= -->
+<header class="cover">
+  <div class="kicker">ShopPulse · Samsung Innovation Internship 2027 · Part II</div>
+  <h1>Backend Flows, Authentication &amp; UI Feedback</h1>
+  <h2>Token lifecycle · refresh rotation · API response contracts · validation · toasts · frontend wiring</h2>
+
+  <div class="meta">
+    <div><strong>Document</strong>Part II — Technical Amendment</div>
+    <div><strong>Companion to</strong>ShopPulse Solution Design (Part I)</div>
+    <div><strong>Extends</strong>§10 Architecture · §14 API · §15 Security · §18 UX</div>
+    <div><strong>Stack</strong>Blazor WASM · ASP.NET Core (.NET 10) · EF Core · PostgreSQL</div>
+    <div><strong>Status</strong>Specification — implementation-ready</div>
+    <div><strong>Currency</strong>ZAR · decimal only</div>
+  </div>
+
+  <div class="status-note">
+    <strong>What this part adds</strong>
+    Part I defined <em>what</em> ShopPulse does. Part II defines <em>how every request actually travels</em> — from a Blazor component, through the HTTP handler chain, across the network, into the API, through validation, into PostgreSQL, and back into a toast or an inline field error. Where Part II and Part I overlap, Part II is more specific and takes precedence.
+  </div>
+</header>
+
+<!-- ================= TOC ================= -->
+<nav class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#s1">Scope &amp; governing decisions</a></li>
+    <li><a href="#s2">End-to-end request lifecycle</a></li>
+    <li><a href="#s3">Same-origin proxy decision</a></li>
+    <li><a href="#s4">Token model &amp; TTLs</a></li>
+    <li><a href="#s5">Refresh rotation &amp; reuse detection</a></li>
+    <li><a href="#s6">Auth endpoint contracts</a></li>
+    <li><a href="#s7">Access token claims</a></li>
+    <li><a href="#s8">Sequence: login, request, refresh, failure</a></li>
+    <li><a href="#s9">Single-flight refresh handler</a></li>
+    <li><a href="#s10">Proactive vs reactive refresh</a></li>
+    <li><a href="#s11">ApiClient &amp; Result&lt;T&gt;</a></li>
+    <li><a href="#s12">Error envelope &amp; status mapping</a></li>
+    <li><a href="#s13">Error code catalogue</a></li>
+    <li><a href="#s14">Server-side validation pipeline</a></li>
+    <li><a href="#s15">Client-side validation &amp; field mapping</a></li>
+    <li><a href="#s16">Feedback rules: toast vs inline vs banner</a></li>
+    <li><a href="#s17">Toast system specification</a></li>
+    <li><a href="#s18">Centered red field errors</a></li>
+    <li><a href="#s19">Loading, disabling, and never lying</a></li>
+    <li><a href="#s20">Idempotency for writes</a></li>
+    <li><a href="#s21">Concurrency &amp; optimistic locking</a></li>
+    <li><a href="#s22">Cold start, offline, degraded network</a></li>
+    <li><a href="#s23">Frontend wiring diagram</a></li>
+    <li><a href="#s24">Program.cs wiring (code)</a></li>
+    <li><a href="#s25">Backend wiring (code)</a></li>
+    <li><a href="#s26">RefreshToken table &amp; indexes</a></li>
+    <li><a href="#s27">Security checklist</a></li>
+    <li><a href="#s28">Test matrix</a></li>
+    <li><a href="#s29">Failure-mode table</a></li>
+    <li><a href="#s30">Acceptance criteria</a></li>
+  </ol>
+</nav>
+
+<!-- ================= 1 ================= -->
+<h2 id="s1"><span class="num">1.</span>Scope &amp; Governing Decisions</h2>
+
+<p>These twelve decisions govern every flow described in this document. Each is chosen for reliability over novelty, because 55% of the Samsung mark is about fit and judgement, not technical spectacle.</p>
+
+<table>
+  <thead><tr><th>#</th><th>Decision</th><th>Rationale</th></tr></thead>
+  <tbody>
+    <tr><td>D1</td><td>Access token is a short-lived JWT held <strong>in memory only</strong></td><td>Never in <code class="inline">localStorage</code>. Removes the largest XSS token-theft surface.</td></tr>
+    <tr><td>D2</td><td>Refresh token is an <strong>opaque random string</strong> in an <code class="inline">HttpOnly</code> cookie</td><td>JavaScript cannot read it, so XSS cannot exfiltrate it.</td></tr>
+    <tr><td>D3</td><td>Frontend and API are served <strong>same-origin</strong> via a Cloudflare Pages Function proxy</td><td>Makes the refresh cookie first-party. Avoids third-party cookie blocking in Chrome, Safari and Firefox.</td></tr>
+    <tr><td>D4</td><td>Refresh tokens <strong>rotate on every use</strong></td><td>Each refresh issues a new token and revokes the old one.</td></tr>
+    <tr><td>D5</td><td>Refresh token <strong>reuse revokes the whole family</strong></td><td>Detects token theft and forces a clean re-login.</td></tr>
+    <tr><td>D6</td><td>Only <strong>SHA-256 hashes</strong> of refresh tokens are stored</td><td>A database leak does not yield usable sessions.</td></tr>
+    <tr><td>D7</td><td><strong>One</strong> refresh may be in flight at a time (single-flight)</td><td>Prevents rotation races that would trip reuse detection on the user's own tab.</td></tr>
+    <tr><td>D8</td><td>Every error is a <strong>ProblemDetails</strong> body with a stable <code class="inline">code</code></td><td>Lets the UI branch on machine-readable codes instead of parsing English.</td></tr>
+    <tr><td>D9</td><td>Server validation is the <strong>source of truth</strong>; client validation is a courtesy</td><td>Instant feedback without ever trusting the client.</td></tr>
+    <tr><td>D10</td><td>Validation errors render <strong>inline, centered, red</strong> — never as a toast</td><td>Toasts vanish; field errors must persist next to the offending input.</td></tr>
+    <tr><td>D11</td><td>All writes that create money or stock movement carry an <strong>idempotency key</strong></td><td>Network retries cannot double-charge or double-deduct.</td></tr>
+    <tr><td>D12</td><td>Success is shown <strong>only after the server commits</strong></td><td>Pessimistic UI for anything financial. No optimistic toasts.</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 2 ================= -->
+<h2 id="s2"><span class="num">2.</span>End-to-End Request Lifecycle</h2>
+
+<p>Every authenticated call follows the same thirteen stages. Understanding this pipeline once means understanding every screen in the application.</p>
+
+<pre> 1. Component calls ApiClient.GetAsync&lt;T&gt;("/api/sales?date=today")
+        |
+ 2. AuthMessageHandler attaches  Authorization: Bearer &lt;accessToken&gt;
+        |
+ 3. (optional) Proactive check: token expires within 60s? refresh first
+        |
+ 4. HttpClient sends HTTPS request to the same-origin proxy
+        |
+ 5. Cloudflare Pages Function forwards to Cloud Run API
+        |
+ 6. JWT middleware validates signature, issuer, audience, lifetime, clock skew
+        |
+ 7. Authorisation policy checks role (Owner / Operator)
+        |
+ 8. Tenant resolution: BusinessId read from token claim, never from the request
+        |
+ 9. FluentValidation runs against the DTO
+        |
+10. Handler executes; EF Core queries are globally filtered by BusinessId
+        |
+11. Success  -> 200/201 with JSON body
+    Failure  -> ProblemDetails with { code, errors, correlationId }
+        |
+12. AuthMessageHandler inspects the response:
+      200-299  -> pass through
+      401      -> attempt ONE refresh, then retry once
+      403      -> pass through (no refresh; the user is authenticated but not allowed)
+        |
+13. ApiClient maps the body into Result&lt;T&gt;  ->  component decides:
+      success  -> toast (or silent) + update state
+      failure  -> inline field errors and/or banner and/or toast, per §16</pre>
+
+<div class="note">
+  <strong>Why 401 triggers a refresh but 403 does not</strong>
+  A 401 means "I don't know who you are" — the token may simply have expired, so refreshing is worth one attempt. A 403 means "I know exactly who you are, and you may not do this" — refreshing would produce an identical 403. Retrying it would only double the load and confuse the user.
+</div>
+
+<!-- ================= 3 ================= -->
+<h2 id="s3"><span class="num">3.</span>Same-Origin Proxy Decision</h2>
+
+<p>This is the single most consequential wiring decision in the document, so it is justified explicitly.</p>
+
+<h3>3.1 The problem</h3>
+<p>Cloudflare Pages (<code class="inline">shoppulse.pages.dev</code>) and Cloud Run (<code class="inline">shoppulse-api-xxxx.run.app</code>) are different sites. A cookie set by the API is therefore a <strong>third-party cookie</strong> when read from the frontend origin. Safari's ITP and Chrome's ongoing third-party cookie restrictions make that unreliable for a graded demonstration.</p>
+
+<h3>3.2 Options compared</h3>
+
+<table>
+  <thead><tr><th>Option</th><th>How it works</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="pill rec">Recommended</span> A — Pages Function proxy</td>
+      <td>A Cloudflare Pages Function at <code class="inline">/api/*</code> forwards to Cloud Run. The browser only ever talks to <code class="inline">shoppulse.pages.dev</code>.</td>
+      <td>First-party cookie. No CORS. No third-party cookie risk. Costs one small JS file.</td>
+    </tr>
+    <tr>
+      <td><span class="pill alt">Fallback</span> B — Direct cross-origin + IndexedDB</td>
+      <td>Blazor calls Cloud Run directly; refresh token stored in IndexedDB, sent in a request body.</td>
+      <td>Works today, but the refresh token becomes JS-readable, defeating D2. Use only if the proxy is blocked.</td>
+    </tr>
+    <tr>
+      <td><span class="pill alt">Rejected</span> C — <code class="inline">SameSite=None</code> cookie</td>
+      <td>API sets a cross-site cookie with <code class="inline">SameSite=None; Secure</code>.</td>
+      <td>Depends on third-party cookie support that browsers are actively removing. Not a safe foundation.</td>
+    </tr>
+    <tr>
+      <td><span class="pill alt">Rejected</span> D — Access token in localStorage</td>
+      <td>Long-lived JWT in browser storage.</td>
+      <td>Trivially exfiltrated by any XSS. Disqualified on security grounds.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>3.3 Proxy implementation</h3>
+<p>A single file at <code class="inline">/functions/api/[[path]].js</code> in the Pages project:</p>
+
+<pre>// functions/api/[[path]].js  — Cloudflare Pages Function
+export async function onRequest(context) {
+  const { request, env, params } = context;
+  const target = env.API_ORIGIN;              // e.g. https://shoppulse-api-xxxx.run.app
+  const path   = (params.path || []).join("/");
+  const url    = new URL(request.url);
+
+  const upstream = new URL(`${target}/api/${path}`);
+  upstream.search = url.search;
+
+  const headers = new Headers(request.headers);
+  headers.set("X-Forwarded-Host", url.host);
+  headers.delete("host");
+
+  const init = {
+    method: request.method,
+    headers,
+    redirect: "manual",
+    body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body,
+  };
+
+  const res = await fetch(upstream.toString(), init);
+
+  // Pass Set-Cookie through untouched so the browser binds it to this origin.
+  const out = new Headers(res.headers);
+  out.delete("content-encoding");   // fetch has already decoded the body
+  out.delete("content-length");
+
+  return new Response(res.body, {
+    status: res.status,
+    headers: out,
+  });
+}</pre>
+
+<div class="warn">
+  <strong>Cookie attributes still matter</strong>
+  Because the proxy makes everything first-party, the API should set the refresh cookie with <code class="inline">Domain</code> <em>omitted</em> (host-only), <code class="inline">Path=/api/auth</code>, <code class="inline">SameSite=Strict</code>, <code class="inline">Secure</code> and <code class="inline">HttpOnly</code>. The cookie is then only transmitted on the two endpoints that need it, which is exactly the intent.
+</div>
+
+<h3>3.4 What the proxy does not solve</h3>
+<ul>
+  <li>It does not replace authentication — the API still validates every JWT.</li>
+  <li>It does not weaken authorisation — role checks remain server-side.</li>
+  <li>It does not remove the need for HTTPS — Cloudflare and Cloud Run both enforce it.</li>
+</ul>
+
+<!-- ================= 4 ================= -->
+<h2 id="s4"><span class="num">4.</span>Token Model &amp; TTLs</h2>
+
+<p>Two tokens with deliberately different lifetimes and storage. The pairing is what makes short expiry usable: the user is not asked to sign in every fifteen minutes, but a stolen access token is worthless within the hour.</p>
+
+<table>
+  <thead><tr><th>Token</th><th>Type</th><th>TTL</th><th>Storage</th><th>Revocable</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Access token</strong></td>
+      <td>JWT (HS256)</td>
+      <td><strong>15 minutes</strong></td>
+      <td>Blazor in-memory field only</td>
+      <td>No (short life)</td>
+      <td>Authorises API calls via <code class="inline">Authorization: Bearer</code></td>
+    </tr>
+    <tr>
+      <td><strong>Refresh token</strong></td>
+      <td>Opaque, 256-bit random, base64url</td>
+      <td><strong>7 days idle</strong><br>30 days absolute</td>
+      <td><code class="inline">HttpOnly</code> cookie <code class="inline">sp_rt</code></td>
+      <td>Yes (family revocation)</td>
+      <td>Obtains a new access token without re-entering credentials</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4.1 Supporting TTLs</h3>
+<table>
+  <thead><tr><th>Item</th><th>Value</th><th>Where enforced</th></tr></thead>
+  <tbody>
+    <tr><td>JWT clock skew allowance</td><td>60 seconds</td><td><code class="inline">TokenValidationParameters.ClockSkew</code></td></tr>
+    <tr><td>Proactive refresh window</td><td>Refresh when &lt; 60 s remain</td><td>Client <code class="inline">AuthMessageHandler</code></td></tr>
+    <tr><td>Login lockout</td><td>5 failures → 15-minute lock</td><td>Server rate limiter</td></tr>
+    <tr><td>Idempotency key retention</td><td>24 hours</td><td>Database</td></tr>
+    <tr><td>Revoked refresh token retention</td><td>30 days (for reuse detection)</td><td>Database</td></tr>
+    <tr><td>Toast success / info duration</td><td>4 seconds</td><td>Client</td></tr>
+    <tr><td>Toast warning duration</td><td>6 seconds</td><td>Client</td></tr>
+    <tr><td>Toast error duration</td><td>8 seconds, manually dismissible</td><td>Client</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>Why 15 minutes and not 60</strong>
+  A longer access token means a stolen token stays valid for longer. Fifteen minutes with silent refresh is invisible to the user and materially reduces the blast radius. The 60-second skew window absorbs normal clock drift between Cloud Run instances and the browser.
+</div>
+
+<h3>4.2 Why the idle and absolute limits differ</h3>
+<ul>
+  <li><strong>Idle limit (7 days)</strong> — a user who does not open the app for a week must sign in again. This closes abandoned sessions on shared devices.</li>
+  <li><strong>Absolute limit (30 days)</strong> — even a continuously active session cannot live forever. Rotation cannot extend it past the original family's start date.</li>
+</ul>
+
+<!-- ================= 5 ================= -->
+<h2 id="s5"><span class="num">5.</span>Refresh Rotation &amp; Reuse Detection</h2>
+
+<p>Rotation is the mechanism that turns a static secret into a self-defending one. Each refresh consumes the presented token and issues a replacement. A token is therefore single-use.</p>
+
+<h3>5.1 The mechanism</h3>
+<ol>
+  <li>Client presents refresh token <em>R1</em>.</li>
+  <li>Server validates <em>R1</em>: exists, not revoked, not expired.</li>
+  <li>Server issues <em>R2</em> in the same family and marks <em>R1</em> as revoked with <code class="inline">ReplacedByTokenId = R2</code>.</li>
+  <li>Server returns a new access token and the new <em>R2</em> cookie.</li>
+  <li>If <em>R1</em> is ever presented again, the server knows it was already used — a signal that it was captured.</li>
+</ol>
+
+<h3>5.2 Family model</h3>
+<pre>Login ──► R1 ──rotate──► R2 ──rotate──► R3 ──rotate──► R4
+          │              │              │              │
+          └──────────────┴──────────────┴──────────────┘
+                    all share FamilyId = F
+
+Reuse of R1 detected
+        │
+        ▼
+Revoke every token in family F
+        │
+        ▼
+All future refreshes with any R in F return 401 AUTH_REFRESH_REUSED
+        │
+        ▼
+User is redirected to /login</pre>
+
+<h3>5.3 Reuse-detection decision table</h3>
+<table>
+  <thead><tr><th>Presented token state</th><th>Server response</th><th>Action taken</th></tr></thead>
+  <tbody>
+    <tr><td>Unknown hash</td><td>401 <code class="inline">AUTH_REFRESH_INVALID</code></td><td>Clear cookie. Nothing to revoke.</td></tr>
+    <tr><td>Valid, not revoked, not expired</td><td>200 + new access token</td><td>Rotate. Revoke old, issue new.</td></tr>
+    <tr><td>Already revoked (reuse)</td><td>401 <code class="inline">AUTH_REFRESH_REUSED</code></td><td><strong>Revoke entire family.</strong> Clear cookie.</td></tr>
+    <tr><td>Valid but past absolute limit</td><td>401 <code class="inline">AUTH_REFRESH_EXPIRED</code></td><td>Clear cookie.</td></tr>
+    <tr><td>Valid but user deactivated</td><td>401 <code class="inline">AUTH_ACCOUNT_DISABLED</code></td><td>Revoke family. Clear cookie.</td></tr>
+  </tbody>
+</table>
+
+<h3>5.4 Entity</h3>
+<pre>public sealed class RefreshToken
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public Guid FamilyId { get; set; }
+
+    // SHA-256 base64url of the raw token. The raw value is never stored.
+    public string TokenHash { get; set; } = default!;
+
+    public DateTimeOffset CreatedAtUtc { get; set; }
+    public DateTimeOffset ExpiresAtUtc { get; set; }
+    public DateTimeOffset? RevokedAtUtc { get; set; }
+    public string? RevokedReason { get; set; }        // ROTATED | REUSE_DETECTED | LOGOUT | ADMIN
+    public Guid? ReplacedByTokenId { get; set; }
+
+    public string? CreatedByIp { get; set; }
+    public string? UserAgent { get; set; }
+}</pre>
+
+<h3>5.5 Rotation service</h3>
+<pre>public sealed class RefreshTokenService
+{
+    private readonly AppDbContext _db;
+    private readonly RefreshTokenOptions _opt;
+
+    public (string Raw, RefreshToken Entity) Rotate(RefreshToken current)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var raw = GenerateRaw();                    // 32 random bytes, base64url
+
+        var next = new RefreshToken
+        {
+            Id           = Guid.NewGuid(),
+            UserId       = current.UserId,
+            FamilyId     = current.FamilyId,
+            TokenHash    = Hash(raw),
+            CreatedAtUtc = now,
+            // Idle window restarts, but never beyond the family's absolute cap.
+            ExpiresAtUtc = Min(now.AddDays(_opt.IdleDays), current.FamilyAbsoluteExpiry),
+        };
+
+        current.RevokedAtUtc      = now;
+        current.RevokedReason     = "ROTATED";
+        current.ReplacedByTokenId = next.Id;
+
+        return (raw, next);
+    }
+
+    public async Task RevokeFamilyAsync(Guid familyId, string reason, CancellationToken ct)
+    {
+        await _db.RefreshTokens
+            .Where(t =&gt; t.FamilyId == familyId &amp;&amp; t.RevokedAtUtc == null)
+            .ExecuteUpdateAsync(s =&gt; s
+                .SetProperty(t =&gt; t.RevokedAtUtc, DateTimeOffset.UtcNow)
+                .SetProperty(t =&gt; t.RevokedReason, reason), ct);
+    }
+
+    private static string GenerateRaw()
+        =&gt; Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
+
+    public static string Hash(string raw)
+        =&gt; Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(raw)));
+}</pre>
+
+<div class="warn">
+  <strong>The one legitimate source of reuse</strong>
+  A race where two browser tabs refresh simultaneously could present the same token twice and falsely trigger family revocation. The single-flight handler in §9 exists specifically to prevent this on the client. On the server, an optional 5-second grace window on a just-rotated token is a reasonable mitigation — but it weakens the detector, so it should be a deliberate, documented trade-off, not a default.
+</div>
+
+<!-- ================= 6 ================= -->
+<h2 id="s6"><span class="num">6.</span>Auth Endpoint Contracts</h2>
+
+<h3>6.1 POST /api/auth/login</h3>
+<p><strong>Auth:</strong> anonymous · <strong>Rate limit:</strong> 5 per minute per IP + email</p>
+<pre>// Request
+{ "email": "owner@shoppulse.test", "password": "SyntheticPass!23" }
+
+// 200 OK  +  Set-Cookie: sp_rt=...; HttpOnly; Secure; SameSite=Strict; Path=/api/auth; Max-Age=604800
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "expiresAtUtc": "2026-11-09T15:47:00Z",
+  "user": {
+    "id": "6c1f...",
+    "displayName": "Owner One",
+    "email": "owner@shoppulse.test",
+    "role": "Owner",
+    "businessId": "b3a2...",
+    "businessName": "Synthetic Pilot Shop"
+  }
+}
+
+// 401 Unauthorized
+{
+  "type": "https://httpstatuses.io/401",
+  "title": "Sign-in failed",
+  "status": 401,
+  "detail": "Email or password is incorrect.",
+  "code": "AUTH_INVALID_CREDENTIALS",
+  "correlationId": "0HN7G2K9Q1A4B"
+}</pre>
+
+<h3>6.2 POST /api/auth/refresh</h3>
+<p><strong>Auth:</strong> anonymous · <strong>Body:</strong> none · <strong>Cookie:</strong> <code class="inline">sp_rt</code> required</p>
+<pre>// 200 OK  +  Set-Cookie: sp_rt=&lt;new&gt;  (rotated)
+{ "accessToken": "eyJhbGciOiJIUzI1NiIs...", "expiresAtUtc": "2026-11-09T15:52:00Z" }
+
+// 401 Unauthorized  +  Set-Cookie: sp_rt=; Max-Age=0
+{ "status": 401, "code": "AUTH_REFRESH_REUSED",
+  "detail": "Session ended for security reasons. Please sign in again." }</pre>
+
+<h3>6.3 POST /api/auth/logout</h3>
+<p><strong>Auth:</strong> bearer or refresh cookie · <strong>Effect:</strong> revokes the family, clears the cookie</p>
+<pre>// 204 No Content  +  Set-Cookie: sp_rt=; Max-Age=0; Path=/api/auth</pre>
+
+<h3>6.4 POST /api/auth/logout-all</h3>
+<p>Revokes every family belonging to the user. Offered in Settings. Responds 204.</p>
+
+<h3>6.5 GET /api/auth/me</h3>
+<p>Returns the current user and role. Used on app start to hydrate UI state after a silent refresh.</p>
+
+<h3>6.6 Endpoint summary</h3>
+<table>
+  <thead><tr><th>Endpoint</th><th>Method</th><th>Auth</th><th>Sets cookie</th><th>Rate limited</th></tr></thead>
+  <tbody>
+    <tr><td>/api/auth/login</td><td>POST</td><td>None</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>/api/auth/refresh</td><td>POST</td><td>Cookie</td><td>Yes (rotated)</td><td>Yes (30/min)</td></tr>
+    <tr><td>/api/auth/logout</td><td>POST</td><td>Bearer / cookie</td><td>Clears</td><td>No</td></tr>
+    <tr><td>/api/auth/logout-all</td><td>POST</td><td>Bearer</td><td>Clears</td><td>No</td></tr>
+    <tr><td>/api/auth/me</td><td>GET</td><td>Bearer</td><td>No</td><td>No</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 7 ================= -->
+<h2 id="s7"><span class="num">7.</span>Access Token Claims</h2>
+
+<p>The token is small on purpose. It carries identity and authorisation context, never business data.</p>
+
+<table>
+  <thead><tr><th>Claim</th><th>Example</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code class="inline">sub</code></td><td>6c1f9a2e-…</td><td>UserId</td></tr>
+    <tr><td><code class="inline">email</code></td><td>owner@shoppulse.test</td><td>Display and audit</td></tr>
+    <tr><td><code class="inline">name</code></td><td>Owner One</td><td>UI greeting</td></tr>
+    <tr><td><code class="inline">role</code></td><td>Owner | Operator</td><td>Authorisation policy</td></tr>
+    <tr><td><code class="inline">business_id</code></td><td>b3a2c7d1-…</td><td><strong>Tenant resolution</strong></td></tr>
+    <tr><td><code class="inline">business_name</code></td><td>Synthetic Pilot Shop</td><td>UI header</td></tr>
+    <tr><td><code class="inline">jti</code></td><td>UUID</td><td>Token identifier, log correlation</td></tr>
+    <tr><td><code class="inline">iat</code> / <code class="inline">nbf</code> / <code class="inline">exp</code></td><td>Unix seconds</td><td>Standard lifetime</td></tr>
+    <tr><td><code class="inline">iss</code> / <code class="inline">aud</code></td><td>shoppulse-api / shoppulse-app</td><td>Rejects tokens minted for other services</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>Never trust the client for the tenant</strong>
+  <code class="inline">business_id</code> is read from the validated token on the server and injected as <code class="inline">ICurrentBusiness</code>. The API never accepts a <code class="inline">businessId</code> from a request body, query string or header. This is what makes cross-tenant access structurally impossible rather than merely discouraged.
+</div>
+
+<h3>7.1 What is deliberately absent</h3>
+<ul>
+  <li>Permissions are not enumerated in the token; the role maps to a server-side policy table so permissions can change without waiting for token expiry.</li>
+  <li>No prices, stock levels or business figures — those would go stale in a 15-minute window.</li>
+  <li>No refresh token reference — the two tokens are independent.</li>
+</ul>
+
+<!-- ================= 8 ================= -->
+<h2 id="s8"><span class="num">8.</span>Sequence: Login, Request, Refresh, Failure</h2>
+
+<h3>8.1 Login</h3>
+<pre>Browser (Blazor WASM)      Pages Function         ASP.NET API            PostgreSQL
+       |                        |                      |                      |
+       | POST /api/auth/login   |                      |                      |
+       | {email, password}      |                      |                      |
+       |-----------------------&gt;|  forward             |                      |
+       |                        |---------------------&gt;|  FindByEmail         |
+       |                        |                      |---------------------&gt;|
+       |                        |                      |&lt;--------------------|
+       |                        |                      |  CheckPasswordHash   |
+       |                        |                      |  Issue JWT (15 min)  |
+       |                        |                      |  Create R1 + family  |
+       |                        |                      |---------------------&gt;|
+       |                        |                      |&lt;--------------------|
+       |                        |&lt;-- 200 + Set-Cookie -|                      |
+       |&lt;-- 200 + Set-Cookie ---|                      |                      |
+       |                        |                      |                      |
+  store accessToken in memory, discard everything else</pre>
+
+<h3>8.2 Authorised request (happy path)</h3>
+<pre>       | GET /api/sales?date=today                     |                      |
+       | Authorization: Bearer &lt;accessToken&gt;           |                      |
+       |-----------------------&gt;|---------------------&gt;|  validate JWT        |
+       |                        |                      |  read business_id    |
+       |                        |                      |  filter by tenant    |
+       |                        |                      |---------------------&gt;|
+       |                        |                      |&lt;--------------------|
+       |&lt;-- 200 { data: [...] }-|&lt;--------------------|                      |</pre>
+
+<h3>8.3 Access token expired — one refresh, one retry</h3>
+<pre>       | GET /api/sales                                 |                      |
+       | Authorization: Bearer &lt;expired&gt;                |                      |
+       |-----------------------&gt;|---------------------&gt;|  exp &lt; now           |
+       |&lt;-- 401 AUTH_TOKEN_EXPIRED ---------------------|                      |
+       |                        |                      |                      |
+       |  (single-flight gate acquired)                |                      |
+       | POST /api/auth/refresh |                      |                      |
+       | Cookie: sp_rt=R1       |                      |                      |
+       |-----------------------&gt;|---------------------&gt;|  hash R1, lookup     |
+       |                        |                      |  revoke R1, issue R2 |
+       |                        |                      |---------------------&gt;|
+       |&lt;-- 200 {accessToken} + Set-Cookie sp_rt=R2 ----|                      |
+       |                        |                      |                      |
+       |  retry original request with new token        |                      |
+       | GET /api/sales                                 |                      |
+       |-----------------------&gt;|---------------------&gt;|                      |
+       |&lt;-- 200 { data } -------------------------------|                      |</pre>
+
+<h3>8.4 Refresh fails — clean redirect</h3>
+<pre>       | POST /api/auth/refresh                        |                      |
+       | Cookie: sp_rt=R1 (already rotated)            |                      |
+       |-----------------------&gt;|---------------------&gt;|  R1 revoked          |
+       |                        |                      |  REUSE -> revoke     |
+       |                        |                      |  entire family       |
+       |&lt;-- 401 AUTH_REFRESH_REUSED + clear cookie ----|                      |
+       |                        |                      |                      |
+  TokenStore.Clear()
+  ToastService.Warning("Your session ended. Please sign in again.")
+  NavigationManager.NavigateTo("/login?reason=session-expired")</pre>
+
+<h3>8.5 Three concurrent 401s — single-flight</h3>
+<pre>Request A ──401──┐
+Request B ──401──┤──► SemaphoreSlim(1)
+Request C ──401──┘         │
+                           │  A wins the gate and calls /api/auth/refresh
+                           │  B and C await the same Task&lt;string?&gt;
+                           │
+                           ▼
+                 one refresh call in total
+                           │
+                           ▼
+                 A, B and C retry with the new token
+                 (no family revocation, because only one rotation happened)</pre>
+
+<!-- ================= 9 ================= -->
+<h2 id="s9"><span class="num">9.</span>Single-Flight Refresh Handler</h2>
+
+<p>This handler is the heart of the frontend wiring. It attaches the token, refreshes proactively when the clock says so, and coordinates a single refresh across every in-flight request.</p>
+
+<h3>9.1 Token store</h3>
+<pre>public sealed record AccessTokenSnapshot(string Value, DateTimeOffset ExpiresAtUtc);
+
+public interface ITokenStore
+{
+    AccessTokenSnapshot? Current { get; }
+    void Set(AccessTokenSnapshot snapshot);
+    void Clear();
+    bool IsExpiringWithin(TimeSpan window);
+}
+
+public sealed class InMemoryTokenStore : ITokenStore
+{
+    private AccessTokenSnapshot? _current;
+
+    public AccessTokenSnapshot? Current =&gt; _current;
+
+    public void Set(AccessTokenSnapshot snapshot) =&gt; _current = snapshot;
+
+    public void Clear() =&gt; _current = null;
+
+    public bool IsExpiringWithin(TimeSpan window)
+        =&gt; _current is null || _current.ExpiresAtUtc - DateTimeOffset.UtcNow &lt;= window;
+}</pre>
+
+<h3>9.2 The handler</h3>
+<pre>public sealed class AuthMessageHandler : DelegatingHandler
+{
+    private static readonly SemaphoreSlim Gate = new(1, 1);
+
+    private readonly ITokenStore _tokens;
+    private readonly IHttpClientFactory _factory;
+    private readonly NavigationManager _nav;
+    private readonly IToastService _toasts;
+    private readonly ILogger&lt;AuthMessageHandler&gt; _log;
+
+    private static readonly TimeSpan RefreshWindow = TimeSpan.FromSeconds(60);
+
+    protected override async Task&lt;HttpResponseMessage&gt; SendAsync(
+        HttpRequestMessage request, CancellationToken ct)
+    {
+        // ---- 1. Proactive refresh if the token is about to expire -------------
+        if (_tokens.IsExpiringWithin(RefreshWindow))
+            await RefreshOnceAsync(ct);
+
+        // ---- 2. Attach the bearer token ---------------------------------------
+        AttachToken(request);
+
+        // ---- 3. Buffer the body so the request can be replayed ----------------
+        //      Only buffered when the content is repeatable-safe.
+        var buffered = await BufferIfNeededAsync(request, ct);
+
+        // ---- 4. First attempt --------------------------------------------------
+        var response = await base.SendAsync(request, ct);
+
+        if (response.StatusCode != HttpStatusCode.Unauthorized)
+            return response;
+
+        // ---- 5. Reactive refresh + one retry ----------------------------------
+        _log.LogInformation("401 received; attempting refresh before retry.");
+
+        var refreshed = await RefreshOnceAsync(ct);
+        if (!refreshed)
+        {
+            _tokens.Clear();
+            _toasts.Warning("Your session ended. Please sign in again.");
+            _nav.NavigateTo("/login?reason=session-expired");
+            return response;
+        }
+
+        using var retry = await CloneAsync(request, buffered, ct);
+        AttachToken(retry);
+
+        return await base.SendAsync(retry, ct);
+    }
+
+    // -------------------------------------------------------------------------
+
+    private void AttachToken(HttpRequestMessage request)
+    {
+        var token = _tokens.Current;
+        if (token is null) return;
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
+    }
+
+    private async Task&lt;bool&gt; RefreshOnceAsync(CancellationToken ct)
+    {
+        await Gate.WaitAsync(ct);
+        try
+        {
+            // Another request may have refreshed while we waited.
+            if (!_tokens.IsExpiringWithin(RefreshWindow))
+                return true;
+
+            var client = _factory.CreateClient("auth");   // handler-free client
+            using var res = await client.PostAsync("api/auth/refresh", content: null, ct);
+
+            if (!res.IsSuccessStatusCode)
+                return false;
+
+            var body = await res.Content.ReadFromJsonAsync&lt;RefreshResponse&gt;(cancellationToken: ct);
+            if (body is null) return false;
+
+            _tokens.Set(new AccessTokenSnapshot(body.AccessToken, body.ExpiresAtUtc));
+            return true;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            _log.LogWarning(ex, "Refresh call failed.");
+            return false;
+        }
+        finally
+        {
+            Gate.Release();
+        }
+    }
+
+    private static async Task&lt;byte[]?&gt; BufferIfNeededAsync(
+        HttpRequestMessage request, CancellationToken ct)
+    {
+        if (request.Content is null) return null;
+        return await request.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    private static async Task&lt;HttpRequestMessage&gt; CloneAsync(
+        HttpRequestMessage original, byte[]? body, CancellationToken ct)
+    {
+        var clone = new HttpRequestMessage(original.Method, original.RequestUri);
+
+        foreach (var header in original.Headers)
+            clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+
+        if (body is not null)
+        {
+            clone.Content = new ByteArrayContent(body);
+            foreach (var header in original.Content!.Headers)
+                clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
+
+        await Task.CompletedTask;
+        return clone;
+    }
+}</pre>
+
+<div class="note">
+  <strong>Why the body must be buffered</strong>
+  An <code class="inline">HttpRequestMessage</code> cannot be sent twice — its content stream is already consumed. Retrying a POST therefore requires re-creating the request with a fresh content object. The buffered byte array makes that possible and keeps idempotency keys intact across the retry.
+</div>
+
+<div class="warn">
+  <strong>Never refresh on 403</strong>
+  The handler only reacts to <code class="inline">401</code>. A <code class="inline">403</code> is a definitive authorisation decision and refreshing would produce the same result — burning a rotation for nothing and risking a false reuse detection.
+</div>
+
+<!-- ================= 10 ================= -->
+<h2 id="s10"><span class="num">10.</span>Proactive vs Reactive Refresh</h2>
+
+<table>
+  <thead><tr><th>Strategy</th><th>When it runs</th><th>Cost</th><th>Benefit</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Proactive</strong></td>
+      <td>Before sending, if <code class="inline">exp - now &lt; 60 s</code></td>
+      <td>One extra round trip, off the critical path of the user's action</td>
+      <td>The user never sees a 401, never sees a retry delay, and the request succeeds first time</td>
+    </tr>
+    <tr>
+      <td><strong>Reactive</strong></td>
+      <td>After receiving a 401</td>
+      <td>The user's request pays for a wasted round trip</td>
+      <td>Handles server-side revocation, clock drift, and tab-wake-from-sleep that proactive checks cannot predict</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Both are used. Proactive refresh handles the ordinary case cheaply; reactive refresh is the safety net. A request that arrives in a fresh tab after a laptop sleeps will have an obviously expired token, which the proactive check catches immediately. A token revoked by an administrator will only surface as a 401, which the reactive path handles.</p>
+
+<h3>10.1 Startup flow</h3>
+<p>Because the access token lives only in memory, a page reload starts with no token. The app performs one silent refresh on boot:</p>
+
+<pre>App.razor OnInitializedAsync
+   |
+   +-- POST /api/auth/refresh   (cookie sent automatically)
+   |
+   +-- 200 -> TokenStore.Set(...)
+   |          GET /api/auth/me
+   |          populate AuthStateProvider
+   |          render the authenticated shell
+   |
+   +-- 401 -> render the anonymous shell
+              route to /login if the requested page requires auth</pre>
+
+<div class="note">
+  <strong>Why a page refresh is not a logout</strong>
+  The user experience is "I refreshed the page and I am still signed in." The security posture is "the access token never touched persistent storage." The refresh cookie bridges the two. This is the whole reason the token pair exists.
+</div>
+
+<!-- ================= 11 ================= -->
+<h2 id="s11"><span class="num">11.</span>ApiClient &amp; Result&lt;T&gt;</h2>
+
+<p>Components must never see a raw <code class="inline">HttpResponseMessage</code>. They receive a discriminated result and decide how to present it. This keeps HTTP concerns out of the UI and makes every failure path explicit.</p>
+
+<h3>11.1 Types</h3>
+<pre>public sealed record ApiError(
+    string Code,
+    string Message,
+    int StatusCode,
+    IReadOnlyDictionary&lt;string, string[]&gt;? FieldErrors,
+    string? CorrelationId)
+{
+    public static ApiError Network() =&gt;
+        new("NETWORK_UNREACHABLE", "Cannot reach the server. Check your connection.",
+            0, null, null);
+
+    public static ApiError Offline() =&gt;
+        new("CLIENT_OFFLINE", "You appear to be offline.",
+            0, null, null);
+}
+
+public sealed class Result&lt;T&gt;
+{
+    public bool IsSuccess { get; init; }
+    public T? Value { get; init; }
+    public ApiError? Error { get; init; }
+
+    public static Result&lt;T&gt; Ok(T value) =&gt; new() { IsSuccess = true, Value = value };
+    public static Result&lt;T&gt; Fail(ApiError error) =&gt; new() { IsSuccess = false, Error = error };
+}</pre>
+
+<h3>11.2 Client</h3>
+<pre>public sealed class ApiClient
+{
+    private readonly HttpClient _http;
+
+    public ApiClient(HttpClient http) =&gt; _http = http;
+
+    public Task&lt;Result&lt;T&gt;&gt; GetAsync&lt;T&gt;(string url, CancellationToken ct = default)
+        =&gt; SendAsync&lt;T&gt;(new HttpRequestMessage(HttpMethod.Get, url), ct);
+
+    public Task&lt;Result&lt;T&gt;&gt; PostAsync&lt;T&gt;(string url, object body, string? idempotencyKey = null,
+        CancellationToken ct = default)
+    {
+        var req = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = JsonContent.Create(body),
+        };
+        req.Headers.Add("Idempotency-Key", idempotencyKey ?? Guid.NewGuid().ToString("N"));
+        return SendAsync&lt;T&gt;(req, ct);
+    }
+
+    public Task&lt;Result&lt;Unit&gt;&gt; DeleteAsync(string url, CancellationToken ct = default)
+        =&gt; SendAsync&lt;Unit&gt;(new HttpRequestMessage(HttpMethod.Delete, url), ct);
+
+    // ---------------------------------------------------------------------
+
+    private async Task&lt;Result&lt;T&gt;&gt; SendAsync&lt;T&gt;(HttpRequestMessage req, CancellationToken ct)
+    {
+        try
+        {
+            using var res = await _http.SendAsync(req, ct);
+
+            if (res.IsSuccessStatusCode)
+            {
+                if (res.StatusCode == HttpStatusCode.NoContent || typeof(T) == typeof(Unit))
+                    return Result&lt;T&gt;.Ok(default!);
+
+                var data = await res.Content.ReadFromJsonAsync&lt;T&gt;(cancellationToken: ct);
+                return Result&lt;T&gt;.Ok(data!);
+            }
+
+            return Result&lt;T&gt;.Fail(await ReadProblemAsync(res, ct));
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return Result&lt;T&gt;.Fail(ApiError.Network());   // timeout
+        }
+        catch (HttpRequestException)
+        {
+            return Result&lt;T&gt;.Fail(ApiError.Network());
+        }
+    }
+
+    private static async Task&lt;ApiError&gt; ReadProblemAsync(
+        HttpResponseMessage res, CancellationToken ct)
+    {
+        try
+        {
+            var problem = await res.Content.ReadFromJsonAsync&lt;ProblemDetailsPayload&gt;(cancellationToken: ct);
+            if (problem is not null)
+                return new ApiError(
+                    problem.Code ?? "UNKNOWN",
+                    problem.Detail ?? problem.Title ?? "Something went wrong.",
+                    (int)res.StatusCode,
+                    problem.Errors,
+                    problem.CorrelationId);
+        }
+        catch (JsonException) { /* fall through */ }
+
+        return new ApiError(
+            "UNKNOWN",
+            "Something went wrong. Please try again.",
+            (int)res.StatusCode,
+            null,
+            null);
+    }
+}</pre>
+
+<h3>11.3 Usage in a component</h3>
+<pre>var result = await Api.GetAsync&lt;PagedResult&lt;ProductDto&gt;&gt;($"/api/products?search={Uri.EscapeDataString(term)}");
+
+if (result.IsSuccess)
+{
+    _products = result.Value!.Items;
+}
+else
+{
+    _loadError = result.Error!;      // rendered as a centered red banner
+}</pre>
+
+<!-- ================= 12 ================= -->
+<h2 id="s12"><span class="num">12.</span>Error Envelope &amp; Status Mapping</h2>
+
+<p>The API returns RFC 7807 <code class="inline">ProblemDetails</code> extended with two fields: a stable <code class="inline">code</code> and a <code class="inline">correlationId</code>. The HTTP status carries the category; the <code class="inline">code</code> carries the specific cause the UI may branch on.</p>
+
+<h3>12.1 Envelope</h3>
+<pre>{
+  "type": "https://httpstatuses.io/409",
+  "title": "Stock conflict",
+  "status": 409,
+  "detail": "Only 3 units of Bread (SKU BRD-001) remain.",
+  "code": "STOCK_INSUFFICIENT",
+  "correlationId": "0HN7G2K9Q1A4B",
+  "errors": null
+}</pre>
+
+<p>Validation failures additionally populate <code class="inline">errors</code> keyed by the C# property name:</p>
+
+<pre>{
+  "type": "https://httpstatuses.io/400",
+  "title": "Validation failed",
+  "status": 400,
+  "detail": "Please correct the highlighted fields.",
+  "code": "VALIDATION_FAILED",
+  "correlationId": "0HN7G2K9Q1A4B",
+  "errors": {
+    "UnitPrice":   ["Price must be greater than zero."],
+    "ExpiryDate":  ["Expiry date cannot be in the past."]
+  }
+}</pre>
+
+<h3>12.2 Status → UI mapping</h3>
+<table>
+  <thead><tr><th>Status</th><th>Meaning</th><th>UI treatment</th></tr></thead>
+  <tbody>
+    <tr><td>200 / 201 / 204</td><td>Success</td><td>Update state; success toast <em>only</em> if the action was a deliberate write</td></tr>
+    <tr><td>400</td><td>Validation failed</td><td>Inline centered red errors under each field; no toast</td></tr>
+    <tr><td>401</td><td>Not authenticated</td><td>Handler refreshes once; on failure redirect to login</td></tr>
+    <tr><td>403</td><td>Not authorised</td><td>Inline banner on the page: "You do not have permission for this."</td></tr>
+    <tr><td>404</td><td>Not found</td><td>Inline empty-state or banner; never a toast</td></tr>
+    <tr><td>409</td><td>Conflict</td><td>Inline banner near the action (e.g. insufficient stock) + error toast</td></tr>
+    <tr><td>422</td><td>Business rule violation</td><td>Inline banner with the specific rule</td></tr>
+    <tr><td>429</td><td>Rate limited</td><td>Warning toast with retry-after guidance; disable the button</td></tr>
+    <tr><td>500</td><td>Server error</td><td>Error toast with the correlation ID; page stays usable</td></tr>
+    <tr><td>503</td><td>Unavailable / cold start</td><td>"Waking up the server…" info banner; auto-retry once</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 13 ================= -->
+<h2 id="s13"><span class="num">13.</span>Error Code Catalogue</h2>
+
+<p>Stable strings the UI may switch on. Adding a code is a backward-compatible change; changing one is not.</p>
+
+<table>
+  <thead><tr><th>Code</th><th>Status</th><th>When it occurs</th><th>User-facing message</th></tr></thead>
+  <tbody>
+    <tr><td><code class="inline">AUTH_INVALID_CREDENTIALS</code></td><td>401</td><td>Bad email or password</td><td>Email or password is incorrect.</td></tr>
+    <tr><td><code class="inline">AUTH_ACCOUNT_LOCKED</code></td><td>401</td><td>Lockout window active</td><td>Too many attempts. Try again in 15 minutes.</td></tr>
+    <tr><td><code class="inline">AUTH_ACCOUNT_DISABLED</code></td><td>403</td><td>Deactivated user</td><td>This account has been disabled.</td></tr>
+    <tr><td><code class="inline">AUTH_TOKEN_EXPIRED</code></td><td>401</td><td>JWT lifetime elapsed</td><td>Handled silently by the refresh handler.</td></tr>
+    <tr><td><code class="inline">AUTH_REFRESH_MISSING</code></td><td>401</td><td>No <code class="inline">sp_rt</code> cookie</td><td>Please sign in.</td></tr>
+    <tr><td><code class="inline">AUTH_REFRESH_INVALID</code></td><td>401</td><td>Unknown token hash</td><td>Session expired. Please sign in again.</td></tr>
+    <tr><td><code class="inline">AUTH_REFRESH_EXPIRED</code></td><td>401</td><td>Past idle or absolute limit</td><td>Session expired. Please sign in again.</td></tr>
+    <tr><td><code class="inline">AUTH_REFRESH_REUSED</code></td><td>401</td><td>Rotated token replayed</td><td>Session ended for security reasons.</td></tr>
+    <tr><td><code class="inline">AUTH_FORBIDDEN</code></td><td>403</td><td>Role lacks the permission</td><td>You do not have permission for this action.</td></tr>
+    <tr><td><code class="inline">VALIDATION_FAILED</code></td><td>400</td><td>FluentValidation failed</td><td>Please correct the highlighted fields.</td></tr>
+    <tr><td><code class="inline">NOT_FOUND</code></td><td>404</td><td>Entity absent or belongs to another tenant</td><td>That record could not be found.</td></tr>
+    <tr><td><code class="inline">DUPLICATE_SKU</code></td><td>409</td><td>SKU already exists in this business</td><td>That SKU is already in use.</td></tr>
+    <tr><td><code class="inline">STOCK_INSUFFICIENT</code></td><td>409</td><td>Sale exceeds available units</td><td>Only N units remain for {product}.</td></tr>
+    <tr><td><code class="inline">CONCURRENCY_CONFLICT</code></td><td>409</td><td>Row version mismatch</td><td>Someone else changed this. Refresh and try again.</td></tr>
+    <tr><td><code class="inline">SHIFT_ALREADY_OPEN</code></td><td>409</td><td>Operator has an active shift</td><td>Close the current shift before opening a new one.</td></tr>
+    <tr><td><code class="inline">IDEMPOTENCY_KEY_REUSED</code></td><td>409</td><td>Same key, different body</td><td>This request was already submitted differently.</td></tr>
+    <tr><td><code class="inline">RATE_LIMITED</code></td><td>429</td><td>Limiter tripped</td><td>Too many requests. Please wait a moment.</td></tr>
+    <tr><td><code class="inline">SERVER_ERROR</code></td><td>500</td><td>Unhandled exception</td><td>Something went wrong. Reference: {correlationId}</td></tr>
+    <tr><td><code class="inline">SERVICE_UNAVAILABLE</code></td><td>503</td><td>Cold start / deploy</td><td>Waking up the server. One moment…</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 14 ================= -->
+<h2 id="s14"><span class="num">14.</span>Server-Side Validation Pipeline</h2>
+
+<p>Validation runs in a fixed order. Later stages assume earlier stages passed, which keeps each rule simple.</p>
+
+<pre>Request arrives
+   |
+   +-- 1. Model binding ..................... malformed JSON -> 400
+   |
+   +-- 2. DataAnnotations (automatic) ....... [Required] [MaxLength] -> 400
+   |
+   +-- 3. FluentValidation .................. business-shape rules -> 400
+   |        RegisterValidator&lt;ReceiveStockRequest&gt;()
+   |        AutoValidateAsync&lt;ReceiveStockRequest&gt;()  (FluentValidation auto-validation)
+   |
+   +-- 4. Authorisation policy .............. role check -> 403
+   |
+   +-- 5. Tenant resolution ................. business_id from token
+   |
+   +-- 6. Domain rule enforcement ........... insufficient stock -> 409
+   |                                          duplicate SKU -> 409
+   |                                          shift already open -> 409
+   |
+   +-- 7. Persistence ....................... DbUpdateConcurrencyException -> 409
+   |
+   +-- 8. Audit write (same transaction)
+   |
+   +-- COMMIT</pre>
+
+<h3>14.1 Validator example</h3>
+<pre>public sealed class ReceiveStockValidator : AbstractValidator&lt;ReceiveStockRequest&gt;
+{
+    public ReceiveStockValidator()
+    {
+        RuleFor(x =&gt; x.ProductId)
+            .NotEmpty().WithMessage("Select a product.");
+
+        RuleFor(x =&gt; x.Quantity)
+            .GreaterThan(0).WithMessage("Quantity must be greater than zero.")
+            .LessThanOrEqualTo(10_000).WithMessage("Quantity looks too large.");
+
+        RuleFor(x =&gt; x.UnitCost)
+            .GreaterThan(0).WithMessage("Unit cost must be greater than zero.")
+            .LessThanOrEqualTo(100_000).WithMessage("Unit cost looks too large.");
+
+        RuleFor(x =&gt; x.ExpiryDate)
+            .GreaterThan(DateOnly.FromDateTime(DateTime.UtcNow))
+            .When(x =&gt; x.ExpiryDate.HasValue)
+            .WithMessage("Expiry date cannot be in the past.");
+
+        RuleFor(x =&gt; x.BatchReference)
+            .MaximumLength(50).WithMessage("Batch reference is too long.");
+    }
+}</pre>
+
+<h3>14.2 Wrapping into ProblemDetails</h3>
+<pre>builder.Services.Configure&lt;ApiBehaviorOptions&gt;(options =&gt;
+{
+    options.InvalidModelStateResponseFactory = context =&gt;
+    {
+        var problem = new ValidationProblemDetails(context.ModelState)
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title  = "Validation failed",
+            Detail = "Please correct the highlighted fields.",
+            Type   = "https://httpstatuses.io/400",
+        };
+
+        problem.Extensions["code"] = "VALIDATION_FAILED";
+        problem.Extensions["correlationId"] = context.HttpContext.TraceIdentifier;
+
+        return new BadRequestObjectResult(problem);
+    };
+});</pre>
+
+<div class="note">
+  <strong>Field keys must match the DTO</strong>
+  The <code class="inline">errors</code> dictionary is keyed by the C# property name (e.g. <code class="inline">UnitPrice</code>). The frontend maps these onto Blazor's <code class="inline">FieldIdentifier</code> via a case-insensitive lookup, so a server error appears under exactly the same input as a client error. See §15.
+</div>
+
+<!-- ================= 15 ================= -->
+<h2 id="s15"><span class="num">15.</span>Client-Side Validation &amp; Field Mapping</h2>
+
+<p>Two layers, one appearance. The user should not be able to tell whether a message came from the browser or the server.</p>
+
+<h3>15.1 Layer responsibilities</h3>
+<table>
+  <thead><tr><th>Layer</th><th>Technology</th><th>Runs</th><th>Rules</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Client</td>
+      <td>DataAnnotations on the DTO + <code class="inline">EditForm</code> + <code class="inline">DataAnnotationsValidator</code></td>
+      <td>On field blur and on submit, before any network call</td>
+      <td>Shape rules: required, length, range, format</td>
+    </tr>
+    <tr>
+      <td>Server</td>
+      <td>FluentValidation</td>
+      <td>On arrival, before any domain logic</td>
+      <td>Shape rules <em>plus</em> business rules the client cannot know</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>The client is never trusted</strong>
+  Client validation exists purely to avoid a pointless round trip. Every rule is enforced again on the server. A request crafted in Postman with a negative price must fail with <code class="inline">VALIDATION_FAILED</code>.
+</div>
+
+<h3>15.2 Mapping server errors onto Blazor fields</h3>
+<pre>public static class ValidationMapper
+{
+    public static void ApplyTo(
+        EditContext editContext,
+        IReadOnlyDictionary&lt;string, string[]&gt; fieldErrors)
+    {
+        var messageStore = new ValidationMessageStore(editContext);
+
+        foreach (var (fieldName, messages) in fieldErrors)
+        {
+            var identifier = editContext
+                .FieldIdentifiers()
+                .FirstOrDefault(f =&gt;
+                    string.Equals(f.FieldName, fieldName, StringComparison.OrdinalIgnoreCase));
+
+            if (identifier == default)
+            {
+                // Unmapped error -> surface as a form-level banner
+                messageStore.Add(new FieldIdentifier(editContext.Model, string.Empty),
+                    messages.First());
+                continue;
+            }
+
+            foreach (var message in messages)
+                messageStore.Add(identifier, message);
+        }
+
+        editContext.NotifyValidationStateChanged();
+    }
+}</pre>
+
+<h3>15.3 Using it in a form</h3>
+<pre>@code {
+    private readonly StockReceiptModel _model = new();
+    private EditContext _edit;
+    private bool _busy;
+
+    protected override void OnInitialized()
+        =&gt; _edit = new EditContext(_model);
+
+    private async Task SubmitAsync()
+    {
+        if (!_edit.Validate())
+            return;
+
+        _busy = true;
+        try
+        {
+            var result = await Api.PostAsync&lt;StockReceiptDto&gt;("/api/stock/receipts", _model);
+
+            if (result.IsSuccess)
+            {
+                Toasts.Success("Stock received.");
+                _model.Reset();
+                _edit = new EditContext(_model);
+            }
+            else if (result.Error!.Code == "VALIDATION_FAILED")
+            {
+                ValidationMapper.ApplyTo(_edit, result.Error.FieldErrors!);
+                // No toast. Errors are already next to the fields.
+            }
+            else
+            {
+                Toasts.Error(result.Error.Message);
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}</pre>
+
+<!-- ================= 16 ================= -->
+<h2 id="s16"><span class="num">16.</span>Feedback Rules: Toast vs Inline vs Banner</h2>
+
+<p>Three surfaces, three jobs. Using the wrong one is the most common cause of "the app feels noisy" or "I didn't see the error."</p>
+
+<table>
+  <thead><tr><th>Surface</th><th>Persists?</th><th>Use for</th><th>Never use for</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Inline field error</strong><br><span class="pill req">Centered red</span></td>
+      <td>Until corrected</td>
+      <td>Validation failures tied to a specific input</td>
+      <td>Network errors, permission errors, system failures</td>
+    </tr>
+    <tr>
+      <td><strong>Page banner</strong></td>
+      <td>Until dismissed or the condition clears</td>
+      <td>403, 404, 409 business conflicts, offline, cold start</td>
+      <td>Field-level validation</td>
+    </tr>
+    <tr>
+      <td><strong>Toast</strong></td>
+      <td>4–8 seconds</td>
+      <td>Outcome confirmations (saved, received, closed), transient system errors</td>
+      <td>Validation errors, anything the user must act on before continuing</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>16.1 The decision table</h3>
+<table>
+  <thead><tr><th>Situation</th><th>Surface</th><th>Example text</th></tr></thead>
+  <tbody>
+    <tr><td>Required field empty</td><td>Inline, centered red</td><td>Quantity is required.</td></tr>
+    <tr><td>Price is negative</td><td>Inline, centered red</td><td>Price must be greater than zero.</td></tr>
+    <tr><td>Expiry date in the past</td><td>Inline, centered red</td><td>Expiry date cannot be in the past.</td></tr>
+    <tr><td>Sale saved</td><td>Success toast</td><td>Sale completed · R 48,00</td></tr>
+    <tr><td>Stock received</td><td>Success toast</td><td>24 units of Bread received.</td></tr>
+    <tr><td>Shift closed with variance</td><td>Warning toast</td><td>Shift closed with a variance of R 12,50.</td></tr>
+    <tr><td>Insufficient stock mid-sale</td><td>Banner near the cart + error toast</td><td>Only 3 units of Bread remain.</td></tr>
+    <tr><td>Operator tries an owner action</td><td>Banner</td><td>You do not have permission for this action.</td></tr>
+    <tr><td>Server unreachable</td><td>Banner (persistent)</td><td>Cannot reach the server. Retrying…</td></tr>
+    <tr><td>Cold start</td><td>Info banner, auto-dismiss</td><td>Waking up the server. One moment…</td></tr>
+    <tr><td>Unhandled server error</td><td>Error toast with reference</td><td>Something went wrong. Reference: 0HN7G2K9.</td></tr>
+    <tr><td>Session expired</td><td>Warning toast + redirect</td><td>Your session ended. Please sign in again.</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>The one rule that matters most</strong>
+  A validation error is never a toast. Toasts disappear after a few seconds; a validation error must still be visible when the user looks back at the form. Sending validation errors to a toast is the fastest way to make an application feel broken.
+</div>
+
+<!-- ================= 17 ================= -->
+<h2 id="s17"><span class="num">17.</span>Toast System Specification</h2>
+
+<h3>17.1 Behaviour</h3>
+<ul>
+  <li>Rendered in a fixed host at the top-right on desktop, bottom-center on mobile.</li>
+  <li>Maximum of 4 visible; the oldest is evicted when a fifth arrives.</li>
+  <li>Identical messages within a 2-second window are deduplicated.</li>
+  <li>Success and info auto-dismiss; errors auto-dismiss but remain manually closable.</li>
+  <li>Hovering pauses the dismiss timer.</li>
+  <li>Announced via <code class="inline">aria-live="polite"</code>; errors use <code class="inline">role="alert"</code>.</li>
+  <li>Never stacks on top of a modal's own feedback.</li>
+</ul>
+
+<h3>17.2 Service</h3>
+<pre>public enum ToastKind { Success, Info, Warning, Error }
+
+public sealed record Toast(Guid Id, ToastKind Kind, string Message, string? Detail, int DurationMs);
+
+public interface IToastService
+{
+    event Action? Changed;
+    IReadOnlyList&lt;Toast&gt; Visible { get; }
+
+    void Success(string message, string? detail = null);
+    void Info(string message, string? detail = null);
+    void Warning(string message, string? detail = null);
+    void Error(string message, string? detail = null);
+    void Dismiss(Guid id);
+}
+
+public sealed class ToastService : IToastService
+{
+    private readonly List&lt;Toast&gt; _items = new();
+    private readonly Dictionary&lt;string, DateTimeOffset&gt; _recent = new();
+
+    public event Action? Changed;
+    public IReadOnlyList&lt;Toast&gt; Visible =&gt; _items;
+
+    public void Success(string message, string? detail = null)
+        =&gt; Push(ToastKind.Success, message, detail, 4_000);
+
+    public void Info(string message, string? detail = null)
+        =&gt; Push(ToastKind.Info, message, detail, 4_000);
+
+    public void Warning(string message, string? detail = null)
+        =&gt; Push(ToastKind.Warning, message, detail, 6_000);
+
+    public void Error(string message, string? detail = null)
+        =&gt; Push(ToastKind.Error, message, detail, 8_000);
+
+    private void Push(ToastKind kind, string message, string? detail, int durationMs)
+    {
+        var key = $"{kind}|{message}";
+        var now = DateTimeOffset.UtcNow;
+
+        if (_recent.TryGetValue(key, out var last) &amp;&amp; now - last &lt; TimeSpan.FromSeconds(2))
+            return;                                   // deduplicate
+
+        _recent[key] = now;
+
+        if (_items.Count &gt;= 4)
+            _items.RemoveAt(0);
+
+        _items.Add(new Toast(Guid.NewGuid(), kind, message, detail, durationMs));
+        Changed?.Invoke();
+    }
+
+    public void Dismiss(Guid id)
+    {
+        _items.RemoveAll(t =&gt; t.Id == id);
+        Changed?.Invoke();
+    }
+}</pre>
+
+<h3>17.3 Styling</h3>
+<pre>.toast-host{
+  position:fixed; top:16px; right:16px; z-index:9999;
+  display:flex; flex-direction:column; gap:10px;
+  max-width:380px; pointer-events:none;
+}
+.toast{
+  pointer-events:auto;
+  border-radius:8px; padding:12px 16px;
+  font-size:14px; line-height:1.4;
+  box-shadow:0 6px 20px rgba(16,24,40,.12);
+  border-left:4px solid transparent;
+  animation:toast-in .18s ease-out;
+}
+.toast--success{ background:#e8f5ec; border-color:#1b7a3d; color:#124d28; }
+.toast--info   { background:#eef6fb; border-color:#0b5f8a; color:#083f5c; }
+.toast--warning{ background:#fff7e6; border-color:#e0a800; color:#6b4e00; }
+.toast--error  { background:#fdecea; border-color:#c62828; color:#7a1010; }
+
+.toast__detail{
+  display:block; margin-top:4px;
+  font-size:12px; opacity:.75;
+  font-family:Consolas,Menlo,monospace;
+}
+
+@keyframes toast-in{
+  from{ opacity:0; transform:translateY(-6px); }
+  to  { opacity:1; transform:translateY(0); }
+}
+
+@media (max-width:640px){
+  .toast-host{
+    top:auto; bottom:16px; left:12px; right:12px;
+    max-width:none;
+  }
+}</pre>
+
+<h3>17.4 Markup</h3>
+<pre>&lt;div class="toast-host" aria-live="polite"&gt;
+  @foreach (var toast in Toasts.Visible)
+  {
+    &lt;div class="toast toast--@toast.Kind.ToString().ToLowerInvariant()"
+         role="@(toast.Kind == ToastKind.Error ? "alert" : "status")"&gt;
+      &lt;strong&gt;@toast.Message&lt;/strong&gt;
+      @if (!string.IsNullOrWhiteSpace(toast.Detail))
+      {
+        &lt;span class="toast__detail"&gt;@toast.Detail&lt;/span&gt;
+      }
+      &lt;button class="toast__close" aria-label="Dismiss" @onclick="() =&gt; Toasts.Dismiss(toast.Id)"&gt;×&lt;/button&gt;
+    &lt;/div&gt;
+  }
+&lt;/div&gt;</pre>
+
+<!-- ================= 18 ================= -->
+<h2 id="s18"><span class="num">18.</span>Centered Red Field Errors</h2>
+
+<p>Validation messages sit directly beneath their input, horizontally centered, in the danger red defined in the palette. This is the single most visible part of the "UI-friendly validation" requirement.</p>
+
+<h3>18.1 Live preview</h3>
+
+<div class="demo-field">
+  <label for="demo-unit-cost">Unit cost (ZAR)</label>
+  <input id="demo-unit-cost" type="text" value="-5,00" aria-invalid="true" aria-describedby="demo-unit-cost-error">
+  <span class="demo-error" id="demo-unit-cost-error" role="alert">Unit cost must be greater than zero.</span>
+</div>
+
+<div class="demo-field">
+  <label for="demo-expiry">Expiry date</label>
+  <input id="demo-expiry" type="text" value="01/01/2024" aria-invalid="true" aria-describedby="demo-expiry-error">
+  <span class="demo-error" id="demo-expiry-error" role="alert">Expiry date cannot be in the past.</span>
+</div>
+
+<h3>18.2 CSS</h3>
+<pre>.field-group{
+  display:flex;
+  flex-direction:column;
+  margin-bottom:18px;
+}
+
+.field-group input,
+.field-group select,
+.field-group textarea{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid #cfd8e3;
+  border-radius:6px;
+  font-size:15px;
+  transition:border-color .15s, box-shadow .15s;
+}
+
+.field-group input:focus{
+  outline:none;
+  border-color:#0b5f8a;
+  box-shadow:0 0 0 3px rgba(11,95,138,.15);
+}
+
+/* Invalid state */
+.field-group input.invalid,
+.field-group select.invalid,
+.field-group textarea.invalid{
+  border:2px solid #c62828;
+  background:#fffafa;
+}
+
+/* The centered red message */
+.field-error{
+  display:block;
+  text-align:center;
+  color:#c62828;
+  font-size:13px;
+  line-height:1.35;
+  margin-top:6px;
+  min-height:18px;          /* reserves space so layout does not jump */
+}
+
+.field-error::before{
+  content:"⚠ ";
+  font-weight:700;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .field-group input{ transition:none; }
+}</pre>
+
+<h3>18.3 Component</h3>
+<pre>@* FieldError.razor *@
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+    &lt;div class="field-error" role="alert" aria-live="polite"&gt;
+        @Message
+    &lt;/div&gt;
+}
+
+@code {
+    [Parameter] public string? Message { get; set; }
+}</pre>
+
+<h3>18.4 Usage inside an EditForm</h3>
+<pre>&lt;div class="field-group"&gt;
+    &lt;label for="qty"&gt;Quantity&lt;/label&gt;
+    &lt;InputNumber id="qty"
+                 class="@(HasError(nameof(Model.Quantity)) ? "invalid" : null)"
+                 @bind-Value="Model.Quantity"
+                 aria-invalid="@HasError(nameof(Model.Quantity))"
+                 aria-describedby="qty-error" /&gt;
+    &lt;FieldError id="qty-error" Message="@FirstError(nameof(Model.Quantity))" /&gt;
+&lt;/div&gt;
+
+@code {
+    private bool HasError(string field)
+        =&gt; _edit.GetValidationMessages(new FieldIdentifier(_model, field)).Any();
+
+    private string? FirstError(string field)
+        =&gt; _edit.GetValidationMessages(new FieldIdentifier(_model, field)).FirstOrDefault();
+}</pre>
+
+<h3>18.5 Accessibility notes</h3>
+<ul>
+  <li><code class="inline">aria-invalid="true"</code> on the input when it has an error.</li>
+  <li><code class="inline">aria-describedby</code> pointing at the error element's id.</li>
+  <li><code class="inline">role="alert"</code> and <code class="inline">aria-live="polite"</code> so screen readers announce the message when it appears.</li>
+  <li>Colour is never the only signal — the border thickens and a ⚠ glyph prefixes the text.</li>
+  <li>The error container reserves <code class="inline">min-height</code> so the form does not jump when a message appears.</li>
+</ul>
+
+<h3>18.6 Form-level banner</h3>
+<p>For errors that belong to the form rather than a field (e.g. <code class="inline">CONCURRENCY_CONFLICT</code>), a banner appears above the fields, also centered:</p>
+
+<pre>.form-banner{
+  text-align:center;
+  padding:12px 16px;
+  border-radius:8px;
+  font-size:14px;
+  margin-bottom:16px;
+}
+.form-banner--error  { background:#fdecea; color:#7a1010; border:1px solid #f3b9b5; }
+.form-banner--warning{ background:#fff7e6; color:#6b4e00; border:1px solid #f0d18a; }
+.form-banner--info   { background:#eef6fb; color:#083f5c; border:1px solid #b8d8ea; }</pre>
+
+<!-- ================= 19 ================= -->
+<h2 id="s19"><span class="num">19.</span>Loading, Disabling, and Never Lying</h2>
+
+<p>The UI must always reflect the true state of the system. Four rules.</p>
+
+<table>
+  <thead><tr><th>Rule</th><th>Implementation</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Disable during submit</strong></td>
+      <td>The submit button sets <code class="inline">disabled="@_busy"</code> and swaps its label for a spinner. Prevents double submission at the source.</td>
+    </tr>
+    <tr>
+      <td><strong>Show a spinner, not a success</strong></td>
+      <td>No green tick until the <code class="inline">Result&lt;T&gt;</code> returns <code class="inline">IsSuccess</code>. For sales this is non-negotiable.</td>
+    </tr>
+    <tr>
+      <td><strong>Reserve layout</strong></td>
+      <td>Skeleton rows while lists load, so the page does not jump when data arrives.</td>
+    </tr>
+    <tr>
+      <td><strong>Idempotency key persists across retries</strong></td>
+      <td>Generated once per user intent, reused by the retry handler.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>19.1 Submit button pattern</h3>
+<pre>&lt;button class="btn btn--primary"
+        type="submit"
+        disabled="@_busy"
+        aria-busy="@_busy.ToString().ToLowerInvariant()"&gt;
+    @if (_busy)
+    {
+        &lt;span class="spinner" aria-hidden="true"&gt;&lt;/span&gt;
+        &lt;span&gt;Saving…&lt;/span&gt;
+    }
+    else
+    {
+        &lt;span&gt;Confirm sale&lt;/span&gt;
+    }
+&lt;/button&gt;
+
+.spinner{
+  display:inline-block;
+  width:14px; height:14px;
+  border:2px solid currentColor;
+  border-right-color:transparent;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  vertical-align:-2px;
+  margin-right:8px;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }</pre>
+
+<h3>19.2 The sale screen specifically</h3>
+<ol>
+  <li>Operator taps <em>Confirm sale</em>.</li>
+  <li>Button disables, shows "Saving…".</li>
+  <li>Request goes out with the idempotency key generated when the cart was finalised.</li>
+  <li>On success: success toast with the total, cart clears, stock figures update.</li>
+  <li>On <code class="inline">STOCK_INSUFFICIENT</code>: banner near the cart listing the affected lines; cart stays intact so the operator can adjust.</li>
+  <li>On network failure: error toast "Could not reach the server. Your sale has not been recorded." Retry uses the same key, so a duplicate cannot occur.</li>
+</ol>
+
+<div class="warn">
+  <strong>The failure message must say what did <em>not</em> happen</strong>
+  "Your sale has not been recorded" is better than "Something went wrong." In a shop, the operator must know whether to re-ring the sale. Ambiguity here is how stock and cash drift apart.
+</div>
+
+<!-- ================= 20 ================= -->
+<h2 id="s20"><span class="num">20.</span>Idempotency for Writes</h2>
+
+<p>Every endpoint that creates money or stock movement accepts an <code class="inline">Idempotency-Key</code> header. The key is generated by the client once per user intent and reused on every retry.</p>
+
+<h3>20.1 Endpoints requiring a key</h3>
+<ul>
+  <li><code class="inline">POST /api/sales</code></li>
+  <li><code class="inline">POST /api/sales/{id}/refunds</code></li>
+  <li><code class="inline">POST /api/stock/receipts</code></li>
+  <li><code class="inline">POST /api/stock/adjustments</code></li>
+  <li><code class="inline">POST /api/shifts/close</code></li>
+</ul>
+
+<h3>20.2 Server behaviour</h3>
+<table>
+  <thead><tr><th>Key state</th><th>Response</th></tr></thead>
+  <tbody>
+    <tr><td>Never seen</td><td>Process normally; store the key, request hash and response</td></tr>
+    <tr><td>Seen, same request hash</td><td><strong>200</strong> with the stored response body + <code class="inline">Idempotency-Replayed: true</code></td></tr>
+    <tr><td>Seen, different request hash</td><td><strong>409</strong> <code class="inline">IDEMPOTENCY_KEY_REUSED</code></td></tr>
+    <tr><td>Seen but still in flight</td><td><strong>409</strong> <code class="inline">CONCURRENCY_CONFLICT</code> — client retries shortly</td></tr>
+  </tbody>
+</table>
+
+<h3>20.3 Storage</h3>
+<pre>public sealed class IdempotencyRecord
+{
+    public Guid Id { get; set; }
+    public Guid BusinessId { get; set; }
+    public string Key { get; set; } = default!;
+    public string RequestHash { get; set; } = default!;   // SHA-256 of canonical body
+    public int StatusCode { get; set; }
+    public string ResponseJson { get; set; } = default!;
+    public DateTimeOffset CreatedAtUtc { get; set; }
+    public DateTimeOffset ExpiresAtUtc { get; set; }      // CreatedAt + 24h
+}</pre>
+
+<p>Unique index on <code class="inline">(BusinessId, Key)</code>. A background job purges expired records nightly.</p>
+
+<!-- ================= 21 ================= -->
+<h2 id="s21"><span class="num">21.</span>Concurrency &amp; Optimistic Locking</h2>
+
+<p>The scenario that matters: two operators sell the last loaf of bread at the same moment.</p>
+
+<h3>21.1 Mechanism</h3>
+<p>Every row that holds mutable quantity carries a concurrency token. EF Core includes it in the <code class="inline">WHERE</code> clause of the <code class="inline">UPDATE</code>. If zero rows are affected, the write is rejected.</p>
+
+<pre>public sealed class StockBatch
+{
+    public Guid Id { get; set; }
+    public Guid ProductId { get; set; }
+    public int RemainingQuantity { get; set; }
+
+    [Timestamp]                                  // rowversion / xmin in PostgreSQL
+    public uint Version { get; set; }
+}</pre>
+
+<h3>21.2 Handling the conflict</h3>
+<pre>try
+{
+    await _db.SaveChangesAsync(ct);
+}
+catch (DbUpdateConcurrencyException)
+{
+    return Problem(
+        statusCode: 409,
+        title: "Stock changed",
+        detail: "Someone else sold this item first. Please refresh and try again.",
+        extensions: new() { ["code"] = "CONCURRENCY_CONFLICT" });
+}</pre>
+
+<h3>21.3 UI behaviour on conflict</h3>
+<ol>
+  <li>Banner appears above the cart: "Stock changed while you were serving. Refresh to see current quantities."</li>
+  <li>The affected line is highlighted in red.</li>
+  <li>A <em>Refresh</em> button reloads the cart lines from the server.</li>
+  <li>The operator adjusts and resubmits with a <strong>new</strong> idempotency key, because the intent has changed.</li>
+</ol>
+
+<div class="note">
+  <strong>PostgreSQL detail</strong>
+  PostgreSQL has no native <code class="inline">rowversion</code>. EF Core maps <code class="inline">[Timestamp]</code> onto the system column <code class="inline">xmin</code> when configured with <code class="inline">UseXminAsConcurrencyToken()</code>, or onto an explicit integer column incremented by a trigger. Either approach yields the same optimistic-lock behaviour.
+</div>
+
+<!-- ================= 22 ================= -->
+<h2 id="s22"><span class="num">22.</span>Cold Start, Offline, Degraded Network</h2>
+
+<p>Three conditions the demo will genuinely encounter, each with a defined response.</p>
+
+<table>
+  <thead><tr><th>Condition</th><th>Detection</th><th>UI response</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Cloud Run cold start</strong></td>
+      <td>First request after idle takes &gt; 3 s</td>
+      <td>Info banner: "Waking up the server. One moment…" Auto-dismisses on success. Request is not cancelled.</td>
+    </tr>
+    <tr>
+      <td><strong>Browser offline</strong></td>
+      <td><code class="inline">navigator.onLine === false</code> or <code class="inline">HttpRequestException</code></td>
+      <td>Persistent banner: "You are offline. Changes cannot be saved." Write buttons disabled.</td>
+    </tr>
+    <tr>
+      <td><strong>Connection dropped mid-write</strong></td>
+      <td>Timeout or <code class="inline">HttpRequestException</code> on a POST</td>
+      <td>Error toast: "Could not reach the server. Your sale has not been recorded." Retry reuses the idempotency key.</td>
+    </tr>
+    <tr>
+      <td><strong>API deployed / restarting</strong></td>
+      <td>503 <code class="inline">SERVICE_UNAVAILABLE</code></td>
+      <td>Info banner + single automatic retry after 2 s. Second failure becomes an error toast.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>22.1 Network status component</h3>
+<pre>@implements IDisposable
+@inject IJSRuntime JS
+
+@if (!_online)
+{
+    &lt;div class="form-banner form-banner--warning" role="status"&gt;
+        You are offline. Changes cannot be saved.
+    &lt;/div&gt;
+}
+
+@code {
+    private bool _online = true;
+    private DotNetObjectReference&lt;NetworkStatus&gt;? _ref;
+    private IJSObjectReference? _module;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ref = DotNetObjectReference.Create(this);
+        _module = await JS.InvokeAsync&lt;IJSObjectReference&gt;("import", "/js/network.js");
+        await _module.InvokeVoidAsync("register", _ref);
+    }
+
+    [JSInvokable]
+    public void SetOnline(bool online)
+    {
+        _online = online;
+        StateHasChanged();
+    }
+
+    public void Dispose() =&gt; _ref?.Dispose();
+}</pre>
+
+<h3>22.2 Sale safety under uncertainty</h3>
+<p>If a sale request times out, the operator must not be told it failed without qualification. The correct sequence is:</p>
+<ol>
+  <li>Show: "We could not confirm whether your sale was recorded."</li>
+  <li>Offer <em>Check status</em>, which re-sends with the <strong>same</strong> idempotency key.</li>
+  <li>The server replays the original response if the sale did commit, or processes it fresh if it did not.</li>
+  <li>Only then does the UI show the definitive outcome.</li>
+</ol>
+<p>This is the reason idempotency exists. Without it, the only safe message is "unknown," which is useless in a shop.</p>
+
+<!-- ================= 23 ================= -->
+<h2 id="s23"><span class="num">23.</span>Frontend Wiring Diagram</h2>
+
+<pre>┌────────────────────────────── Browser tab ───────────────────────────────┐
+│                                                                          │
+│  Blazor WebAssembly                                                      │
+│                                                                          │
+│  ┌──────────────────┐        ┌────────────────────────────────────────┐  │
+│  │ Pages / Components│       │ Feedback surfaces                      │  │
+│  │ Login            │        │ ToastHost                              │  │
+│  │ Dashboard        │◄───────┤ FieldError (centered red)              │  │
+│  │ Sell / Rush Mode │        │ FormBanner                             │  │
+│  │ Stock / Reports  │        │ NetworkStatus                          │  │
+│  └────────┬─────────┘        └────────────────────────────────────────┘  │
+│           │                                                              │
+│           │ calls                                                        │
+│           ▼                                                              │
+│  ┌─────────────────────┐        ┌──────────────────────────────────────┐ │
+│  │ ApiClient           │        │ AuthStateProvider                    │ │
+│  │ returns Result&lt;T&gt;   │        │ (claims + role for UI gating)        │ │
+│  └──────────┬──────────┘        └──────────────────▲───────────────────┘ │
+│             │                                      │                     │
+│             │ HttpClient("api")                    │ reads token          │
+│             ▼                                      │                     │
+│  ┌─────────────────────────────────────────────────┴──────────────────┐  │
+│  │ AuthMessageHandler                                                 │  │
+│  │  • proactive refresh if &lt; 60 s remain                              │  │
+│  │  • attach Authorization: Bearer                                    │  │
+│  │  • buffer body for replay                                          │  │
+│  │  • on 401: single-flight refresh, then one retry                   │  │
+│  │  • on refresh failure: clear store, toast, redirect to /login      │  │
+│  └──────────────────────────────┬─────────────────────────────────────┘  │
+│                                 │                                        │
+│  ┌──────────────────────────────▼─────────────────────────────────────┐  │
+│  │ ITokenStore (in-memory only — no localStorage, no sessionStorage)  │  │
+│  │   accessToken · expiresAtUtc                                       │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+│                                                                          │
+│  Cookie jar: sp_rt (HttpOnly · Secure · SameSite=Strict · Path=/api/auth)│
+│              not readable by JavaScript                                  │
+└──────────────────────────────────┬───────────────────────────────────────┘
+                                   │ HTTPS (same origin)
+                                   ▼
+                   Cloudflare Pages Function  /api/*  reverse proxy
+                                   │
+                                   ▼
+                   ASP.NET Core API  (Google Cloud Run · .NET 10)
+                     JWT validation · role policies · tenant resolution
+                     FluentValidation · ProblemDetails · idempotency
+                                   │
+                                   ▼
+                            Neon PostgreSQL</pre>
+
+<!-- ================= 24 ================= -->
+<h2 id="s24"><span class="num">24.</span>Program.cs Wiring (Code)</h2>
+
+<pre>var builder = WebApplication.CreateBuilder(args);
+
+// ---------- Configuration ------------------------------------------------
+var apiBase = builder.Configuration["ApiBaseUrl"]
+    ?? throw new InvalidOperationException("ApiBaseUrl is not configured.");
+
+// ---------- Core services ------------------------------------------------
+builder.Services.AddScoped&lt;ITokenStore, InMemoryTokenStore&gt;();
+builder.Services.AddScoped&lt;IToastService, ToastService&gt;();
+builder.Services.AddScoped&lt;AuthStateProvider&gt;();
+builder.Services.AddScoped&lt;AuthenticationStateProvider&gt;(
+    sp =&gt; sp.GetRequiredService&lt;AuthStateProvider&gt;());
+
+// ---------- HTTP clients -------------------------------------------------
+// "auth" has NO AuthMessageHandler, so a refresh can never recurse into itself.
+builder.Services.AddHttpClient("auth", c =&gt;
+{
+    c.BaseAddress = new Uri(apiBase);
+    c.Timeout = TimeSpan.FromSeconds(20);
+});
+
+// "api" is the authenticated client used by ApiClient.
+builder.Services.AddTransient&lt;AuthMessageHandler&gt;();
+builder.Services.AddHttpClient("api", c =&gt;
+{
+    c.BaseAddress = new Uri(apiBase);
+    c.Timeout = TimeSpan.FromSeconds(30);
+})
+.AddHttpMessageHandler&lt;AuthMessageHandler&gt;();
+
+builder.Services.AddScoped&lt;ApiClient&gt;(sp =&gt;
+    new ApiClient(sp.GetRequiredService&lt;IHttpClientFactory&gt;().CreateClient("api")));
+
+// ---------- Blazor -------------------------------------------------------
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddBlazorBootstrap();     // optional UI library
+
+var app = builder.Build();
+
+await app.RunAsync();</pre>
+
+<div class="note">
+  <strong>Why two named clients</strong>
+  If <code class="inline">AuthMessageHandler</code> used the same client it decorates, a failed refresh would trigger another refresh, which would trigger another — an infinite loop. The <code class="inline">"auth"</code> client bypasses the handler entirely. This is a small detail with large consequences.
+</div>
+
+<h3>24.1 Startup silent refresh</h3>
+<pre>protected override async Task OnInitializedAsync()
+{
+    var authClient = HttpFactory.CreateClient("auth");
+    var res = await authClient.PostAsync("api/auth/refresh", content: null);
+
+    if (res.IsSuccessStatusCode)
+    {
+        var body = await res.Content.ReadFromJsonAsync&lt;RefreshResponse&gt;();
+        Tokens.Set(new AccessTokenSnapshot(body!.AccessToken, body.ExpiresAtUtc));
+
+        var me = await Api.GetAsync&lt;MeDto&gt;("api/auth/me");
+        if (me.IsSuccess)
+            AuthState.NotifyAuthenticated(me.Value!);
+    }
+}</pre>
+
+<!-- ================= 25 ================= -->
+<h2 id="s25"><span class="num">25.</span>Backend Wiring (Code)</h2>
+
+<h3>25.1 JWT authentication</h3>
+<pre>var jwt = builder.Configuration.GetSection("Jwt").Get&lt;JwtOptions&gt;()!;
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =&gt;
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidIssuer              = jwt.Issuer,
+            ValidateAudience         = true,
+            ValidAudience            = jwt.Audience,
+            ValidateLifetime         = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey         = new SymmetricSecurityKey(
+                                          Encoding.UTF8.GetBytes(jwt.SigningKey)),
+            ClockSkew                = TimeSpan.FromSeconds(jwt.ClockSkewSeconds),
+            NameClaimType            = "name",
+            RoleClaimType            = "role",
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async ctx =&gt;
+            {
+                ctx.HandleResponse();
+                ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                ctx.Response.ContentType = "application/problem+json";
+
+                var expired = ctx.AuthenticateFailure is SecurityTokenExpiredException;
+
+                await ctx.Response.WriteAsJsonAsync(new
+                {
+                    type          = "https://httpstatuses.io/401",
+                    title         = "Not authenticated",
+                    status        = 401,
+                    detail        = "Your session has expired.",
+                    code          = expired ? "AUTH_TOKEN_EXPIRED" : "AUTH_FORBIDDEN",
+                    correlationId = ctx.HttpContext.TraceIdentifier,
+                });
+            },
+        };
+    });</pre>
+
+<h3>25.2 Authorisation policies</h3>
+<pre>builder.Services.AddAuthorization(options =&gt;
+{
+    options.AddPolicy("OwnerOnly", p =&gt; p.RequireRole("Owner"));
+    options.AddPolicy("Staff",     p =&gt; p.RequireRole("Owner", "Operator"));
+    options.AddPolicy("CanAdjustStock", p =&gt;
+        p.RequireAssertion(ctx =&gt;
+            ctx.User.IsInRole("Owner") ||
+            ctx.User.HasClaim("can_adjust_stock", "true")));
+});
+
+// Usage
+[Authorize(Policy = "Staff")]
+[HttpPost("/api/sales")]
+public async Task&lt;IActionResult&gt; CreateSale(...) { ... }</pre>
+
+<h3>25.3 Refresh cookie</h3>
+<pre>private void SetRefreshCookie(string raw)
+{
+    Response.Cookies.Append(_opt.CookieName, raw, new CookieOptions
+    {
+        HttpOnly = true,
+        Secure   = true,
+        SameSite = SameSiteMode.Strict,
+        Path     = _opt.CookiePath,           // "/api/auth"
+        MaxAge   = TimeSpan.FromDays(_opt.IdleDays),
+        IsEssential = true,
+    });
+}
+
+private void ClearRefreshCookie()
+{
+    Response.Cookies.Delete(_opt.CookieName, new CookieOptions
+    {
+        HttpOnly = true,
+        Secure   = true,
+        SameSite = SameSiteMode.Strict,
+        Path     = _opt.CookiePath,
+    });
+}</pre>
+
+<h3>25.4 Tenant resolution</h3>
+<pre>public sealed class CurrentBusiness : ICurrentBusiness
+{
+    public Guid BusinessId { get; }
+    public string Role { get; }
+
+    public CurrentBusiness(IHttpContextAccessor accessor)
+    {
+        var user = accessor.HttpContext?.User
+            ?? throw new UnauthorizedAccessException();
+
+        var raw = user.FindFirstValue("business_id")
+            ?? throw new UnauthorizedAccessException("Missing business_id claim.");
+
+        BusinessId = Guid.Parse(raw);
+        Role = user.FindFirstValue("role") ?? "Operator";
+    }
+}
+
+// Registered scoped. Never read from request body or query string.
+builder.Services.AddScoped&lt;ICurrentBusiness, CurrentBusiness&gt;();</pre>
+
+<h3>25.5 Global tenant filter</h3>
+<pre>protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity&lt;Product&gt;()
+        .HasQueryFilter(p =&gt; p.BusinessId == _currentBusiness.BusinessId);
+
+    modelBuilder.Entity&lt;Sale&gt;()
+        .HasQueryFilter(s =&gt; s.BusinessId == _currentBusiness.BusinessId);
+
+    // ...every tenant-owned entity carries the same filter
+}</pre>
+
+<h3>25.6 Rate limiting</h3>
+<pre>builder.Services.AddRateLimiter(options =&gt;
+{
+    options.AddFixedWindowLimiter("auth", limiter =&gt;
+    {
+        limiter.PermitLimit = 5;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+        limiter.AutoReplenishment = true;
+    });
+
+    options.OnRejected = async (ctx, ct) =&gt;
+    {
+        ctx.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await ctx.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            type = "https://httpstatuses.io/429",
+            title = "Too many requests",
+            status = 429,
+            detail = "Please wait a moment before trying again.",
+            code = "RATE_LIMITED",
+            correlationId = ctx.HttpContext.TraceIdentifier,
+        }, ct);
+    };
+});</pre>
+
+<h3>25.7 CORS (only if the proxy is not used)</h3>
+<pre>builder.Services.AddCors(o =&gt; o.AddPolicy("frontend", p =&gt; p
+    .WithOrigins("https://shoppulse.pages.dev")
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));      // required for cookie-based refresh
+
+// With the Pages Function proxy in place, CORS is unnecessary —
+// the browser only ever talks to the Pages origin.
+</pre>
+
+<!-- ================= 26 ================= -->
+<h2 id="s26"><span class="num">26.</span>RefreshToken Table &amp; Indexes</h2>
+
+<pre>CREATE TABLE refresh_tokens (
+    id                    uuid          PRIMARY KEY,
+    user_id               uuid          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    family_id             uuid          NOT NULL,
+    token_hash            text          NOT NULL,
+    created_at_utc        timestamptz   NOT NULL,
+    expires_at_utc        timestamptz   NOT NULL,
+    revoked_at_utc        timestamptz   NULL,
+    revoked_reason        text          NULL,
+    replaced_by_token_id  uuid          NULL,
+    created_by_ip         text          NULL,
+    user_agent            text          NULL
+);
+
+CREATE UNIQUE INDEX ux_refresh_tokens_hash
+    ON refresh_tokens (token_hash);
+
+CREATE INDEX ix_refresh_tokens_family
+    ON refresh_tokens (family_id);
+
+CREATE INDEX ix_refresh_tokens_user
+    ON refresh_tokens (user_id, revoked_at_utc);
+
+-- Supports the nightly purge job
+CREATE INDEX ix_refresh_tokens_expiry
+    ON refresh_tokens (expires_at_utc)
+    WHERE revoked_at_utc IS NOT NULL;
+</pre>
+
+<table>
+  <thead><tr><th>Index</th><th>Serves</th></tr></thead>
+  <tbody>
+    <tr><td><code class="inline">ux_refresh_tokens_hash</code></td><td>Every refresh lookup — the hot path</td></tr>
+    <tr><td><code class="inline">ix_refresh_tokens_family</code></td><td>Family-wide revocation on reuse detection</td></tr>
+    <tr><td><code class="inline">ix_refresh_tokens_user</code></td><td>"Log out everywhere" from Settings</td></tr>
+    <tr><td><code class="inline">ix_refresh_tokens_expiry</code></td><td>Purge of revoked tokens older than 30 days</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 27 ================= -->
+<h2 id="s27"><span class="num">27.</span>Security Checklist</h2>
+
+<ul class="check">
+  <li>Access token held in memory only — no <code class="inline">localStorage</code>, no <code class="inline">sessionStorage</code>, no <code class="inline">IndexedDB</code></li>
+  <li>Refresh token <code class="inline">HttpOnly</code>, <code class="inline">Secure</code>, <code class="inline">SameSite=Strict</code>, <code class="inline">Path=/api/auth</code></li>
+  <li>Refresh tokens stored as SHA-256 hashes only</li>
+  <li>Rotation on every refresh; reuse revokes the family</li>
+  <li>Absolute session cap enforced independently of the idle window</li>
+  <li>JWT signature, issuer, audience and lifetime validated on every request</li>
+  <li><code class="inline">ClockSkew</code> set to 60 s — not the 5-minute default</li>
+  <li>Tenant ID read from the token claim only — never from the request</li>
+  <li>Every tenant-owned entity carries a global query filter</li>
+  <li>Role checks on every endpoint; 403 returned before any business logic</li>
+  <li>Rate limiting on <code class="inline">/api/auth/login</code> and <code class="inline">/api/auth/refresh</code></li>
+  <li>Account lockout after repeated failures</li>
+  <li>Password hashed with ASP.NET Core Identity defaults (PBKDF2)</li>
+  <li>Secrets in Cloud Run environment / secret manager — never in Git</li>
+  <li>Connection string never reaches the Blazor WASM bundle</li>
+  <li>HTTPS enforced end to end; HSTS enabled</li>
+  <li>No passwords, tokens or full request bodies in logs</li>
+  <li>Idempotency keys stored per business, hashed request body compared</li>
+  <li>Audit events written in the same transaction as the business change</li>
+  <li>No real personal data anywhere in the demo dataset</li>
+</ul>
+
+<!-- ================= 28 ================= -->
+<h2 id="s28"><span class="num">28.</span>Test Matrix</h2>
+
+<table>
+  <thead><tr><th>#</th><th>Scenario</th><th>Expected result</th></tr></thead>
+  <tbody>
+    <tr><td>T01</td><td>Valid login</td><td>200, access token returned, <code class="inline">sp_rt</code> cookie set, no token in body beyond the access token</td></tr>
+    <tr><td>T02</td><td>Wrong password</td><td>401 <code class="inline">AUTH_INVALID_CREDENTIALS</code>, generic message, no email enumeration</td></tr>
+    <tr><td>T03</td><td>Six failed logins in a minute</td><td>429 <code class="inline">RATE_LIMITED</code>; lockout after threshold</td></tr>
+    <tr><td>T04</td><td>Valid refresh</td><td>200, new access token, new <code class="inline">sp_rt</code>, old token marked revoked</td></tr>
+    <tr><td>T05</td><td>Refresh with the just-used token</td><td>401 <code class="inline">AUTH_REFRESH_REUSED</code>; entire family revoked</td></tr>
+    <tr><td>T06</td><td>Refresh with no cookie</td><td>401 <code class="inline">AUTH_REFRESH_MISSING</code></td></tr>
+    <tr><td>T07</td><td>Refresh after idle limit</td><td>401 <code class="inline">AUTH_REFRESH_EXPIRED</code></td></tr>
+    <tr><td>T08</td><td>API call with expired access token</td><td>Handler refreshes once, retries, user sees 200</td></tr>
+    <tr><td>T09</td><td>Three concurrent calls with an expired token</td><td>Exactly one <code class="inline">/api/auth/refresh</code> call; all three retry successfully</td></tr>
+    <tr><td>T10</td><td>Refresh fails while calls are in flight</td><td>Store cleared, warning toast, redirect to <code class="inline">/login</code></td></tr>
+    <tr><td>T11</td><td>Operator calls an Owner-only endpoint</td><td>403 <code class="inline">AUTH_FORBIDDEN</code>; no refresh attempted</td></tr>
+    <tr><td>T12</td><td>User A requests User B's sale by id</td><td>404 (tenant filter hides it) — never 200, never 403 leaking existence</td></tr>
+    <tr><td>T13</td><td>Sale with negative quantity</td><td>400 <code class="inline">VALIDATION_FAILED</code>, <code class="inline">errors["Items[0].Quantity"]</code> populated</td></tr>
+    <tr><td>T14</td><td>Sale exceeding available stock</td><td>409 <code class="inline">STOCK_INSUFFICIENT</code> with remaining quantity in detail</td></tr>
+    <tr><td>T15</td><td>Two operators buy the last unit concurrently</td><td>One 201, one 409 <code class="inline">CONCURRENCY_CONFLICT</code></td></tr>
+    <tr><td>T16</td><td>Same idempotency key, identical body</td><td>200 with the stored response + <code class="inline">Idempotency-Replayed: true</code></td></tr>
+    <tr><td>T17</td><td>Same idempotency key, different body</td><td>409 <code class="inline">IDEMPOTENCY_KEY_REUSED</code></td></tr>
+    <tr><td>T18</td><td>Request timed out mid-sale, then retried</td><td>Exactly one sale exists; retry returns the replay</td></tr>
+    <tr><td>T19</td><td>Logout</td><td>204, cookie cleared, refresh with old token returns 401</td></tr>
+    <tr><td>T20</td><td>Page refresh while signed in</td><td>Silent refresh on boot restores the session; no login prompt</td></tr>
+    <tr><td>T21</td><td>Cold start</td><td>Info banner during the wait; request completes; banner dismisses</td></tr>
+    <tr><td>T22</td><td>Browser goes offline mid-form</td><td>Offline banner; submit disabled; no false success</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 29 ================= -->
+<h2 id="s29"><span class="num">29.</span>Failure-Mode Table</h2>
+
+<table>
+  <thead><tr><th>Failure</th><th>Detected by</th><th>System response</th><th>User sees</th></tr></thead>
+  <tbody>
+    <tr><td>Access token expired</td><td>401 <code class="inline">AUTH_TOKEN_EXPIRED</code></td><td>Single-flight refresh, one retry</td><td>Nothing — the request simply succeeds</td></tr>
+    <tr><td>Refresh token expired</td><td>401 <code class="inline">AUTH_REFRESH_EXPIRED</code></td><td>Clear store, redirect</td><td>Warning toast + login page</td></tr>
+    <tr><td>Refresh token stolen and replayed</td><td>401 <code class="inline">AUTH_REFRESH_REUSED</code></td><td>Revoke whole family</td><td>"Session ended for security reasons."</td></tr>
+    <tr><td>Role lacks permission</td><td>403 <code class="inline">AUTH_FORBIDDEN</code></td><td>No retry</td><td>Inline banner</td></tr>
+    <tr><td>Validation failure</td><td>400 <code class="inline">VALIDATION_FAILED</code></td><td>Map errors to fields</td><td>Centered red text under each input</td></tr>
+    <tr><td>Stock changed under the user</td><td>409 <code class="inline">STOCK_INSUFFICIENT</code></td><td>No write</td><td>Banner + highlighted cart line</td></tr>
+    <tr><td>Concurrent update</td><td>409 <code class="inline">CONCURRENCY_CONFLICT</code></td><td>Rollback</td><td>Banner: "Refresh and try again."</td></tr>
+    <tr><td>Duplicate request replay</td><td>Idempotency match</td><td>Return stored response</td><td>Normal success — no duplicate sale</td></tr>
+    <tr><td>Rate limited</td><td>429 <code class="inline">RATE_LIMITED</code></td><td>No retry</td><td>Warning toast + disabled button</td></tr>
+    <tr><td>API cold start</td><td>Latency &gt; 3 s</td><td>Wait, do not cancel</td><td>Info banner</td></tr>
+    <tr><td>API unavailable</td><td>503</td><td>One automatic retry</td><td>Info banner, then error toast</td></tr>
+    <tr><td>Network unreachable</td><td><code class="inline">HttpRequestException</code></td><td>No retry on GET; explicit retry on POST</td><td>Offline banner</td></tr>
+    <tr><td>Unhandled server exception</td><td>500</td><td>Logged with correlation ID</td><td>Error toast with the reference</td></tr>
+    <tr><td>Database down</td><td>Exception in repository</td><td>500 <code class="inline">SERVER_ERROR</code></td><td>Error toast; page remains navigable</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 30 ================= -->
+<h2 id="s30"><span class="num">30.</span>Acceptance Criteria</h2>
+
+<p>Part II is considered implemented when all of the following are demonstrably true in the deployed application.</p>
+
+<h3>Authentication</h3>
+<ul class="check">
+  <li>Logging in returns an access token and sets an <code class="inline">HttpOnly</code> refresh cookie visible in DevTools with the correct flags</li>
+  <li>The access token does not appear in <code class="inline">localStorage</code>, <code class="inline">sessionStorage</code> or any cookie</li>
+  <li>Refreshing the page keeps the user signed in via the silent refresh on boot</li>
+  <li>Refresh rotates: a second refresh call in DevTools shows a different cookie value</li>
+  <li>Replaying an old refresh token returns <code class="inline">AUTH_REFRESH_REUSED</code> and forces re-login</li>
+  <li>Logout clears the cookie and the old token no longer refreshes</li>
+</ul>
+
+<h3>Request pipeline</h3>
+<ul class="check">
+  <li>An expired access token produces exactly one refresh call, then a successful retry — visible in the Network tab</li>
+  <li>Three simultaneous 401s produce exactly one <code class="inline">/api/auth/refresh</code> request</li>
+  <li>A 403 never triggers a refresh</li>
+  <li>A cross-tenant request returns 404, not 200</li>
+</ul>
+
+<h3>Validation &amp; feedback</h3>
+<ul class="check">
+  <li>Submitting an invalid form shows centered red text under each offending field with a ⚠ prefix</li>
+  <li>Invalid inputs carry <code class="inline">aria-invalid="true"</code> and a red border</li>
+  <li>Validation errors are never delivered as toasts</li>
+  <li>Successful writes show a success toast; failed writes show either inline errors or a banner — never both for the same message</li>
+  <li>Every toast is readable on a 360 px wide screen</li>
+</ul>
+
+<h3>Data integrity</h3>
+<ul class="check">
+  <li>Submitting the same sale twice with the same idempotency key creates one sale</li>
+  <li>Two concurrent attempts on the last unit produce one success and one <code class="inline">CONCURRENCY_CONFLICT</code></li>
+  <li>No completed sale is ever deleted; corrections are refunds</li>
+  <li>Every write that moves stock or money produces an audit event in the same transaction</li>
+</ul>
+
+<h3>Resilience</h3>
+<ul class="check">
+  <li>A simulated cold start shows the info banner and the request still completes</li>
+  <li>Going offline mid-form disables submit and shows the offline banner</li>
+  <li>A timed-out sale retry produces exactly one sale</li>
+  <li>A 500 shows the correlation ID so the failure can be traced in logs</li>
+</ul>
+
+<div class="note">
+  <strong>What Part II deliberately does not cover</strong>
+  Password reset emails, MFA and social login are out of scope for the pilot — each adds surface area without addressing the validated problem. They are documented as "next with more time" in the walkthrough rather than half-built.
+</div>
+
+<footer>
+  ShopPulse — Part II: Backend Flows, Authentication &amp; UI Feedback Specification · Samsung Innovation Internship 2027 · Stage 1 Entry Assignment · Extends the Part I Solution Design document · Status: implementation-ready specification.
+</footer>
+
+</div>
+</body>
+</html>

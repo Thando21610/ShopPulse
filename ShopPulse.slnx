@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ShopPulse.Api/ShopPulse.Api.csproj" />
+    <Project Path="src/ShopPulse.Client/ShopPulse.Client.csproj" />
+  </Folder>
+</Solution>

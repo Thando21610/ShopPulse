@@ -1,0 +1,170 @@
+using Microsoft.EntityFrameworkCore;
+using ShopPulse.Api.Domain;
+
+namespace ShopPulse.Api.Data;
+
+public class AppDbContext : DbContext
+{
+    private readonly ICurrentBusiness? _currentBusiness;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentBusiness? currentBusiness = null)
+        : base(options)
+    {
+        _currentBusiness = currentBusiness;
+    }
+
+    public DbSet<Business> Businesses => Set<Business>();
+    public DbSet<AppUser> Users => Set<AppUser>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<StockBatch> StockBatches => Set<StockBatch>();
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<WasteRecord> WasteRecords => Set<WasteRecord>();
+    public DbSet<CashShift> CashShifts => Set<CashShift>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
+    public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Tenant filters (skip when no current business, e.g. during seed/login)
+        if (_currentBusiness is not null && _currentBusiness.BusinessId != Guid.Empty)
+        {
+            var bid = _currentBusiness.BusinessId;
+            modelBuilder.Entity<Product>().HasQueryFilter(p => p.BusinessId == bid);
+            modelBuilder.Entity<StockBatch>().HasQueryFilter(b => b.BusinessId == bid);
+            modelBuilder.Entity<StockMovement>().HasQueryFilter(m => m.BusinessId == bid);
+            modelBuilder.Entity<Sale>().HasQueryFilter(s => s.BusinessId == bid);
+            modelBuilder.Entity<WasteRecord>().HasQueryFilter(w => w.BusinessId == bid);
+            modelBuilder.Entity<CashShift>().HasQueryFilter(c => c.BusinessId == bid);
+            modelBuilder.Entity<AuditEvent>().HasQueryFilter(a => a.BusinessId == bid);
+            modelBuilder.Entity<IdempotencyRecord>().HasQueryFilter(i => i.BusinessId == bid);
+        }
+
+        modelBuilder.Entity<Business>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+        });
+
+        modelBuilder.Entity<AppUser>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Email).IsUnique();
+            e.Property(x => x.Email).HasMaxLength(256).IsRequired();
+            e.Property(x => x.Role).HasMaxLength(32).IsRequired();
+            e.HasOne(x => x.Business).WithMany(b => b.Users).HasForeignKey(x => x.BusinessId);
+        });
+
+        modelBuilder.Entity<Product>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.BusinessId, x.Sku }).IsUnique();
+            e.Property(x => x.Sku).HasMaxLength(64).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.Property(x => x.UnitPrice).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<StockBatch>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.UnitCost).HasPrecision(18, 2);
+            e.HasOne(x => x.Product).WithMany(p => p.Batches).HasForeignKey(x => x.ProductId);
+            e.Property(x => x.Version).IsConcurrencyToken();
+        });
+
+        modelBuilder.Entity<Sale>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.BusinessId, x.IdempotencyKey }).IsUnique()
+                .HasFilter("\"IdempotencyKey\" IS NOT NULL");
+            e.Property(x => x.Subtotal).HasPrecision(18, 2);
+            e.Property(x => x.Discount).HasPrecision(18, 2);
+            e.Property(x => x.GrandTotal).HasPrecision(18, 2);
+            e.Property(x => x.AmountTendered).HasPrecision(18, 2);
+            e.Property(x => x.ChangeAmount).HasPrecision(18, 2);
+            e.Property(x => x.ReceiptNumber).HasMaxLength(32);
+        });
+
+        modelBuilder.Entity<SaleItem>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.UnitPriceSnapshot).HasPrecision(18, 2);
+            e.Property(x => x.LineTotal).HasPrecision(18, 2);
+            e.HasOne(x => x.Sale).WithMany(s => s.Items).HasForeignKey(x => x.SaleId);
+        });
+
+        modelBuilder.Entity<RefreshToken>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.TokenHash).IsUnique();
+            e.HasIndex(x => x.FamilyId);
+            e.HasIndex(x => new { x.UserId, x.RevokedAtUtc });
+            e.Property(x => x.TokenHash).HasMaxLength(128).IsRequired();
+        });
+
+        modelBuilder.Entity<IdempotencyRecord>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.BusinessId, x.Key }).IsUnique();
+            e.Property(x => x.Key).HasMaxLength(128).IsRequired();
+        });
+
+        modelBuilder.Entity<AuditEvent>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.BusinessId, x.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<WasteRecord>(e =>
+        {
+            e.Property(x => x.EstimatedCostValue).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<CashShift>(e =>
+        {
+            e.Property(x => x.OpeningFloat).HasPrecision(18, 2);
+            e.Property(x => x.ActualCash).HasPrecision(18, 2);
+            e.Property(x => x.ExpectedCash).HasPrecision(18, 2);
+            e.Property(x => x.Variance).HasPrecision(18, 2);
+        });
+    }
+}
+
+public interface ICurrentBusiness
+{
+    Guid BusinessId { get; }
+    string Role { get; }
+    Guid UserId { get; }
+}
+
+public class CurrentBusiness : ICurrentBusiness
+{
+    public Guid BusinessId { get; }
+    public string Role { get; }
+    public Guid UserId { get; }
+
+    public CurrentBusiness(IHttpContextAccessor accessor)
+    {
+        var user = accessor.HttpContext?.User
+            ?? throw new UnauthorizedAccessException("No authenticated user.");
+
+        var rawBid = user.FindFirst("business_id")?.Value
+            ?? throw new UnauthorizedAccessException("Missing business_id claim.");
+        var rawUid = user.FindFirst("sub")?.Value
+            ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("Missing sub claim.");
+
+        BusinessId = Guid.Parse(rawBid);
+        UserId = Guid.Parse(rawUid);
+        Role = user.FindFirst("role")?.Value ?? "Operator";
+    }
+}
+
+public class NullCurrentBusiness : ICurrentBusiness
+{
+    public Guid BusinessId => Guid.Empty;
+    public string Role => "";
+    public Guid UserId => Guid.Empty;
+}
