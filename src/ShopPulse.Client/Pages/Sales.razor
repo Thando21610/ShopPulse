@@ -57,7 +57,7 @@
                 <div class="product-picker">
                     @foreach (var product in FilteredProducts)
                     {
-                        <button class="product-pick" @onclick="() => Add(product)" disabled="@(product.Available <= 0 || _checkoutOutcomeUnknown)">
+                        <button class="product-pick" @onclick="() => Add(product)" disabled="@(_checkoutOutcomeUnknown || IsAtLimit(product))">
                             <span class="product-initial" style="@InitialStyle(product.Category)">@Initial(product.Name)</span>
                             <span class="product-pick-copy"><strong>@product.Name</strong><small>@product.Sku</small></span>
                             <span class="product-pick-price">@Money(product.UnitPrice)</span>
@@ -75,7 +75,7 @@
                 {
                     @foreach (var line in _cart)
                     {
-                        <div class="cart-line"><div><strong>@line.Product.Name</strong><small>@Money(line.Product.UnitPrice) each</small></div><div class="quantity-control"><button aria-label="Decrease @line.Product.Name" disabled="@_checkoutOutcomeUnknown" @onclick="() => Change(line, -1)">−</button><strong>@line.Quantity</strong><button aria-label="Increase @line.Product.Name" disabled="@_checkoutOutcomeUnknown" @onclick="() => Change(line, 1)">+</button></div><strong>@Money(line.Product.UnitPrice * line.Quantity)</strong></div>
+                        <div class="cart-line"><div><strong>@line.Product.Name</strong><small>@Money(line.Product.UnitPrice) each · @line.Product.Available available</small></div><div class="quantity-control"><button aria-label="Decrease quantity of @line.Product.Name" disabled="@_checkoutOutcomeUnknown" @onclick="() => Change(line, -1)">−</button><strong>@line.Quantity</strong><button aria-label="Increase quantity of @line.Product.Name" disabled="@(_checkoutOutcomeUnknown || line.Quantity >= line.Product.Available)" @onclick="() => Change(line, 1)">+</button></div><strong>@Money(line.Product.UnitPrice * line.Quantity)</strong></div>
                     }
                 }
                 <div class="cart-total" aria-live="polite" aria-atomic="true"><span>Total due</span><strong>@Money(Total)</strong></div>
@@ -199,6 +199,7 @@
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _products = []; _catalogueLoadFailed = true; _error = "The catalogue could not be reached. Try again."; }
         finally { _loading = false; }
     }
+    private bool IsAtLimit(ProductOption product) => product.Available <= 0 || (_cart.FirstOrDefault(x => x.Product.Id == product.Id)?.Quantity ?? 0) >= product.Available;
     private void Add(ProductOption product)
     {
         if (product.Available <= 0) return;
