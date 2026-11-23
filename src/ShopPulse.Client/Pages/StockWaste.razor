@@ -51,6 +51,7 @@
     }
     private async Task Submit()
     {
+        ApiErrorFormatter.ClearServerValidationErrors(_editContext);
         var batch = _batches.FirstOrDefault(x => x.Id == _form.BatchId);
         if (batch is null) { _error = "Choose a stock batch."; return; }
         if (_form.Quantity < 1 || _form.Quantity > batch.RemainingQuantity) { _error = $"Enter a quantity from 1 to {batch.RemainingQuantity}."; return; }
