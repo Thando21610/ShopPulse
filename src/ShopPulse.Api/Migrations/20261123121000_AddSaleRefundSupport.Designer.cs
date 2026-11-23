@@ -10,8 +10,7 @@ using ShopPulse.Api.Data;
 
 namespace ShopPulse.Api.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
-    partial class AddSaleRefundSupport
+    public sealed partial class AddSaleRefundSupport
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
