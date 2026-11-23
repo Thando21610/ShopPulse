@@ -47,7 +47,7 @@ jobs:
           UseSqlite: "false"
           ConnectionStrings__Default: ${{ env.SHOPPULSE_TEST_POSTGRES_CONNECTION }}
         run: |
-          dotnet ef migrations add AlignCurrentModel --project src/ShopPulse.Api/ShopPulse.Api.csproj --startup-project src/ShopPulse.Api/ShopPulse.Api.csproj --output-dir Migrations
+          dotnet-ef migrations add AlignCurrentModel --project src/ShopPulse.Api/ShopPulse.Api.csproj --startup-project src/ShopPulse.Api/ShopPulse.Api.csproj --output-dir Migrations
           echo "===== GENERATED MIGRATION ====="
           cat src/ShopPulse.Api/Migrations/*_AlignCurrentModel.cs
           echo "===== GENERATED SNAPSHOT FILTERS ====="
