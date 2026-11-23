@@ -24,6 +24,10 @@ public sealed class AddSaleRefundSupport : Migration
             name: "CanReceiveStock", table: "Users", type: "boolean",
             nullable: false, defaultValue: false);
 
+        migrationBuilder.AddColumn<bool>(
+            name: "CanManageProducts", table: "Users", type: "boolean",
+            nullable: false, defaultValue: false);
+
         migrationBuilder.AddColumn<decimal>(
             name: "RefundAmount", table: "Sales", type: "numeric(18,2)",
             precision: 18, scale: 2, nullable: false, defaultValue: 0m);
@@ -58,6 +62,7 @@ public sealed class AddSaleRefundSupport : Migration
         migrationBuilder.DropColumn(name: "CanRefundSales", table: "Users");
         migrationBuilder.DropColumn(name: "CanManageProducts", table: "Users");
         migrationBuilder.DropColumn(name: "CanReceiveStock", table: "Users");
+        migrationBuilder.DropColumn(name: "CanManageProducts", table: "Users");
         migrationBuilder.DropColumn(name: "RefundAmount", table: "Sales");
         migrationBuilder.DropColumn(name: "RefundedAtUtc", table: "Sales");
         migrationBuilder.DropColumn(name: "RefundedByUserId", table: "Sales");
