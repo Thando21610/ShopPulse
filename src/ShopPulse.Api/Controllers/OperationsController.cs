@@ -24,7 +24,7 @@ public sealed class OperationsController : ControllerBase
         _current = current;
     }
 
-    public sealed record SaleLineRequest(Guid ProductId, int Quantity);
+    public sealed record SaleLineRequest(Guid ProductId, int Quantity, decimal? ExpectedUnitPrice = null);
     public sealed record CompleteSaleRequest(IReadOnlyList<SaleLineRequest> Items, string PaymentMethod, decimal AmountTendered, bool CardPaymentConfirmed = false);
     public sealed record SaleResult(Guid Id, string ReceiptNumber, decimal Subtotal, decimal Discount, decimal GrandTotal, string PaymentMethod, decimal AmountTendered, decimal ChangeAmount, DateTimeOffset CreatedAtUtc, IReadOnlyList<SaleLineResult> Items);
     public sealed record SaleLineResult(string ProductName, string Sku, int Quantity, decimal UnitPrice, decimal LineTotal);
@@ -54,7 +54,7 @@ public sealed class OperationsController : ControllerBase
         if (method == "Card" && !request.CardPaymentConfirmed)
             return Failure(400, "VALIDATION_FAILED", "Confirm that the payment was approved on the external card terminal.");
         var normalized = request.Items.GroupBy(x => x.ProductId)
-            .Select(g => new SaleLineRequest(g.Key, g.Sum(x => x.Quantity)))
+            .Select(g => new SaleLineRequest(g.Key, g.Sum(x => x.Quantity), g.First().ExpectedUnitPrice))
             .OrderBy(x => x.ProductId).ToArray();
         var requestHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
             JsonSerializer.Serialize(new { Items = normalized, PaymentMethod = method, request.AmountTendered, request.CardPaymentConfirmed }))));
@@ -81,6 +81,19 @@ public sealed class OperationsController : ControllerBase
         var products = await _db.Products.Where(x => productIds.Contains(x.Id) && x.IsActive).ToDictionaryAsync(x => x.Id, ct);
         if (products.Count != productIds.Length)
             return Failure(400, "VALIDATION_FAILED", "One or more selected products are unavailable.");
+        foreach (var line in normalized)
+        {
+            if (line.ExpectedUnitPrice.HasValue
+                && line.ExpectedUnitPrice.Value != products[line.ProductId].UnitPrice)
+                return Conflict(new
+                {
+                    code = "PRICE_CHANGED",
+                    productId = line.ProductId,
+                    productName = products[line.ProductId].Name,
+                    currentUnitPrice = products[line.ProductId].UnitPrice,
+                    message = $"The price of {products[line.ProductId].Name} changed. The basket has been refreshed; review the new total before confirming."
+                });
+        }
 
         var subtotal = normalized.Sum(line => products[line.ProductId].UnitPrice * line.Quantity);
         const decimal discount = 0m;
