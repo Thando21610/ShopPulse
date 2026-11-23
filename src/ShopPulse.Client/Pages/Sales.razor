@@ -13,7 +13,7 @@
     <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">New sale</span></header>
     <ShopPulse.Client.Shared.WorkspaceNav />
     <section class="feature-heading"><p class="eyebrow">CHECKOUT · ZAR</p><h1>New sale</h1><p class="muted">Find products, build a basket and take payment.</p></section>
-    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error @if (_cashShiftRequired) { <a href="/cash-shift">Open cash shift</a> }</div> }
     @if (_receipt is not null)
     {
         <section class="panel receipt-panel" id="receipt">
@@ -82,7 +82,7 @@
     private List<CartLine> _cart = [];
     private string _search = "", _paymentMethod = "Cash";
     private decimal _tendered;
-    private bool _loading = true, _busy;
+    private bool _loading = true, _busy, _cashShiftRequired;
     private string? _error;
     private SaleResult? _receipt;
     // Retain the same key when a network response is lost so a retry cannot create a duplicate sale.
@@ -123,7 +123,7 @@
         if (_cart.Count == 0) { _error = "Add at least one product to the basket."; return; }
         if (_paymentMethod == "Cash" && _tendered < Total) { _error = "Enter enough cash to cover the sale."; return; }
         if (_paymentMethod == "Card" && !_cardPaymentConfirmed) { _error = "Confirm the payment was approved on your card terminal."; return; }
-        _busy = true; _error = null;
+        _busy = true; _error = null; _cashShiftRequired = false;
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/sales")
@@ -136,6 +136,8 @@
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
                 var problem = await response.Content.ReadFromJsonAsync<JsonDocument>();
+                _cashShiftRequired = problem?.RootElement.TryGetProperty("code", out var code) == true
+                    && code.GetString() == "CASH_SHIFT_REQUIRED";
                 _error = problem?.RootElement.TryGetProperty("message", out var m) == true ? m.GetString() : "Stock changed while you were checking out. Review the basket.";
                 return;
             }
