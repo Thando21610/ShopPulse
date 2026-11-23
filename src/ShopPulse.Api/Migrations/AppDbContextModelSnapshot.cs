@@ -227,7 +227,15 @@ namespace ShopPulse.Api.Migrations
                     b.Property<string>("VarianceReason")
                         .HasColumnType("text");
 
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("BusinessId", "OperatorUserId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 'Open'");
 
                     b.ToTable("CashShifts");
                 });
