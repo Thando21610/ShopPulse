@@ -289,3 +289,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; c
 /* Single-column sign-in: no split-card or hero panel. */
 .login-layout { display:flex; justify-content:center; align-items:flex-start; width:100%; }
 .sign-in-panel { width:min(100%,480px); max-width:480px; margin:0 auto; }
+
+
+/* Consistent mobile-friendly control targets across every operational journey. */
+button { min-height: var(--touch-target, 44px); }
+input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+  min-height: var(--touch-target, 44px);
+}
