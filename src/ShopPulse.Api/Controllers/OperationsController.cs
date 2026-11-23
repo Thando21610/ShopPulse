@@ -245,6 +245,62 @@ public sealed class OperationsController : ControllerBase
         return Ok(batches);
     }
 
+    [HttpGet("stock/rescue")]
+    public async Task<IActionResult> StockRescue([FromQuery] int days = 7, CancellationToken ct = default)
+    {
+        days = Math.Clamp(days, 1, 14);
+        var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
+        var cutoff = today.AddDays(days);
+        var batches = await _db.StockBatches.AsNoTracking()
+            .Where(x => x.RemainingQuantity > 0 && x.ExpiryDate != null && x.ExpiryDate <= cutoff)
+            .OrderBy(x => x.ExpiryDate).ThenBy(x => x.ReceivedAtUtc)
+            .Select(x => new
+            {
+                x.Id, x.ProductId, ProductName = x.Product.Name, x.Product.Sku,
+                x.BatchReference, x.RemainingQuantity, x.ExpiryDate
+            }).ToListAsync(ct);
+        if (batches.Count == 0) return Ok(Array.Empty<object>());
+
+        var productIds = batches.Select(x => x.ProductId).Distinct().ToArray();
+        var recentStart = DateTimeOffset.UtcNow.AddDays(-7);
+        var sales = await _db.Sales.Where(x => x.Status == "Completed" && x.CreatedAtUtc >= recentStart)
+            .SelectMany(x => x.Items.Select(item => new { item.ProductId, item.Quantity }))
+            .Where(x => productIds.Contains(x.ProductId))
+            .GroupBy(x => x.ProductId)
+            .Select(group => new { ProductId = group.Key, UnitsSold = group.Sum(x => x.Quantity) })
+            .ToListAsync(ct);
+        var salesByProduct = sales.ToDictionary(x => x.ProductId, x => x.UnitsSold);
+
+        var suggestions = batches.GroupBy(x => new { x.ProductId, x.ProductName, x.Sku })
+            .Select(group =>
+            {
+                var unitsSold = salesByProduct.GetValueOrDefault(group.Key.ProductId);
+                var averageDailySales = unitsSold / 7m;
+                var earliestExpiry = group.Min(x => x.ExpiryDate!.Value);
+                var daysRemaining = Math.Max(0, earliestExpiry.DayNumber - today.DayNumber);
+                var expiringUnits = group.Sum(x => x.RemainingQuantity);
+                var estimatedDemand = averageDailySales * daysRemaining;
+                var atRisk = unitsSold == 0 ? (int?)null : Math.Max(0, expiringUnits - (int)Math.Floor(estimatedDemand));
+                var recommendation = unitsSold == 0
+                    ? "Prioritise the earliest-expiry batch. There is not enough recent sales history to estimate demand."
+                    : atRisk > 0
+                        ? "Prioritise this stock now; consider a clearly labelled markdown and review the next order quantity."
+                        : "Continue FEFO rotation and monitor sales before the expiry date.";
+                return new
+                {
+                    group.Key.ProductId, group.Key.ProductName, group.Key.Sku,
+                    ExpiringUnits = expiringUnits, UnitsSoldLast7Days = unitsSold,
+                    AverageDailySales = decimal.Round(averageDailySales, 2),
+                    EarliestExpiry = earliestExpiry, DaysUntilExpiry = daysRemaining,
+                    AtRiskUnits = atRisk, Recommendation
+                };
+            })
+            .OrderByDescending(x => x.AtRiskUnits ?? x.ExpiringUnits)
+            .ThenBy(x => x.EarliestExpiry)
+            .ToList();
+        return Ok(suggestions);
+    }
+
     [HttpGet("stock/expiry")]
     public async Task<IActionResult> Expiry([FromQuery] int days = 7, CancellationToken ct = default)
     {
