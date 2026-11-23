@@ -111,14 +111,23 @@ A stock conflict returns HTTP 409 and keeps the basket available for review. The
 
 ## Refund a sale (UC-06)
 
-1. Owner or operator with `CanRefundSales` opens Refund a sale.\n2. Client loads up to 100 completed receipts through `GET /api/sales/refundable`.\n3. Staff selects the original receipt, reviews its line items and enters a reason.\n4. Staff confirms that the money was refunded externally through the original payment channel. ShopPulse does not process card or bank payments.\n5. Staff may mark returned goods as safe to restock. If selected, the API restores quantities to the original sale batches, writes positive Refund stock movements and retains expired batches as expired/non-sellable.\n6. API records the full refund against the original sale, updates status, records actor/time/method/reason and writes an audit event in a transaction. A sale can only be refunded once.\n7. Daily reporting subtracts refunds on the date the refund was issued; cash-shift expected balance subtracts cash refunds.\n\nPartial refunds are not implemented; the current workflow is a full-sale refund.\n\n## Cash shift and reconciliation (UC-09)
+1. Owner or operator with `CanRefundSales` opens Refund a sale.
+2. Client loads up to 100 completed receipts through `GET /api/sales/refundable`.
+3. Staff selects the original receipt, reviews its line items and enters a reason.
+4. Staff confirms that the money was refunded externally through the original payment channel. ShopPulse does not process card or bank payments.
+5. Staff may mark returned goods as safe to restock. If selected, the API restores quantities to the original sale batches, writes positive Refund stock movements and retains expired batches as expired/non-sellable.
+6. API records the full refund against the original sale, updates status, records actor/time/method/reason and writes an audit event in a transaction. A sale can only be refunded once.
+7. Daily reporting subtracts refunds on the date the refund was issued; cash-shift expected balance subtracts cash refunds.
+
+Partial refunds are not implemented; the current workflow is a full-sale refund.
+
+## Cash shift and reconciliation (UC-09)
 
 1. Operator opens a shift and records opening float in ZAR.
-2. Operator can view and close their own shift; owner can review all open shifts and select one to reconcile.
-3. Close request includes the selected shift ID, actual cash and a variance explanation when actual differs from expected.
-4. API calculates expected cash from opening float plus completed cash sales, records variance and audit event.
-5. Cash refunds paid by the operator during their shift are subtracted from expected drawer cash.
-
+2. Operator can view and close their own shift; owner can review all open shifts and select one to reconcile, while also opening their own shift.
+3. Operator/owner records cash-in and cash-out movements with an amount and reason. Each movement is persisted and audited.
+4. Close request includes the selected shift ID, actual cash and a variance explanation when actual differs from expected.
+5. API calculates expected cash as opening float + cash sales − cash refunds + cash in − cash out, records variance and audit event.
 ## Reports (UC-11)
 
 - GET /api/reports/summary?date=YYYY-MM-DD returns gross and net sales, refunds by payment method, cash/card totals, waste cost, active product count, current sellable inventory units, low-stock products, audit actions and cash-shift variance for the selected SAST date.
