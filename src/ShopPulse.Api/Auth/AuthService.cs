@@ -125,7 +125,7 @@ public class AuthService
             .Include(u => u.Business)
             .FirstOrDefaultAsync(u => u.Id == token.UserId, ct);
 
-        if (user is null || !user.IsActive)
+        if (user is null || !user.IsActive || !user.Business.IsActive)
             return (false, "AUTH_ACCOUNT_DISABLED", null);
 
         // Rotate
