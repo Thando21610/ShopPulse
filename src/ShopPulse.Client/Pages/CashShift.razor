@@ -43,6 +43,15 @@
     }
     else
     {
+        @if (IsOwner && Session.User is not null && !_openShifts.Any(x => x.OperatorUserId == Session.User.Id))
+        {
+            <section class="panel form-panel">
+                <h2>Open your own cash shift</h2>
+                <label for="owner-opening">Opening float (ZAR)</label>
+                <input id="owner-opening" class="form-control" type="number" min="0" step="0.01" @bind="_openingFloat" />
+                <button class="button button-primary" @onclick="Open" disabled="@_busy">@(_busy ? "Opening…" : "Open my shift")</button>
+            </section>
+        }
         <section class="panel form-panel">
             @if (IsOwner && _openShifts.Count > 1)
             {
