@@ -43,6 +43,7 @@
     protected override async Task OnInitializedAsync()
     {
         _editContext = new EditContext(_form);
+        _editContext.OnFieldChanged += (_, _) => ApiErrorFormatter.ClearServerValidationErrors(_editContext);
         if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
         if (Session.User?.Role != "Owner" && Session.User?.CanReceiveStock != true) { _forbidden = true; return; }
         try { _products = await Http.GetFromJsonAsync<List<ProductOption>>("api/products") ?? []; }
