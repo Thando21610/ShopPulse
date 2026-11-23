@@ -169,26 +169,6 @@ namespace ShopPulse.Api.Migrations
                     b.Property<Guid>("OperatorUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("RefundAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<string>("RefundPaymentMethod")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RefundReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<bool>("RefundRestocked")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid?>("RefundedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("RefundedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -376,6 +356,26 @@ namespace ShopPulse.Api.Migrations
 
                     b.Property<Guid>("OperatorUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<decimal>("RefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("RefundPaymentMethod")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RefundReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("RefundRestocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("RefundedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("RefundedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
@@ -568,48 +568,6 @@ namespace ShopPulse.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("WasteRecords");
-                });
-
-            modelBuilder.Entity("ShopPulse.Api.Domain.AppUser", b =>
-                {
-                    b.HasOne("ShopPulse.Api.Domain.Business", "Business")
-                        .WithMany("Users")
-                        .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Business");
-                });
-
-            modelBuilder.Entity("ShopPulse.Api.Domain.Product", b =>
-                {
-                    b.HasOne("ShopPulse.Api.Domain.Business", null)
-                        .WithMany("Products")
-                        .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ShopPulse.Api.Domain.SaleItem", b =>
-                {
-                    b.HasOne("ShopPulse.Api.Domain.Sale", "Sale")
-                        .WithMany("Items")
-                        .HasForeignKey("SaleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Sale");
-                });
-
-            modelBuilder.Entity("ShopPulse.Api.Domain.StockBatch", b =>
-                {
-                    b.HasOne("ShopPulse.Api.Domain.Product", "Product")
-                        .WithMany("Batches")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("ShopPulse.Api.Domain.Business", b =>
