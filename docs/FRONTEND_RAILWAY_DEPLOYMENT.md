@@ -70,8 +70,9 @@ The production API runs reviewed EF Core migrations during startup. The current 
 - `20261123102908_InitialPostgres`
 - `20261123121000_AddSaleRefundSupport`
 - `20261123122000_AddDelegatedPermissionsAndCashMovements`
+- `20261123123000_AddCashShiftConcurrency`
 
-The second migration adds sale refund fields. The third adds delegated operator permission columns (`CanManageProducts`, `CanReceiveStock`), sale concurrency versioning and the tenant-scoped cash drawer movements table. After the latest API deployment, verify all three migration IDs are present in Neon:
+The second migration adds the refund fields and CanRefundSales permission. The third adds delegated operator permission columns (`CanManageProducts`, `CanReceiveStock`), sale concurrency versioning and the tenant-scoped cash drawer movements table. The fourth adds cash-shift concurrency versioning and a unique filtered index that permits only one open shift per operator/business. Run the duplicate-open-shift preflight query in the Database migration notes section before deploying. After the latest API deployment, verify all four migration IDs are present in Neon:
 
 ```sql
 SELECT "MigrationId"
