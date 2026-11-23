@@ -540,9 +540,14 @@ public sealed class OperationsController : ControllerBase
             return Forbid();
 
         var cashSales = await _db.Sales.Where(x => x.OperatorUserId == shift.OperatorUserId
-                && x.PaymentMethod == "Cash" && x.Status == "Completed" && x.CreatedAtUtc >= shift.OpenedAtUtc)
+                && x.PaymentMethod == "Cash" && x.CreatedAtUtc >= shift.OpenedAtUtc
+                && x.Status != "Voided")
             .SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
-        var expected = shift.OpeningFloat + cashSales;
+        var cashRefunds = await _db.Sales.Where(x => x.OperatorUserId == shift.OperatorUserId
+                && x.RefundPaymentMethod == "Cash" && x.RefundedAtUtc >= shift.OpenedAtUtc
+                && x.RefundedAtUtc < DateTimeOffset.UtcNow)
+            .SumAsync(x => (decimal?)x.RefundAmount, ct) ?? 0m;
+        var expected = shift.OpeningFloat + cashSales - cashRefunds;
         if (decimal.Round(request.ActualCash, 2) != decimal.Round(expected, 2)
             && string.IsNullOrWhiteSpace(request.VarianceReason))
             return Failure(400, "VALIDATION_FAILED", "Enter a variance explanation when counted cash differs from expected cash.");
