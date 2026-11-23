@@ -17,7 +17,7 @@
     }
     else
     {
-        @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error @if (_cashShiftRequired) { <a href="/cash-shift">Open cash shift</a> }</div> }
         <section class="panel products-panel">
             <div class="panel-heading"><h2>Recent refundable sales</h2><button class="button button-quiet" @onclick="Load" disabled="@_loading">Refresh</button></div>
             @if (_loading) { <p class="muted">Loading sales…</p> }
@@ -82,7 +82,7 @@
     private List<SaleRow> _sales = [];
     private SaleRow? _selected;
     private RefundForm _form = new();
-    private bool _loading = true, _busy, _forbidden;
+    private bool _loading = true, _busy, _forbidden, _cashShiftRequired;
     private string? _error;
 
     protected override async Task OnInitializedAsync()
@@ -110,14 +110,28 @@
         _busy = true; _error = null;
         try
         {
-            using var response = await Http.PostAsJsonAsync($"api/sales/{_selected.Id}/refunds", new
+            using var response = await Http.PostAsJsonAsync($"api/sales/{_selected.Id}/refund", new
             {
-                reason = _form.Reason,
-                restockItems = _form.RestockItems,
-                refundIssued = _form.RefundIssued
+                reason = _form.Reason.Trim(),
+                refundPaymentMethod = _selected.PaymentMethod,
+                cashRefundConfirmed = _selected.PaymentMethod == "Cash" && _form.RefundIssued,
+                cardRefundConfirmed = _selected.PaymentMethod == "Card" && _form.RefundIssued,
+                restockItems = _form.RestockItems
             });
             if (!response.IsSuccessStatusCode)
             {
+                _cashShiftRequired = false;
+                if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                {
+                    using var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
+                    _cashShiftRequired = problem?.RootElement.TryGetProperty("code", out var code) == true
+                        && code.GetString() == "CASH_SHIFT_REQUIRED";
+                    _error = _cashShiftRequired
+                        ? "Open your cash shift before paying a cash refund."
+                        : problem?.RootElement.TryGetProperty("detail", out var detail) == true
+                            ? detail.GetString() : "The sale or original stock batch has changed. Refresh and review the refund.";
+                    return;
+                }
                 _error = await ApiErrorFormatter.FormatAsync(response, "The refund could not be recorded.");
                 return;
             }
