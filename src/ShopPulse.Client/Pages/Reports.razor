@@ -1,0 +1,48 @@
+@page "/reports"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Reports | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Owner reports</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">BUSINESS OVERVIEW</p><h1>Daily report</h1><p class="muted">Review sales, payment mix and recorded waste in South African Rand.</p></section>
+    @if (_forbidden) { <div class="inline-alert" role="alert">Financial reports are available to the store owner only.</div> }
+    else
+    {
+        <div class="toolbar-row"><label for="report-date">Report date</label><input id="report-date" class="form-control compact-select" type="date" @bind="_date" @bind:after="Load" /><button class="button button-quiet" @onclick="Load">Refresh</button></div>
+        @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        @if (_report is not null)
+        {
+            <section class="metrics-grid">
+                <article class="panel metric-card"><span>Sales total</span><strong>@Money(_report.SalesTotal)</strong><small>@_report.SalesCount completed sales</small></article>
+                <article class="panel metric-card"><span>Cash received</span><strong>@Money(_report.CashTotal)</strong><small>Cash transactions</small></article>
+                <article class="panel metric-card"><span>Card payments</span><strong>@Money(_report.CardTotal)</strong><small>Card transactions</small></article>
+                <article class="panel metric-card"><span>Recorded waste</span><strong>@Money(_report.WasteCost)</strong><small>Estimated stock cost</small></article>
+            </section>
+            <p class="muted small-note">All amounts are ZAR. Reports use UTC calendar dates at present.</p>
+        }
+    }
+</main>
+@code {
+    private DateTime _date = DateTime.Today;
+    private ReportSummary? _report;
+    private bool _forbidden;
+    private string? _error;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
+        if (Session.User?.Role != "Owner") { _forbidden = true; return; }
+        await Load();
+    }
+    private async Task Load()
+    {
+        _error = null;
+        try { _report = await Http.GetFromJsonAsync<ReportSummary>($"api/reports/summary?date={_date:yyyy-MM-dd}"); }
+        catch (HttpRequestException) { _error = "The report could not be loaded."; }
+    }
+    private static string Money(decimal v) => v.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
+    private sealed class ReportSummary { public int SalesCount { get; set; } public decimal SalesTotal { get; set; } public decimal CashTotal { get; set; } public decimal CardTotal { get; set; } public decimal WasteCost { get; set; } public string Currency { get; set; } = "ZAR"; }
+}
