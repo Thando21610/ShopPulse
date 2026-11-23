@@ -44,7 +44,7 @@
     {
         <div class="sales-grid @(_rushMode ? "rush-mode" : "")">
             <section class="panel">
-                <div class="panel-heading"><h2>Products</h2><div class="panel-actions"><span class="count-pill">@_products.Count available</span><button class="button button-quiet" @onclick="ToggleRushMode" aria-pressed="@_rushMode">@(_rushMode ? "Exit Rush mode" : "Rush mode")</button><button class="button button-quiet" @onclick="LoadProducts" disabled="@_loading">Refresh stock</button></div></div>
+                <div class="panel-heading"><h2>Products</h2><div class="panel-actions"><span class="count-pill">@_products.Count available</span><button class="button button-quiet" @onclick="ToggleRushMode" aria-pressed="@_rushMode">@(_rushMode ? "Exit Rush mode" : "Rush mode")</button><button class="button button-quiet" @onclick="LoadProducts" disabled="@(_loading || _checkoutOutcomeUnknown)">Refresh stock</button></div></div>
                 <input class="form-control" placeholder="Search product or SKU" @bind="_search" @bind:event="oninput" aria-label="Search products" />
                 @if (_loading) { <p class="muted" role="status">Loading products…</p> }
                 else if (_catalogueLoadFailed)
