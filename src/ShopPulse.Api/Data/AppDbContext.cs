@@ -85,6 +85,8 @@ public class AppDbContext : DbContext
             e.Property(x => x.AmountTendered).HasPrecision(18, 2);
             e.Property(x => x.ChangeAmount).HasPrecision(18, 2);
             e.Property(x => x.ReceiptNumber).HasMaxLength(32);
+            e.Property(x => x.RefundAmount).HasPrecision(18, 2);
+            e.Property(x => x.RefundReason).HasMaxLength(500);
         });
 
         modelBuilder.Entity<SaleItem>(e =>
