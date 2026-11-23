@@ -1,0 +1,73 @@
+@page "/settings"
+@using System.Net.Http.Json
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+@inject ShopPulse.Client.ToastService Toast
+
+<PageTitle>Business settings | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Business settings</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">STORE PROFILE · OWNER</p><h1>Business settings</h1><p class="muted">Maintain the store details shown in your workspace.</p></section>
+    @if (_forbidden) { <div class="inline-alert" role="alert">Only the store owner can change business settings.</div> }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        <section class="panel form-panel">
+            @if (_loading) { <p class="muted">Loading business profile…</p> }
+            else
+            {
+                <EditForm Model="_form" OnValidSubmit="Save">
+                    <DataAnnotationsValidator />
+                    <div class="form-grid">
+                        <div class="field-group full"><label for="business-name">Business name</label><InputText id="business-name" class="form-control" @bind-Value="_form.Name" maxlength="200" /><ValidationMessage For="@(() => _form.Name)" /></div>
+                        <div class="field-group full"><label for="business-address">Business address (optional)</label><InputTextArea id="business-address" class="form-control" @bind-Value="_form.Address" maxlength="500" /><ValidationMessage For="@(() => _form.Address)" /></div>
+                    </div>
+                    <button class="button button-primary" type="submit" disabled="@_busy">@(_busy ? "Saving…" : "Save business details")</button>
+                </EditForm>
+            }
+        </section>
+    }
+</main>
+@code {
+    private BusinessForm _form = new();
+    private bool _loading = true, _busy, _forbidden;
+    private string? _error;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
+        if (Session.User?.Role != "Owner") { _forbidden = true; return; }
+        try
+        {
+            var profile = await Http.GetFromJsonAsync<BusinessForm>("api/business/current");
+            if (profile is not null) _form = profile;
+        }
+        catch (HttpRequestException) { _error = "Business details could not be loaded."; }
+        finally { _loading = false; }
+    }
+    private async Task Save()
+    {
+        _busy = true; _error = null;
+        try
+        {
+            using var response = await Http.PutAsJsonAsync("api/business/current", new { name = _form.Name.Trim(), address = _form.Address });
+            if (!response.IsSuccessStatusCode)
+            {
+                using var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
+                _error = problem?.RootElement.TryGetProperty("message", out var message) == true ? message.GetString() : "Business details could not be saved.";
+                return;
+            }
+            Toast.ShowSuccess("Business details updated.");
+        }
+        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        finally { _busy = false; }
+    }
+    private sealed class BusinessForm
+    {
+        public Guid Id { get; set; }
+        [Required, StringLength(200, MinimumLength = 2)] public string Name { get; set; } = "";
+        [StringLength(500)] public string? Address { get; set; }
+    }
+}
