@@ -19,6 +19,14 @@
         {
             <section class="panel empty-state" role="status">Loading products…</section>
         }
+        else if (_productLoadFailed)
+        {
+            <section class="panel empty-state">
+                <strong>Products could not be loaded</strong>
+                <p class="muted">Check your connection and try again. No stock has been changed.</p>
+                <button class="button button-quiet" @onclick="LoadProducts" disabled="@_loadingProducts">Retry</button>
+            </section>
+        }
         else if (_products.Count == 0)
         {
             <section class="panel empty-state">
@@ -56,7 +64,7 @@
     private List<ProductOption> _products = [];
     private ReceiveForm _form = new();
     private EditContext _editContext = default!;
-    private bool _busy, _forbidden, _success, _loadingProducts = true;
+    private bool _busy, _forbidden, _success, _loadingProducts = true, _productLoadFailed;
     private string? _error;
     protected override async Task OnInitializedAsync()
     {
@@ -64,8 +72,15 @@
         _editContext.OnFieldChanged += (_, _) => ApiErrorFormatter.ClearServerValidationErrors(_editContext);
         if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
         if (Session.User?.Role != "Owner" && Session.User?.CanReceiveStock != true) { _forbidden = true; return; }
+        await LoadProducts();
+    }
+    private async Task LoadProducts()
+    {
+        _loadingProducts = true;
+        _productLoadFailed = false;
+        _error = null;
         try { _products = await Http.GetFromJsonAsync<List<ProductOption>>("api/products") ?? []; }
-        catch (HttpRequestException) { _error = "Could not load products. Try again."; }
+        catch (HttpRequestException) { _productLoadFailed = true; _error = "Could not load products. Try again."; }
         finally { _loadingProducts = false; }
     }
     private async Task Submit()
