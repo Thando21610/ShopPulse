@@ -71,6 +71,7 @@
                 </div>
                 <div class="summary-line"><span>Total due</span><strong>@Money(Total)</strong></div>
                 @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+                @if (_cashShiftRequired) { <div class="inline-alert" role="alert">Open your cash shift before continuing. <a href="/cash-shift">Open cash shift</a></div> }
                 @if (_paymentMethod == "Cash" && !_checkingCashShift && _cashShift is null)
                 {
                     <div class="inline-alert" role="status">Open a cash shift before accepting cash. <a href="/cash-shift">Open cash shift</a> · <button class="link-button" @onclick="LoadCashShift">Refresh status</button></div>
