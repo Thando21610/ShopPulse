@@ -480,13 +480,24 @@ public sealed class OperationsController : ControllerBase
             .ToListAsync(ct);
         var staffActions = await _db.AuditEvents.CountAsync(x =>
             x.CreatedAtUtc >= start && x.CreatedAtUtc < end && x.ActorUserId != null, ct);
+        var movements = _db.StockMovements.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end);
+        var unitsReceived = await movements.Where(x => x.MovementType == "Receipt")
+            .SumAsync(x => (int?)x.QuantityChange, ct) ?? 0;
+        var unitsSold = await movements.Where(x => x.MovementType == "Sale")
+            .SumAsync(x => (int?)x.QuantityChange, ct) ?? 0;
+        var stockAdjustments = await movements.CountAsync(x => x.MovementType is "Waste" or "Adjustment", ct);
+        var closedShifts = await _db.CashShifts.Where(x => x.ClosedAtUtc >= start && x.ClosedAtUtc < end && x.Status == "Closed")
+            .ToListAsync(ct);
+        var cashVariance = closedShifts.Sum(x => x.Variance ?? 0m);
         return Ok(new
         {
-            date = selected, salesCount = count, salesTotal = total, cashTotal = cash,
-            cardTotal = card, wasteCost = waste, activeProducts = inventory.Count,
+            date = selected, salesCount = count, salesTotal = total,
+            averageTransactionValue = count == 0 ? 0m : decimal.Round(total / count, 2),
+            cashTotal = cash, cardTotal = card, wasteCost = waste, activeProducts = inventory.Count,
             inventoryUnits = inventory.Sum(x => x.Available),
             lowStockProducts = inventory.Count(x => x.Available <= x.MinimumStockLevel),
-            staffActions, currency = "ZAR"
+            staffActions, unitsReceived, unitsSold = Math.Abs(unitsSold),
+            stockAdjustments, closedShifts = closedShifts.Count, cashVariance, currency = "ZAR"
         });
     }
 
