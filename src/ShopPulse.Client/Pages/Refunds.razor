@@ -106,6 +106,7 @@
     private async Task Submit()
     {
         if (_selected is null) return;
+        ApiErrorFormatter.ClearServerValidationErrors(_editContext);
         if (!_form.RefundIssued) { _error = "Confirm that the refund was issued through the original payment channel."; return; }
         _busy = true; _error = null;
         try
@@ -118,6 +119,9 @@
             });
             if (!response.IsSuccessStatusCode)
             {
+                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                    && await ApiErrorFormatter.ApplyValidationErrorsAsync(response, _editContext))
+                    return;
                 _cashShiftRequired = false;
                 if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
                 {
@@ -136,7 +140,7 @@
                 return;
             }
             Toast.ShowSuccess($"Refund recorded for receipt {_selected.ReceiptNumber}.");
-            _selected = null; _form = new();
+            _selected = null; _form = new(); _editContext = CreateContext(_form);
             await Load();
         }
         catch (HttpRequestException) { _error = "The service could not be reached. Refresh the sales list before retrying."; }
