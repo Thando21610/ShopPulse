@@ -4,19 +4,20 @@
 @using System.Text.Json
 @inject HttpClient Http
 
-<PageTitle>ShopPulse | Retail operations</PageTitle>
+<PageTitle>ShopPulse | Store workspace</PageTitle>
 
 <div class="dashboard-shell">
     <header class="dashboard-header">
-        <div class="brand-lockup">
-            <div class="brand-mark">S</div>
-            <div><strong>ShopPulse</strong><span>RETAIL OPERATIONS</span></div>
-        </div>
+        <a class="brand-lockup" href="/" aria-label="ShopPulse home">
+            <span class="brand-mark" aria-hidden="true">S</span>
+            <span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span>
+        </a>
         <div class="header-right">
-            <span class="status-indicator"></span>
-            <span>API connection</span>
+            <span class="status-indicator @(_apiOnline ? "online" : "offline")"></span>
+            <span>@(_apiOnline ? "API connected" : "API unavailable")</span>
             @if (_signedIn)
             {
+                <span class="role-chip">@_role</span>
                 <button class="button button-quiet" @onclick="LogoutAsync">Sign out</button>
             }
         </div>
@@ -25,59 +26,86 @@
     <main class="dashboard-main">
         <section class="welcome-row">
             <div>
-                <p class="eyebrow">STORE OVERVIEW</p>
-                <h1>Good business starts with visibility.</h1>
-                <p class="muted">Manage your catalogue and keep track of the products that keep your shop moving.</p>
+                <p class="eyebrow">STORE WORKSPACE</p>
+                <h1>@(_signedIn ? $"Welcome, {_displayName}" : "A clearer view of your store.")</h1>
+                <p class="muted">Simple, reliable tools for everyday retail operations.</p>
             </div>
-            <div class="date-chip">@DateTime.Now.ToString("ddd, dd MMM yyyy")</div>
+            <time class="date-chip" datetime="@DateTimeOffset.Now.ToString("yyyy-MM-dd")">@DateTimeOffset.Now.ToString("ddd, dd MMM yyyy")</time>
         </section>
 
         @if (!_signedIn)
         {
-            <section class="panel sign-in-panel">
+            <section class="panel sign-in-panel" aria-labelledby="signin-heading">
                 <div>
-                    <p class="eyebrow">SECURE ACCESS</p>
-                    <h2>Sign in to your store</h2>
-                    <p class="muted">Use your ShopPulse staff account to load live product data from the API.</p>
+                    <p class="eyebrow">SECURE STAFF ACCESS</p>
+                    <h2 id="signin-heading">Sign in to ShopPulse</h2>
+                    <p class="muted">Use the account provided by your store owner.</p>
                 </div>
                 <EditForm Model="_login" OnValidSubmit="LoginAsync" class="login-form">
                     <DataAnnotationsValidator />
-                    <label>Email address</label>
-                    <InputText @bind-Value="_login.Email" type="email" autocomplete="username" placeholder="you@yourshop.co.za" />
-                    <label>Password</label>
-                    <InputText @bind-Value="_login.Password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+                    <label for="email">Email address</label>
+                    <InputText id="email" @bind-Value="_login.Email" type="email" autocomplete="username" placeholder="you@yourshop.co.za" />
+                    <label for="password">Password</label>
+                    <InputText id="password" @bind-Value="_login.Password" type="password" autocomplete="current-password" placeholder="Your password" />
                     @if (!string.IsNullOrWhiteSpace(_error)) { <p class="error-message" role="alert">@_error</p> }
-                    <button class="button button-primary" type="submit" disabled="@_busy">@(_busy ? "Signing in…" : "Sign in securely")</button>
+                    <button class="button button-primary" type="submit" disabled="@(_busy || !_apiOnline)">
+                        @(_busy ? "Signing in…" : "Sign in")
+                    </button>
+                    @if (!_apiOnline) { <p class="helper-message">The service is temporarily unavailable. Please try again shortly.</p> }
                 </EditForm>
             </section>
         }
         else
         {
-            <section class="metric-grid">
-                <article class="metric-card"><span class="metric-label">ACTIVE PRODUCTS</span><strong>@_products.Count</strong><span class="metric-foot">Loaded from your store</span></article>
-                <article class="metric-card"><span class="metric-label">LOW STOCK ITEMS</span><strong>—</strong><span class="metric-foot">Stock alert endpoint not yet available</span></article>
-                <article class="metric-card"><span class="metric-label">TODAY'S SALES</span><strong>—</strong><span class="metric-foot">Checkout endpoint not yet available</span></article>
+            <section class="workspace-toolbar">
+                <div>
+                    <p class="eyebrow">CATALOGUE</p>
+                    <h2>Your products</h2>
+                    <p class="muted">Live catalogue data from your store.</p>
+                </div>
+                <span class="count-pill">@_products.Count products</span>
             </section>
-            <section class="panel products-panel">
-                <div class="section-heading"><div><p class="eyebrow">CATALOGUE</p><h2>Your products</h2></div><span class="count-pill">@_products.Count items</span></div>
-                @if (_products.Count == 0)
+
+            <section class="panel products-panel" aria-label="Product catalogue">
+                @if (_loadingProducts)
                 {
-                    <div class="empty-state"><strong>No products found</strong><p class="muted">Your catalogue is empty or the API returned no active products.</p></div>
+                    <div class="empty-state"><strong>Loading catalogue…</strong><p class="muted">Retrieving the latest product data.</p></div>
+                }
+                else if (!string.IsNullOrWhiteSpace(_productsError))
+                {
+                    <div class="empty-state"><strong>Could not load products</strong><p class="muted">@_productsError</p><button class="button button-quiet" @onclick="LoadProductsAsync">Try again</button></div>
+                }
+                else if (_products.Count == 0)
+                {
+                    <div class="empty-state"><strong>Your catalogue is empty</strong><p class="muted">Products will appear here once they have been added to your store.</p></div>
                 }
                 else
                 {
-                    <div class="table-wrap"><table><thead><tr><th>PRODUCT</th><th>SKU</th><th>AVAILABLE</th><th>UNIT PRICE</th></tr></thead><tbody>
-                    @foreach (var item in _products)
-                    {
-                        <tr><td><strong>@item.Name</strong></td><td>@item.Sku</td><td>@item.Available</td><td>@item.UnitPrice.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"))</td></tr>
-                    }
-                    </tbody></table></div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th scope="col">PRODUCT</th><th scope="col">SKU</th><th scope="col">AVAILABLE</th><th scope="col">UNIT PRICE</th></tr></thead>
+                            <tbody>
+                                @foreach (var item in _products)
+                                {
+                                    <tr>
+                                        <td><strong>@item.Name</strong></td>
+                                        <td><span class="sku">@item.Sku</span></td>
+                                        <td>@item.Available</td>
+                                        <td>@item.UnitPrice.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="table-note">Prices are shown in South African Rand (ZAR).</p>
                 }
             </section>
+            <p class="permission-note">Signed in as @_displayName · @_role access. Permissions are enforced by the API.</p>
         }
+
         @if (!string.IsNullOrWhiteSpace(_notice)) { <p class="notice-message" role="status">@_notice</p> }
     </main>
-    <footer class="dashboard-footer"><span>ShopPulse · Smarter operations. Less waste. Better business.</span><span>Prices displayed in South African Rand (ZAR)</span></footer>
+    <footer class="dashboard-footer"><span>ShopPulse · Smarter operations. Less waste. Better business.</span><span>Store data is served securely by the ShopPulse API.</span></footer>
 </div>
 
 @code {
@@ -85,40 +113,98 @@
     private readonly List<ProductRow> _products = [];
     private bool _signedIn;
     private bool _busy;
+    private bool _loadingProducts;
+    private bool _apiOnline;
+    private string _displayName = "there";
+    private string _role = "";
     private string? _error;
+    private string? _productsError;
     private string? _notice;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var response = await Http.GetAsync("health");
+            _apiOnline = response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException) { _apiOnline = false; }
+    }
 
     private async Task LoginAsync()
     {
-        _busy = true; _error = null;
+        _busy = true;
+        _error = null;
         try
         {
-            var response = await Http.PostAsJsonAsync("api/auth/login", new { email = _login.Email.Trim(), password = _login.Password });
-            if (!response.IsSuccessStatusCode) { _error = "Sign-in failed. Check your details and try again."; return; }
+            using var response = await Http.PostAsJsonAsync("api/auth/login",
+                new { email = _login.Email.Trim(), password = _login.Password });
+            if (!response.IsSuccessStatusCode)
+            {
+                _error = response.StatusCode == System.Net.HttpStatusCode.Unauthorized
+                    ? "Email or password is incorrect."
+                    : "Sign-in is temporarily unavailable. Please try again.";
+                return;
+            }
+
             using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>();
-            var token = payload?.RootElement.GetProperty("accessToken").GetString();
-            if (string.IsNullOrWhiteSpace(token)) { _error = "The API did not return an access token."; return; }
+            var root = payload?.RootElement;
+            var token = root?.TryGetProperty("accessToken", out var tokenElement) == true
+                ? tokenElement.GetString() : null;
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                _error = "The service returned an invalid sign-in response.";
+                return;
+            }
+
+            var user = root!.Value.GetProperty("user");
+            _displayName = user.TryGetProperty("displayName", out var name) ? name.GetString() ?? "there" : "there";
+            _role = user.TryGetProperty("role", out var role) ? role.GetString() ?? "Staff" : "Staff";
             Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             _signedIn = true;
             await LoadProductsAsync();
         }
-        catch (HttpRequestException) { _error = "Could not reach the ShopPulse API. Check the API URL and CORS settings."; }
-        catch (Exception) { _error = "Something went wrong while signing in. Please try again."; }
+        catch (HttpRequestException) { _error = "Could not reach the API. Check the service URL and CORS configuration."; }
+        catch (JsonException) { _error = "The API returned an unexpected response."; }
         finally { _busy = false; }
     }
 
     private async Task LoadProductsAsync()
     {
-        var items = await Http.GetFromJsonAsync<List<ProductRow>>("api/products");
-        _products.Clear();
-        if (items is not null) _products.AddRange(items);
+        _loadingProducts = true;
+        _productsError = null;
+        try
+        {
+            using var response = await Http.GetAsync("api/products");
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                Http.DefaultRequestHeaders.Authorization = null;
+                _signedIn = false;
+                _productsError = "Your session has expired. Please sign in again.";
+                return;
+            }
+            if (!response.IsSuccessStatusCode)
+            {
+                _productsError = "The API could not retrieve your catalogue.";
+                return;
+            }
+            var items = await response.Content.ReadFromJsonAsync<List<ProductRow>>();
+            _products.Clear();
+            if (items is not null) _products.AddRange(items);
+        }
+        catch (HttpRequestException) { _productsError = "Could not connect to the API."; }
+        finally { _loadingProducts = false; }
     }
 
     private async Task LogoutAsync()
     {
-        try { await Http.PostAsync("api/auth/logout", null); } catch { }
+        try { await Http.PostAsync("api/auth/logout", null); } catch (HttpRequestException) { }
         Http.DefaultRequestHeaders.Authorization = null;
-        _products.Clear(); _signedIn = false; _login.Password = "";
+        _products.Clear();
+        _signedIn = false;
+        _login.Password = "";
+        _displayName = "there";
+        _role = "";
         _notice = "You have signed out.";
     }
 
