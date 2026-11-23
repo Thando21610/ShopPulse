@@ -111,8 +111,11 @@ public sealed class OperationsController : ControllerBase
         foreach (var line in normalized)
         {
             var product = products[line.ProductId];
+            // Never allocate stock whose expiry date is before the shop's SAST business date.
+            var shopToday = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
             var batches = await _db.StockBatches
-                .Where(x => x.ProductId == product.Id && x.RemainingQuantity > 0)
+                .Where(x => x.ProductId == product.Id && x.RemainingQuantity > 0
+                    && (x.ExpiryDate == null || x.ExpiryDate >= shopToday))
                 .OrderBy(x => x.ExpiryDate ?? DateOnly.MaxValue)
                 .ThenBy(x => x.ReceivedAtUtc)
                 .ToListAsync(ct);
