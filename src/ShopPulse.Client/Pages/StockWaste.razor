@@ -1,0 +1,57 @@
+@page "/stock/waste"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Record waste | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Inventory</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">INVENTORY · LOSS CONTROL</p><h1>Record waste</h1><p class="muted">Record expired, damaged, missing or spoiled stock against its batch.</p></section>
+    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+    <section class="panel form-panel">
+        <EditForm Model="_form" OnValidSubmit="Submit">
+            <div class="form-grid">
+                <div class="field-group full"><label for="batch">Stock batch</label><InputSelect id="batch" class="form-control" @bind-Value="_form.BatchId"><option value="">Choose a batch</option>@foreach(var b in _batches){<option value="@b.Id">@b.ProductName · @b.RemainingQuantity available · @b.BatchReference</option>}</InputSelect></div>
+                <div class="field-group"><label for="quantity">Quantity to write off</label><InputNumber id="quantity" class="form-control" @bind-Value="_form.Quantity" min="1" /></div>
+                <div class="field-group"><label for="reason">Reason</label><InputSelect id="reason" class="form-control" @bind-Value="_form.Reason"><option>Expired</option><option>Damaged</option><option>Missing</option><option>Spoiled</option><option>Other</option></InputSelect></div>
+                <div class="field-group full"><label for="notes">Notes (optional)</label><InputTextArea id="notes" class="form-control" @bind-Value="_form.Notes" maxlength="500" /></div>
+            </div>
+            <p class="muted small-note">The API verifies the batch, checks available quantity and records the stock movement and audit event together.</p>
+            <button class="button button-primary" type="submit" disabled="@_busy || _batches.Count == 0">@(_busy ? "Saving…" : "Record waste")</button>
+        </EditForm>
+    </section>
+    @if (_success) { <div class="toast-inline" role="status">Waste recorded and stock updated.</div> }
+</main>
+
+@code {
+    private List<BatchOption> _batches = [];
+    private WasteForm _form = new();
+    private bool _busy, _success;
+    private string? _error;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
+        try { _batches = await Http.GetFromJsonAsync<List<BatchOption>>("api/stock/batches") ?? []; }
+        catch (HttpRequestException) { _error = "Could not load stock batches."; }
+    }
+    private async Task Submit()
+    {
+        var batch = _batches.FirstOrDefault(x => x.Id == _form.BatchId);
+        if (batch is null) { _error = "Choose a stock batch."; return; }
+        if (_form.Quantity < 1 || _form.Quantity > batch.RemainingQuantity) { _error = $"Enter a quantity from 1 to {batch.RemainingQuantity}."; return; }
+        _busy = true; _error = null; _success = false;
+        try
+        {
+            using var response = await Http.PostAsJsonAsync("api/stock/waste", new { productId = batch.ProductId, stockBatchId = batch.Id, quantity = _form.Quantity, reason = _form.Reason, notes = _form.Notes });
+            if (response.IsSuccessStatusCode) { _success = true; _form = new(); _batches = await Http.GetFromJsonAsync<List<BatchOption>>("api/stock/batches") ?? []; return; }
+            var p = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
+            _error = p?.RootElement.TryGetProperty("message", out var m) == true ? m.GetString() : p?.RootElement.TryGetProperty("detail", out var d) == true ? d.GetString() : "Waste could not be recorded.";
+        }
+        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        finally { _busy = false; }
+    }
+    private sealed class WasteForm { public Guid BatchId { get; set; } public int Quantity { get; set; } = 1; public string Reason { get; set; } = "Expired"; public string? Notes { get; set; } }
+    private sealed class BatchOption { public Guid Id { get; set; } public Guid ProductId { get; set; } public string ProductName { get; set; } = ""; public string? BatchReference { get; set; } public int RemainingQuantity { get; set; } }
+}
