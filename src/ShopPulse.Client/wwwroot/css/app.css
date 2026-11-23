@@ -329,3 +329,16 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
     border-radius: 18px 18px 0 0;
   }
 }
+
+
+/* Current-page and keyboard navigation feedback */
+.workspace-nav a.active {
+  color: var(--accent);
+  background: #eaf2f7;
+  border-color: #cbdce8;
+  font-weight: 750;
+}
+.workspace-nav a:focus-visible {
+  outline: 3px solid rgba(11, 95, 138, .28);
+  outline-offset: 2px;
+}
