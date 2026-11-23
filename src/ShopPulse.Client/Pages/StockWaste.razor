@@ -22,6 +22,14 @@
     {
         <section class="panel empty-state" role="status">Loading stock batches…</section>
     }
+    else if (_batchLoadFailed)
+    {
+        <section class="panel empty-state">
+            <strong>Stock batches could not be loaded</strong>
+            <p class="muted">Check your connection and try again. No stock has been changed.</p>
+            <button class="button button-quiet" @onclick="LoadBatches" disabled="@_loadingBatches">Retry</button>
+        </section>
+    }
     else if (_batches.Count == 0)
     {
         <section class="panel empty-state">
@@ -54,7 +62,7 @@
     private List<BatchOption> _batches = [];
     private WasteForm _form = new();
     private EditContext _editContext = default!;
-    private bool _busy, _success, _forbidden, _loadingBatches = true;
+    private bool _busy, _success, _forbidden, _loadingBatches = true, _batchLoadFailed;
     private string? _error;
     protected override async Task OnInitializedAsync()
     {
@@ -62,8 +70,15 @@
         _editContext.OnFieldChanged += (_, _) => ApiErrorFormatter.ClearServerValidationErrors(_editContext);
         if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
         if (Session.User?.Role != "Owner" && Session.User?.CanAdjustStock != true) { _forbidden = true; return; }
+        await LoadBatches();
+    }
+    private async Task LoadBatches()
+    {
+        _loadingBatches = true;
+        _batchLoadFailed = false;
+        _error = null;
         try { _batches = await Http.GetFromJsonAsync<List<BatchOption>>("api/stock/batches") ?? []; }
-        catch (HttpRequestException) { _error = "Could not load stock batches."; }
+        catch (HttpRequestException) { _batchLoadFailed = true; _error = "Could not load stock batches."; }
         finally { _loadingBatches = false; }
     }
     private async Task Submit()
