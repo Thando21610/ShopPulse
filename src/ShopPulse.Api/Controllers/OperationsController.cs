@@ -52,10 +52,6 @@ public sealed class OperationsController : ControllerBase
             return Failure(400, "VALIDATION_FAILED", "Payment method must be Cash or Card.");
         if (method == "Card" && !request.CardPaymentConfirmed)
             return Failure(400, "VALIDATION_FAILED", "Confirm that the payment was approved on the external card terminal.");
-        if (method == "Cash" && !await _db.CashShifts.AnyAsync(
-                x => x.OperatorUserId == _current.UserId && x.Status == "Open", ct))
-            return Conflict(new { code = "CASH_SHIFT_REQUIRED", message = "Open your cash shift before completing a cash sale." });
-
         var normalized = request.Items.GroupBy(x => x.ProductId)
             .Select(g => new SaleLineRequest(g.Key, g.Sum(x => x.Quantity)))
             .OrderBy(x => x.ProductId).ToArray();
@@ -73,6 +69,12 @@ public sealed class OperationsController : ControllerBase
             await transaction.CommitAsync(ct);
             return StatusCode(previous.StatusCode, replay);
         }
+
+        // Validate the open cash shift only for a new sale. Idempotent replays
+        // must still return the original receipt if the shift was closed meanwhile.
+        if (method == "Cash" && !await _db.CashShifts.AnyAsync(
+                x => x.OperatorUserId == _current.UserId && x.Status == "Open", ct))
+            return Conflict(new { code = "CASH_SHIFT_REQUIRED", message = "Open your cash shift before completing a cash sale." });
 
         var productIds = normalized.Select(x => x.ProductId).ToArray();
         var products = await _db.Products.Where(x => productIds.Contains(x.Id) && x.IsActive).ToDictionaryAsync(x => x.Id, ct);
