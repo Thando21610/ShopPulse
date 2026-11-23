@@ -31,6 +31,7 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("auth")]
     public async Task<IActionResult> Login([FromBody] LoginRequest req, CancellationToken ct)
     {
+        if (!IsAllowedRefreshOrigin()) return Forbid();
         if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
             return Problem(statusCode: 400, title: "Validation failed",
                 detail: "Email and password are required.",
