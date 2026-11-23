@@ -200,8 +200,8 @@
         finally { _busy = false; }
     }
     private void ToggleRushMode() => _rushMode = !_rushMode;
-    private void OpenPaymentModal() { _error = null; _showPaymentModal = true; }
-    private void ClosePaymentModal() { if (!_busy) _showPaymentModal = false; }
+    private void OpenPaymentModal() { _error = null; _cardPaymentConfirmed = false; ResetIdempotencyKey(); _showPaymentModal = true; }
+    private void ClosePaymentModal() { if (!_busy) { _showPaymentModal = false; _cardPaymentConfirmed = false; ResetIdempotencyKey(); } }
     private void ResetIdempotencyKey() => _idempotencyKey = null;
     private void OnPaymentMethodChanged() { ResetIdempotencyKey(); _cardPaymentConfirmed = false; }
     private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _cardPaymentConfirmed = false; _showPaymentModal = false; ResetIdempotencyKey(); _ = LoadProducts(); }
