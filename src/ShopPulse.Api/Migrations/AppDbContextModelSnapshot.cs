@@ -37,6 +37,12 @@ namespace ShopPulse.Api.Migrations
                     b.Property<bool>("CanRefundSales")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("CanManageProducts")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanReceiveStock")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
