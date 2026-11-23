@@ -3,6 +3,7 @@
 <nav class="workspace-nav" aria-label="Store operations">
     <a href="/"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span> Overview</a>
     <a href="/sales"><span class="material-symbols-outlined" aria-hidden="true">point_of_sale</span> New sale</a>
+    @if (Session.User?.Role == "Owner" || Session.User?.CanRefundSales == true) { <a href="/sales/refunds"><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span> Refund a sale</a> }
     <a href="/inventory"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Inventory</a>
     @if (Session.User?.Role == "Owner")
     {
