@@ -74,8 +74,81 @@ public sealed class CanAdjustStockAuthorizationTests
         }
     }
 
+
+    [Fact]
+    public async Task Operator_WithPermission_CanRefundSales()
+    {
+        var businessId = Guid.NewGuid(); var userId = Guid.NewGuid();
+        var (provider, connection) = await CreateProviderAsync(businessId, userId, false, businessId, canRefundSales: true);
+        await using (connection) await using (provider)
+        {
+            var result = await AuthorizeAsync(provider, userId, "Operator", ShopPulsePolicies.CanRefundSales);
+            Assert.True(result.Succeeded);
+        }
+    }
+
+    [Fact]
+    public async Task Operator_WithoutPermission_CannotRefundSales()
+    {
+        var businessId = Guid.NewGuid(); var userId = Guid.NewGuid();
+        var (provider, connection) = await CreateProviderAsync(businessId, userId, false, businessId);
+        await using (connection) await using (provider)
+        {
+            var result = await AuthorizeAsync(provider, userId, "Operator", ShopPulsePolicies.CanRefundSales);
+            Assert.False(result.Succeeded);
+        }
+    }
+
+    [Fact]
+    public async Task Operator_WithPermission_CanManageProducts()
+    {
+        var businessId = Guid.NewGuid(); var userId = Guid.NewGuid();
+        var (provider, connection) = await CreateProviderAsync(businessId, userId, false, businessId, canManageProducts: true);
+        await using (connection) await using (provider)
+        {
+            var result = await AuthorizeAsync(provider, userId, "Operator", ShopPulsePolicies.CanManageProducts);
+            Assert.True(result.Succeeded);
+        }
+    }
+
+    [Fact]
+    public async Task Operator_WithoutPermission_CannotManageProducts()
+    {
+        var businessId = Guid.NewGuid(); var userId = Guid.NewGuid();
+        var (provider, connection) = await CreateProviderAsync(businessId, userId, false, businessId);
+        await using (connection) await using (provider)
+        {
+            var result = await AuthorizeAsync(provider, userId, "Operator", ShopPulsePolicies.CanManageProducts);
+            Assert.False(result.Succeeded);
+        }
+    }
+
+    [Fact]
+    public async Task Operator_WithPermission_CanReceiveStock()
+    {
+        var businessId = Guid.NewGuid(); var userId = Guid.NewGuid();
+        var (provider, connection) = await CreateProviderAsync(businessId, userId, false, businessId, canReceiveStock: true);
+        await using (connection) await using (provider)
+        {
+            var result = await AuthorizeAsync(provider, userId, "Operator", ShopPulsePolicies.ReceiveStock);
+            Assert.True(result.Succeeded);
+        }
+    }
+
+    [Fact]
+    public async Task Operator_WithoutPermission_CannotReceiveStock()
+    {
+        var businessId = Guid.NewGuid(); var userId = Guid.NewGuid();
+        var (provider, connection) = await CreateProviderAsync(businessId, userId, false, businessId);
+        await using (connection) await using (provider)
+        {
+            var result = await AuthorizeAsync(provider, userId, "Operator", ShopPulsePolicies.ReceiveStock);
+            Assert.False(result.Succeeded);
+        }
+    }
+
     private static async Task<AuthorizationResult> AuthorizeAsync(
-        ServiceProvider provider, Guid userId, string role)
+        ServiceProvider provider, Guid userId, string role, string policy = ShopPulsePolicies.CanAdjustStock)
     {
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
         [
@@ -86,11 +159,11 @@ public sealed class CanAdjustStockAuthorizationTests
         using var scope = provider.CreateScope();
         var authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
         return await authorization.AuthorizeAsync(
-            principal, resource: null, ShopPulsePolicies.CanAdjustStock);
+            principal, resource: null, policy);
     }
 
     private static async Task<(ServiceProvider Provider, SqliteConnection Connection)> CreateProviderAsync(
-        Guid currentBusinessId, Guid userId, bool canAdjustStock, Guid userBusinessId)
+        Guid currentBusinessId, Guid userId, bool canAdjustStock, Guid userBusinessId, bool canRefundSales = false, bool canManageProducts = false, bool canReceiveStock = false)
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -125,6 +198,9 @@ public sealed class CanAdjustStockAuthorizationTests
                 DisplayName = "Test Operator",
                 Role = "Operator",
                 CanAdjustStock = canAdjustStock,
+                CanRefundSales = canRefundSales,
+                CanManageProducts = canManageProducts,
+                CanReceiveStock = canReceiveStock,
                 IsActive = true
             });
             await db.SaveChangesAsync();
@@ -136,6 +212,9 @@ public sealed class CanAdjustStockAuthorizationTests
         services.AddSingleton<ICurrentBusiness>(currentBusiness);
         services.AddScoped(_ => new AppDbContext(options, currentBusiness));
         services.AddScoped<IAuthorizationHandler, CanAdjustStockHandler>();
+        services.AddScoped<IAuthorizationHandler, CanRefundSalesHandler>();
+        services.AddScoped<IAuthorizationHandler, CanManageProductsHandler>();
+        services.AddScoped<IAuthorizationHandler, CanReceiveStockHandler>();
 
         return (services.BuildServiceProvider(), connection);
     }
