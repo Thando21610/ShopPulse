@@ -1,4 +1,5 @@
 @page "/cash-shift"
+@using System.Text.Json
 @using System.Net.Http.Json
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
@@ -136,7 +137,7 @@
                 await LoadMovements();
             }
         }
-        catch (HttpRequestException) { _error = "Could not load the current cash shifts. Check your session and try again."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "Could not load the current cash shifts. Check your session and try again."; }
     }
 
     private async Task SelectShift()
@@ -153,7 +154,7 @@
         _movements = [];
         if (_shift is null) return;
         try { _movements = await Http.GetFromJsonAsync<List<CashMovementInfo>>($"api/cash-shifts/{_shift.Id}/movements") ?? []; }
-        catch (HttpRequestException) { _error = "Cash movement history could not be loaded."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "Cash movement history could not be loaded."; }
     }
 
     private async Task RecordMovement()
@@ -181,7 +182,7 @@
             _movement = new();
             await LoadMovements();
         }
-        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
     }
 
@@ -200,7 +201,7 @@
             Toast.ShowSuccess("Cash shift opened.");
             await Load();
         }
-        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
     }
 
@@ -220,7 +221,7 @@
             Toast.ShowSuccess("Cash shift closed and reconciled.");
             await Load();
         }
-        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
     }
 
