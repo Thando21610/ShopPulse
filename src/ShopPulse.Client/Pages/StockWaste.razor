@@ -3,6 +3,7 @@
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
 @inject NavigationManager Nav
+@inject ShopPulse.Client.ToastService Toast
 
 <PageTitle>Record waste | ShopPulse</PageTitle>
 <main class="feature-page">
@@ -45,7 +46,7 @@
         try
         {
             using var response = await Http.PostAsJsonAsync("api/stock/waste", new { productId = batch.ProductId, stockBatchId = batch.Id, quantity = _form.Quantity, reason = _form.Reason, notes = _form.Notes });
-            if (response.IsSuccessStatusCode) { _success = true; _form = new(); _batches = await Http.GetFromJsonAsync<List<BatchOption>>("api/stock/batches") ?? []; return; }
+            if (response.IsSuccessStatusCode) { _success = true; _form = new(); Toast.ShowSuccess("Waste recorded and stock updated."); _batches = await Http.GetFromJsonAsync<List<BatchOption>>("api/stock/batches") ?? []; return; }
             var p = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
             _error = p?.RootElement.TryGetProperty("message", out var m) == true ? m.GetString() : p?.RootElement.TryGetProperty("detail", out var d) == true ? d.GetString() : "Waste could not be recorded.";
         }
