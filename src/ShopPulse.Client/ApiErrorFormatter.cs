@@ -1,11 +1,31 @@
 using System.Net;
 using System.Text.Json;
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace ShopPulse.Client;
 
 public static class ApiErrorFormatter
 {
+    private static readonly ConditionalWeakTable<EditContext, ValidationMessageStore> ValidationStores = new();
+
+    public static void ClearServerValidationErrors(EditContext editContext)
+    {
+        if (ValidationStores.TryGetValue(editContext, out var store))
+        {
+            store.Clear();
+            editContext.NotifyValidationStateChanged();
+        }
+    }
+
+    public static void SetFieldValidationError(EditContext editContext, string fieldName, string message)
+    {
+        var store = ValidationStores.GetValue(editContext, context => new ValidationMessageStore(context));
+        var field = new FieldIdentifier(editContext.Model, fieldName);
+        store.Clear(field);
+        store.Add(field, message);
+        editContext.NotifyValidationStateChanged();
+    }
     public static async Task<string> FormatAsync(
         HttpResponseMessage response,
         string fallback,
@@ -64,7 +84,7 @@ public static class ApiErrorFormatter
             if (!document.RootElement.TryGetProperty("errors", out var errors)
                 || errors.ValueKind != JsonValueKind.Object) return false;
 
-            var store = new ValidationMessageStore(editContext);
+            var store = ValidationStores.GetValue(editContext, context => new ValidationMessageStore(context));
             store.Clear();
             var properties = editContext.Model.GetType().GetProperties();
             var applied = false;
