@@ -69,7 +69,7 @@
                             <ValidationMessage For="@(() => _login.Password)" />
                         </div>
                         <button class="button button-primary" type="submit" disabled="@(_busy || !_apiOnline)">
-                            @(_busy ? "Signing in…" : "Sign in securely")
+                            <span class="material-symbols-outlined" aria-hidden="true">login</span>@(_busy ? "Signing in…" : "Sign in securely")
                         </button>
                         @if (!_apiOnline) { <p class="helper-message">ShopPulse is having trouble reaching the service. Please try again shortly.</p> }
                     </EditForm>
@@ -81,7 +81,7 @@
             <section class="workspace-toolbar">
                 <div>
                     <p class="eyebrow">CATALOGUE</p>
-                    <h2>Your products</h2>
+                    <h2><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Your products</h2>
                     <p class="muted">Live catalogue data from your store.</p>
                 </div>
                 <span class="count-pill">@_products.Count products</span>
