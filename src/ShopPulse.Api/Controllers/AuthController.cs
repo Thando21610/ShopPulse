@@ -95,6 +95,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("logout")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Logout(CancellationToken ct)
     {
         if (!IsAllowedRefreshOrigin()) return Forbid();
