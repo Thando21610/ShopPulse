@@ -89,7 +89,9 @@ public class AuthService
                 BusinessId = user.BusinessId,
                 BusinessName = user.Business.Name,
                 CanAdjustStock = user.CanAdjustStock,
-                CanRefundSales = user.CanRefundSales
+                CanRefundSales = user.CanRefundSales,
+                CanManageProducts = user.CanManageProducts,
+                CanReceiveStock = user.CanReceiveStock
             },
             RefreshTokenRaw = raw
         });
@@ -245,4 +247,6 @@ public record UserDto
     public string BusinessName { get; init; } = default!;
     public bool CanAdjustStock { get; init; }
     public bool CanRefundSales { get; init; }
+    public bool CanManageProducts { get; init; }
+    public bool CanReceiveStock { get; init; }
 }
