@@ -178,3 +178,33 @@ Partial refunds are not implemented; the current workflow is a full-sale refund.
 - Test duplicate checkout submission, lost network response, concurrent sales of the same batch and stale stock conflict handling.
 - Verify receipt printing on the intended receipt printer. Browser print is implemented; thermal-printer-specific integration is not.
 - Verify external card-terminal payment and refunds out of band. No card gateway is integrated.
+
+
+## Full solution-design use-case coverage
+
+| Use case | Frontend journey | Status / boundary |
+|---|---|---|
+| UC-01 Authenticate | Sign in, session restore, refresh, sign out | Implemented |
+| UC-02 Manage products | Create, edit, deactivate products | Implemented; owner or explicitly permitted operator |
+| UC-03 Receive stock | Receive delivery into a traceable batch | Implemented; owner or explicitly permitted operator |
+| UC-04 View inventory | Product stock, batches and movement ledger | Implemented |
+| UC-05 Process a sale | Search, basket, Rush mode, cash/card confirmation, receipt and print | Implemented; external card terminal is separate, discounts are not enabled |
+| UC-06 Refund a sale | Find original receipt, full refund, optional batch restock | Implemented; refund is recorded only after the operator confirms the external refund was issued |
+| UC-07 Record waste | Select batch, quantity, reason and notes | Implemented; owner or explicitly permitted operator |
+| UC-08 Monitor expiry | Expired, expiring-soon and safe stock; FEFO priority | Implemented |
+| UC-09 Cash shift | Open own shift, cash in/out, review movement history, reconcile and close | Implemented; owner can review/close staff shifts |
+| UC-10 Anonymous queue | Anonymous ticket and now-serving display | Not implemented; explicitly optional and deferred until validated with the shop owner |
+| UC-11 View reports | Daily ZAR sales, refunds, stock, waste and shift metrics | Implemented; owner only |
+| UC-12 Review audit history | Filter and inspect read-only audit events | Implemented; owner only |
+| UC-13 Manage staff | Create operator, edit permissions, deactivate account | Implemented; initial password is manual, no invitation/reset email |
+| UC-14 Configure business | Edit business name and address | Implemented; owner only |
+
+### Deliberate scope limits
+
+- No card acquiring/payment gateway is integrated. Card transactions require external terminal approval and an explicit confirmation in ShopPulse.
+- Refunds are full-value against the original payment method; partial refunds are not currently supported.
+- Discounts are currently fixed at zero; no discount approval workflow is exposed.
+- Anonymous queue management remains optional and is not part of the current MVP.
+- Staff password reset and invitation email are not integrated.
+- Receipt printing uses the browser print dialog; dedicated thermal-printer integration is not included.
+- Product and checkout tiles use category-coloured initials. Remote product/hero images are intentionally omitted to match the approved low-bandwidth design.
