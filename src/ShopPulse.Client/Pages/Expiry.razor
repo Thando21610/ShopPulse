@@ -23,6 +23,14 @@
                 @if (!_batches.Any(x => x.Status == "ExpiringSoon")) { <p class="muted">No stock expiring in this period.</p> }
                 @foreach(var b in _batches.Where(x => x.Status == "ExpiringSoon")) { <article class="expiry-item"><div><strong>@b.ProductName</strong><small>@b.BatchReference · @b.RemainingQuantity units</small></div><span class="expiry-date">@b.ExpiryDate?.ToString("dd MMM yyyy")</span><span class="priority-label">Prioritise this batch</span></article> }
             </section>
+            <section class="panel expiry-panel safe">
+                <div class="panel-heading"><h2>Safe stock</h2><span class="count-pill">@_batches.Count(x => x.Status == "Safe")</span></div>
+                @if (!_batches.Any(x => x.Status == "Safe")) { <p class="muted">No later-dated batches in the current list.</p> }
+                @foreach (var b in _batches.Where(x => x.Status == "Safe"))
+                {
+                    <article class="expiry-item"><div><strong>@b.ProductName</strong><small>@b.BatchReference · @b.RemainingQuantity units</small></div><span class="expiry-date">@b.ExpiryDate?.ToString("dd MMM yyyy")</span></article>
+                }
+            </section>
         </div>
     }
 </main>
