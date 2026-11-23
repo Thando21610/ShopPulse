@@ -676,6 +676,10 @@ public sealed class OperationsController : ControllerBase
         var closedShifts = await _db.CashShifts.Where(x => x.ClosedAtUtc >= start && x.ClosedAtUtc < end && x.Status == "Closed")
             .ToListAsync(ct);
         var cashVariance = closedShifts.Sum(x => x.Variance ?? 0m);
+        var cashInTotal = await _db.CashMovements.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end && x.Direction == "In")
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+        var cashOutTotal = await _db.CashMovements.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end && x.Direction == "Out")
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
         return Ok(new
         {
             date = selected, salesCount = count, grossSalesTotal = grossSales, salesTotal = total,
@@ -685,7 +689,7 @@ public sealed class OperationsController : ControllerBase
             inventoryUnits = inventory.Sum(x => x.Available),
             lowStockProducts = inventory.Count(x => x.Available <= x.MinimumStockLevel),
             staffActions, unitsReceived, unitsSold = Math.Abs(unitsSold),
-            stockAdjustments, closedShifts = closedShifts.Count, cashVariance, currency = "ZAR"
+            stockAdjustments, closedShifts = closedShifts.Count, cashVariance, cashIn = cashInTotal, cashOut = cashOutTotal, currency = "ZAR"
         });
     }
 
