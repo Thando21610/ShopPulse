@@ -33,6 +33,7 @@ public sealed class OperationsController : ControllerBase
     public sealed record OpenCashShiftRequest(decimal OpeningFloat);
     public sealed record CloseCashShiftRequest(Guid ShiftId, decimal ActualCash, string? VarianceReason);
     public sealed record RefundSaleRequest(string Reason, bool RestockItems, bool RefundIssued);
+    public sealed record CashMovementRequest(Guid ShiftId, string Direction, decimal Amount, string Reason);
 
     [HttpPost("sales")]
     [Authorize(Policy = ShopPulsePolicies.CompleteSales)]
@@ -540,6 +541,52 @@ public sealed class OperationsController : ControllerBase
         return Created($"/api/cash-shifts/{shift.Id}", new { shift.Id, shift.OpeningFloat, shift.OpenedAtUtc, shift.Status });
     }
 
+    [HttpGet("cash-shifts/{id:guid}/movements")]
+    public async Task<IActionResult> CashMovements(Guid id, CancellationToken ct)
+    {
+        var shift = await _db.CashShifts.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (shift is null) return NotFound(new { code = "SHIFT_NOT_FOUND", message = "Cash shift not found." });
+        if (!string.Equals(_current.Role, "Owner", StringComparison.OrdinalIgnoreCase)
+            && shift.OperatorUserId != _current.UserId) return Forbid();
+
+        var movements = await _db.CashMovements.AsNoTracking()
+            .Where(x => x.CashShiftId == id)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new { x.Id, x.Direction, x.Amount, x.Reason, x.ActorUserId, x.CreatedAtUtc })
+            .ToListAsync(ct);
+        return Ok(movements);
+    }
+
+    [HttpPost("cash-shifts/movements")]
+    public async Task<IActionResult> RecordCashMovement([FromBody] CashMovementRequest request, CancellationToken ct)
+    {
+        var direction = request.Direction?.Trim();
+        var reason = request.Reason?.Trim();
+        if (request.ShiftId == Guid.Empty || direction is not ("In" or "Out")
+            || request.Amount <= 0 || request.Amount > 10000000m
+            || string.IsNullOrWhiteSpace(reason) || reason.Length > 500)
+            return Failure(400, "VALIDATION_FAILED", "Select a shift, choose cash in or out, enter a positive amount and provide a reason.");
+
+        var shift = await _db.CashShifts.FirstOrDefaultAsync(x => x.Id == request.ShiftId && x.Status == "Open", ct);
+        if (shift is null) return Conflict(new { code = "SHIFT_NOT_OPEN", message = "Cash movements can only be recorded against an open shift." });
+        if (!string.Equals(_current.Role, "Owner", StringComparison.OrdinalIgnoreCase)
+            && shift.OperatorUserId != _current.UserId) return Forbid();
+
+        var movement = new CashMovement
+        {
+            Id = Guid.NewGuid(), BusinessId = _current.BusinessId, CashShiftId = shift.Id,
+            OperatorUserId = shift.OperatorUserId, Direction = direction!, Amount = decimal.Round(request.Amount, 2),
+            Reason = reason, ActorUserId = _current.UserId, CreatedAtUtc = DateTimeOffset.UtcNow
+        };
+        _db.CashMovements.Add(movement);
+        AddAudit("CashMovementRecorded", "CashShift", shift.Id, new { movement.Direction, movement.Amount, movement.Reason, movement.OperatorUserId });
+        await _db.SaveChangesAsync(ct);
+        return Created($"/api/cash-shifts/{shift.Id}/movements/{movement.Id}", new
+        {
+            movement.Id, movement.Direction, movement.Amount, movement.Reason, movement.CreatedAtUtc
+        });
+    }
+
     [HttpPost("cash-shifts/close")]
     [Authorize(Policy = ShopPulsePolicies.CloseCashShift)]
     public async Task<IActionResult> CloseShift([FromBody] CloseCashShiftRequest request, CancellationToken ct)
@@ -564,7 +611,15 @@ public sealed class OperationsController : ControllerBase
                 && x.RefundPaymentMethod == "Cash" && x.RefundedAtUtc >= shift.OpenedAtUtc
                 && x.RefundedAtUtc < DateTimeOffset.UtcNow)
             .SumAsync(x => (decimal?)x.RefundAmount, ct) ?? 0m;
-        var expected = shift.OpeningFloat + cashSales - cashRefunds;
+        var cashIn = await _db.CashMovements.Where(x => x.CashShiftId == shift.Id
+                && x.Direction == "In" && x.CreatedAtUtc >= shift.OpenedAtUtc
+                && x.CreatedAtUtc < DateTimeOffset.UtcNow)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+        var cashOut = await _db.CashMovements.Where(x => x.CashShiftId == shift.Id
+                && x.Direction == "Out" && x.CreatedAtUtc >= shift.OpenedAtUtc
+                && x.CreatedAtUtc < DateTimeOffset.UtcNow)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+        var expected = shift.OpeningFloat + cashSales - cashRefunds + cashIn - cashOut;
         if (decimal.Round(request.ActualCash, 2) != decimal.Round(expected, 2)
             && string.IsNullOrWhiteSpace(request.VarianceReason))
             return Failure(400, "VALIDATION_FAILED", "Enter a variance explanation when counted cash differs from expected cash.");
@@ -574,7 +629,7 @@ public sealed class OperationsController : ControllerBase
         shift.VarianceReason = request.VarianceReason?.Trim();
         shift.ClosedAtUtc = DateTimeOffset.UtcNow;
         shift.Status = "Closed";
-        AddAudit("CashShiftClosed", "CashShift", shift.Id, new { shift.ExpectedCash, shift.ActualCash, shift.Variance, shift.VarianceReason });
+        AddAudit("CashShiftClosed", "CashShift", shift.Id, new { shift.ExpectedCash, shift.ActualCash, shift.Variance, shift.VarianceReason, cashSales, cashRefunds, cashIn, cashOut });
         await _db.SaveChangesAsync(ct);
         return Ok(new { shift.Id, shift.OpeningFloat, shift.ExpectedCash, shift.ActualCash, shift.Variance, shift.VarianceReason, shift.ClosedAtUtc, shift.Status });
     }
