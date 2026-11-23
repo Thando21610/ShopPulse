@@ -130,8 +130,8 @@
             using var response = await Http.PutAsJsonAsync($"api/staff/{_editing.Id}", new { displayName = _editing.DisplayName, isActive = _editing.IsActive, canAdjustStock = _editing.CanAdjustStock });
             if (!response.IsSuccessStatusCode)
             {
-                using var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
-                _error = problem?.RootElement.TryGetProperty("message", out var message) == true ? message.GetString() : "Staff access could not be updated.";
+                var message = await ApiErrorFormatter.FormatAsync(response, "Staff access could not be updated.");
+                if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
                 return;
             }
             _editing = null;
