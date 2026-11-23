@@ -72,7 +72,7 @@ The browser includes credentials on API calls. The deployed frontend origin must
 
 1. Staff opens New sale and searches by product name or SKU.
 2. Staff adds products and adjusts quantities in the basket.
-3. The client previews subtotal, cash tendered and change.
+3. Staff opens the payment modal, chooses Cash or Card, and reviews the total; cash shows tendered amount/change, while card requires external-terminal approval confirmation.
 4. Cash sales require the operator's own open cash shift; the page checks shift status before enabling checkout.
 5. For card, the operator confirms that a separate external terminal approved the payment. ShopPulse records the method but does not process card details or integrate with a bank terminal.
 6. Client sends POST /api/sales with an Idempotency-Key.
