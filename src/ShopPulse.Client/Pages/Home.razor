@@ -1,9 +1,8 @@
 @page "/"
 @using System.ComponentModel.DataAnnotations
-@using System.Net.Http.Headers
 @using System.Net.Http.Json
-@using System.Text.Json
 @inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
 
 <PageTitle>ShopPulse | Store workspace</PageTitle>
 
@@ -143,7 +142,20 @@
     {
         try { using var response = await Http.GetAsync("health"); _apiOnline = response.IsSuccessStatusCode; }
         catch (HttpRequestException) { _apiOnline = false; }
-        if (!_apiOnline) ShowToast("The service is currently unavailable. Check your connection and try again.", true);
+        if (!_apiOnline)
+        {
+            ShowToast("The service is currently unavailable. Check your connection and try again.", true);
+            return;
+        }
+
+        // Restore the HttpOnly refresh-cookie session before rendering the sign-in state.
+        if (await Session.RestoreAsync())
+        {
+            _signedIn = true;
+            _displayName = Session.User?.DisplayName ?? "there";
+            _role = Session.User?.Role ?? "Staff";
+            await LoadProductsAsync();
+        }
     }
 
     private async Task LoginAsync()
@@ -151,27 +163,19 @@
         _busy = true;
         try
         {
-            using var response = await Http.PostAsJsonAsync("api/auth/login", new { email = _login.Email.Trim(), password = _login.Password });
-            if (!response.IsSuccessStatusCode)
+            var result = await Session.SignInAsync(_login.Email.Trim(), _login.Password);
+            if (!result.Success)
             {
-                ShowToast(response.StatusCode == System.Net.HttpStatusCode.Unauthorized ? "The email or password is incorrect. Check your details and try again." : "We couldn't sign you in right now. Please try again.", true);
+                ShowToast(result.Message ?? "We couldn't sign you in right now. Please try again.", true);
                 return;
             }
-            using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>();
-            var root = payload?.RootElement;
-            var token = root?.TryGetProperty("accessToken", out var tokenElement) == true ? tokenElement.GetString() : null;
-            if (string.IsNullOrWhiteSpace(token)) { ShowToast("The server returned an unexpected sign-in response. Please contact your administrator.", true); return; }
-            var user = root!.Value.GetProperty("user");
-            _displayName = user.TryGetProperty("displayName", out var name) ? name.GetString() ?? "there" : "there";
-            _role = user.TryGetProperty("role", out var role) ? role.GetString() ?? "Staff" : "Staff";
-            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            _displayName = Session.User?.DisplayName ?? "there";
+            _role = Session.User?.Role ?? "Staff";
             _signedIn = true;
             ShowToast("You're signed in. Welcome to your store workspace.");
             await LoadProductsAsync();
         }
-        catch (HttpRequestException) { ShowToast("We couldn't reach ShopPulse. Check your connection and try again.", true); }
-        catch (JsonException) { ShowToast("The server returned an unexpected response. Please try again.", true); }
-        catch (KeyNotFoundException) { ShowToast("Your account response is incomplete. Please contact your administrator.", true); }
         finally { _busy = false; }
     }
 
@@ -183,7 +187,7 @@
             using var response = await Http.GetAsync("api/products");
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
-                Http.DefaultRequestHeaders.Authorization = null; _signedIn = false;
+                Session.Clear(); _signedIn = false;
                 ShowToast("Your session has expired. Please sign in again.", true); return;
             }
             if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
@@ -202,8 +206,8 @@
 
     private async Task LogoutAsync()
     {
-        try { await Http.PostAsync("api/auth/logout", null); } catch (HttpRequestException) { }
-        Http.DefaultRequestHeaders.Authorization = null; _products.Clear(); _signedIn = false;
+        await Session.SignOutAsync();
+        _products.Clear(); _signedIn = false;
         _login.Password = ""; _displayName = "there"; _role = "";
         ShowToast("You have signed out successfully.");
     }
