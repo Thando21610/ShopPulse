@@ -5,6 +5,7 @@
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
 @inject NavigationManager Nav
+@inject Microsoft.JSInterop.IJSRuntime JS
 
 <PageTitle>New sale | ShopPulse</PageTitle>
 <main class="feature-page">
@@ -36,7 +37,7 @@
                     {
                         <button class="product-pick" @onclick="() => Add(product)" disabled="@(product.Available <= 0)">
                             <span class="product-initial" style="@InitialStyle(product.Category)">@Initial(product.Name)</span>
-                            <span class="product-pick-copy"><strong>@product.Name</strong><small>@product.Sku · @_ = ""</small></span>
+                            <span class="product-pick-copy"><strong>@product.Name</strong><small>@product.Sku</small></span>
                             <span class="product-pick-price">@Money(product.UnitPrice)</span>
                             <span class="product-stock">@product.Available left</span>
                         </button>
@@ -139,7 +140,6 @@
     }
     private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _ = LoadProducts(); }
     private async Task PrintReceipt() => await JS.InvokeVoidAsync("window.print");
-    [Microsoft.AspNetCore.Components.Inject] private Microsoft.JSInterop.IJSRuntime JS { get; set; } = default!;
     private static string Money(decimal amount) => amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
     private static string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
     private static string InitialStyle(string? category) => category?.ToLowerInvariant() switch { "bakery" or "bread" => "background:#f4e6d2;color:#80532a", "dairy" => "background:#e3eff8;color:#245a80", "beverages" => "background:#e6f2e9;color:#27643b", _ => "background:#edf0f5;color:#435064" };
