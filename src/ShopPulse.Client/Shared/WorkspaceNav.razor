@@ -12,6 +12,7 @@
     }
     @if (Session.User?.Role == "Owner" || Session.User?.CanAdjustStock == true) { <a href="/stock/waste"><span class="material-symbols-outlined" aria-hidden="true">delete_sweep</span> Record waste</a> }
     <a href="/expiry"><span class="material-symbols-outlined" aria-hidden="true">event_busy</span> Expiry</a>
+    <a href="/stock-rescue"><span class="material-symbols-outlined" aria-hidden="true">savings</span> Stock rescue</a>
     <a href="/cash-shift"><span class="material-symbols-outlined" aria-hidden="true">payments</span> Cash shift</a>
     @if (Session.User?.Role == "Owner")
     {
