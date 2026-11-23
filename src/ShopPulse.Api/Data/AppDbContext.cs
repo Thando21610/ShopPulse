@@ -138,10 +138,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<CashMovement>(e =>
         {
             e.HasKey(x => x.Id);
-            e.Property(x => x.Direction).HasMaxLength(3).IsRequired();
+            e.Property(x => x.Direction).HasMaxLength(8).IsRequired();
             e.Property(x => x.Amount).HasPrecision(18, 2);
             e.Property(x => x.Reason).HasMaxLength(500).IsRequired();
             e.HasIndex(x => new { x.BusinessId, x.CashShiftId, x.CreatedAtUtc });
+            e.HasOne<Business>().WithMany().HasForeignKey(x => x.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
             e.HasOne<CashShift>().WithMany().HasForeignKey(x => x.CashShiftId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
