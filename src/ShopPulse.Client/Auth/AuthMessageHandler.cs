@@ -66,7 +66,7 @@ public sealed class AuthMessageHandler : DelegatingHandler
             catch (HttpRequestException)
             {
                 _tokens.Clear();
-                _navigation.NavigateTo("/");
+                _navigation.NavigateTo("/", forceLoad: true);
                 return response;
             }
             finally
