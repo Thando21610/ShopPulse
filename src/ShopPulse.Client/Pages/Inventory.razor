@@ -12,7 +12,7 @@
     @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
     <div class="metrics-grid inventory-metrics">
         <article class="panel metric-card"><span>Active products</span><strong>@_products.Count</strong><small>In the catalogue</small></article>
-        <article class="panel metric-card"><span>Units on hand</span><strong>@_products.Sum(x => x.Available)</strong><small>Across all active products</small></article>
+        <article class="panel metric-card"><span>Sellable units</span><strong>@_products.Sum(x => x.Available)</strong><small>Across all active products</small></article>
         <article class="panel metric-card"><span>Low stock</span><strong>@_products.Count(x => x.Available <= x.MinimumStockLevel)</strong><small>At or below threshold</small></article>
         <article class="panel metric-card"><span>Tracked batches</span><strong>@_batches.Count</strong><small>With remaining stock</small></article>
     </div>
