@@ -3,4 +3,7 @@
     <Project Path="src/ShopPulse.Api/ShopPulse.Api.csproj" />
     <Project Path="src/ShopPulse.Client/ShopPulse.Client.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ShopPulse.Api.Tests/ShopPulse.Api.Tests.csproj" />
+  </Folder>
 </Solution>
