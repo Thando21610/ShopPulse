@@ -11,8 +11,8 @@ RUN dotnet publish ShopPulse.Api.csproj -c Release -o /app/publish /p:UseAppHost
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 # Npgsql's optional GSSAPI negotiation loads this system library when present.
-RUN apt-get update \\
-    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \\
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/publish ./
