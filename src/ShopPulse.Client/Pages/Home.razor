@@ -148,7 +148,7 @@
         }
 
         // Restore the HttpOnly refresh-cookie session before rendering the sign-in state.
-        if (await Session.RestoreAsync())
+        if (Session.IsAuthenticated)
         {
             _signedIn = true;
             _displayName = Session.User?.DisplayName ?? "there";
