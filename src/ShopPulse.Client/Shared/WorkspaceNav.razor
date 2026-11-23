@@ -1,17 +1,17 @@
 @inject ShopPulse.Client.Auth.AuthSessionService Session
 
 <nav class="workspace-nav" aria-label="Store operations">
-    <a href="/">Overview</a>
-    <a href="/sales">New sale</a>
+    <a href="/"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span> Overview</a>
+    <a href="/sales"><span class="material-symbols-outlined" aria-hidden="true">point_of_sale</span> New sale</a>
     @if (Session.User?.Role == "Owner")
     {
-        <a href="/stock/receive">Receive stock</a>
+        <a href="/stock/receive"><span class="material-symbols-outlined" aria-hidden="true">add_box</span> Receive stock</a>
     }
-    <a href="/stock/waste">Record waste</a>
-    <a href="/expiry">Expiry</a>
-    <a href="/cash-shift">Cash shift</a>
+    <a href="/stock/waste"><span class="material-symbols-outlined" aria-hidden="true">delete_sweep</span> Record waste</a>
+    <a href="/expiry"><span class="material-symbols-outlined" aria-hidden="true">event_busy</span> Expiry</a>
+    <a href="/cash-shift"><span class="material-symbols-outlined" aria-hidden="true">payments</span> Cash shift</a>
     @if (Session.User?.Role == "Owner")
     {
-        <a href="/reports">Reports</a>
+        <a href="/reports"><span class="material-symbols-outlined" aria-hidden="true">bar_chart</span> Reports</a>
     }
 </nav>
