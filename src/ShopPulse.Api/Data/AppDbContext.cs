@@ -87,6 +87,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.ReceiptNumber).HasMaxLength(32);
             e.Property(x => x.RefundAmount).HasPrecision(18, 2);
             e.Property(x => x.RefundReason).HasMaxLength(500);
+            e.Property(x => x.Version).IsConcurrencyToken();
         });
 
         modelBuilder.Entity<SaleItem>(e =>
