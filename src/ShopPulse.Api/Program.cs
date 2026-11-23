@@ -107,6 +107,8 @@ builder.Services
 
 builder.Services.AddScoped<IAuthorizationHandler, CanAdjustStockHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, CanRefundSalesHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, CanReceiveStockHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, CanManageProductsHandler>();
 builder.Services.AddAuthorization(ShopPulsePolicies.AddPolicies);
 
 // ─── Rate limiting ───────────────────────────────────────────────────────────
