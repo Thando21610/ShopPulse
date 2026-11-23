@@ -140,7 +140,7 @@
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/sales")
             {
-                Content = JsonContent.Create(new { items = _cart.Select(x => new { productId = x.Product.Id, quantity = x.Quantity }), paymentMethod = _paymentMethod, amountTendered = _paymentMethod == "Cash" ? _tendered : Total, cardPaymentConfirmed = _paymentMethod == "Card" && _cardPaymentConfirmed })
+                Content = JsonContent.Create(new { items = _cart.Select(x => new { productId = x.Product.Id, quantity = x.Quantity, expectedUnitPrice = x.Product.UnitPrice }), paymentMethod = _paymentMethod, amountTendered = _paymentMethod == "Cash" ? _tendered : Total, cardPaymentConfirmed = _paymentMethod == "Card" && _cardPaymentConfirmed })
             };
             _idempotencyKey ??= Guid.NewGuid().ToString("N");
             request.Headers.Add("Idempotency-Key", _idempotencyKey);
@@ -148,9 +148,19 @@
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
                 var problem = await response.Content.ReadFromJsonAsync<JsonDocument>();
-                _cashShiftRequired = problem?.RootElement.TryGetProperty("code", out var code) == true
-                    && code.GetString() == "CASH_SHIFT_REQUIRED";
+                var code = problem?.RootElement.TryGetProperty("code", out var codeValue) == true ? codeValue.GetString() : null;
+                _cashShiftRequired = code == "CASH_SHIFT_REQUIRED";
                 _error = problem?.RootElement.TryGetProperty("message", out var m) == true ? m.GetString() : "Stock changed while you were checking out. Review the basket.";
+                if (code == "PRICE_CHANGED")
+                {
+                    await LoadProducts();
+                    foreach (var line in _cart)
+                    {
+                        var refreshed = _products.FirstOrDefault(x => x.Id == line.Product.Id);
+                        if (refreshed is not null) line.Product = refreshed;
+                    }
+                    ResetIdempotencyKey();
+                }
                 return;
             }
             if (response.StatusCode == HttpStatusCode.BadRequest)
@@ -182,7 +192,7 @@
     private static string InitialStyle(string? category) => category?.ToLowerInvariant() switch { "bakery" or "bread" => "background:#f4e6d2;color:#80532a", "dairy" => "background:#e3eff8;color:#245a80", "beverages" => "background:#e6f2e9;color:#27643b", _ => "background:#edf0f5;color:#435064" };
     private sealed class CashShiftInfo { public Guid Id { get; set; } public decimal OpeningFloat { get; set; } public DateTimeOffset OpenedAtUtc { get; set; } }
     private sealed class ProductOption { public Guid Id { get; set; } public string Name { get; set; } = ""; public string Sku { get; set; } = ""; public string? Category { get; set; } public decimal UnitPrice { get; set; } public int Available { get; set; } }
-    private sealed class CartLine(ProductOption product) { public ProductOption Product { get; } = product; public int Quantity { get; set; } = 1; }
+    private sealed class CartLine(ProductOption product) { public ProductOption Product { get; set; } = product; public int Quantity { get; set; } = 1; }
     private sealed record SaleResult(Guid Id, string ReceiptNumber, decimal Subtotal, decimal Discount, decimal GrandTotal, string PaymentMethod, decimal AmountTendered, decimal ChangeAmount, DateTimeOffset CreatedAtUtc, List<SaleLineResult> Items);
     private sealed record SaleLineResult(string ProductName, string Sku, int Quantity, decimal UnitPrice, decimal LineTotal);
 }
