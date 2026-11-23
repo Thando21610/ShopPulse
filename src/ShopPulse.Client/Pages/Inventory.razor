@@ -1,4 +1,5 @@
 @page "/inventory"
+@using System.Text.Json
 @using System.Net.Http.Json
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
@@ -93,7 +94,7 @@
             _batches = batchesTask.Result ?? [];
             _movements = movementsTask.Result ?? [];
         }
-        catch (HttpRequestException) { _error = "Inventory data could not be loaded. Check your connection and refresh."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "Inventory data could not be loaded. Check your connection and refresh."; }
         finally { _loading = false; }
     }
     private string TabClass(string tab) => _tab == tab ? "button button-primary" : "button button-quiet";
