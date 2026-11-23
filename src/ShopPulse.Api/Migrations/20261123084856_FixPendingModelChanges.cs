@@ -11,7 +11,7 @@ namespace ShopPulse.Api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("ALTER TABLE "WasteRecords" ALTER COLUMN "StockBatchId" TYPE uuid USING "StockBatchId"::uuid;");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Reason",
@@ -171,7 +171,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.Sql("ALTER TABLE "StockMovements" ALTER COLUMN "StockBatchId" TYPE uuid USING "StockBatchId"::uuid;");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
             migrationBuilder.AlterColumn<Guid>(
                 name: "ReferenceId",
@@ -397,7 +397,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.Sql("ALTER TABLE "SaleItems" ALTER COLUMN "StockBatchId" TYPE uuid USING "StockBatchId"::uuid;");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "SkuSnapshot",
@@ -866,7 +866,7 @@ namespace ShopPulse.Api.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("ALTER TABLE "WasteRecords" ALTER COLUMN "StockBatchId" TYPE uuid USING "StockBatchId"::uuid;");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Reason",
@@ -1026,7 +1026,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(Guid),
                 oldType: "uuid");
 
-            migrationBuilder.Sql("ALTER TABLE "StockMovements" ALTER COLUMN "StockBatchId" TYPE uuid USING "StockBatchId"::uuid;");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "ReferenceId",
@@ -1252,7 +1252,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(Guid),
                 oldType: "uuid");
 
-            migrationBuilder.Sql("ALTER TABLE "SaleItems" ALTER COLUMN "StockBatchId" TYPE uuid USING "StockBatchId"::uuid;");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "SkuSnapshot",
