@@ -44,3 +44,43 @@ The repository now contains UI flows wired to the API for sign-in/catalogue, del
 Partial refunds and anonymous queue management are not implemented. The current refund journey is a full-sale refund and requires the operator to confirm that money was returned externally through the original payment channel. Queue management remains optional in the solution design and should only be built if validated with the shop owner. These are implemented code paths, not proof of successful production acceptance. Verify each journey against the deployed Railway API and Neon database using separate Owner and Operator accounts. In particular, confirm the refresh cookie is accepted by the browser across the deployed origins, validate that operators cannot access owner-only actions, and test concurrent checkout/stock updates before using the system for live trading.
 
 A successful static frontend deployment does not by itself prove Neon connectivity or database readiness. Confirm API deployment logs and test the authenticated catalogue flow against the deployed API.
+
+
+## Database migration checkpoint
+
+The production API runs reviewed EF Core migrations during startup. The current migration chain includes:
+
+- `20261123102908_InitialPostgres`
+- `20261123121000_AddSaleRefundSupport`
+
+The second migration adds the delegated operator permission columns (`CanRefundSales`, `CanManageProducts`, `CanReceiveStock`) and the sale refund/concurrency fields. After the latest API deployment, verify both migration IDs are present in Neon:
+
+```sql
+SELECT "MigrationId"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+```
+
+Do not reset or drop the Neon schema to apply this migration. If the API fails during startup migration, inspect the Railway deployment logs and Neon migration history before changing production data.
+
+## End-to-end acceptance checklist
+
+Run these checks with a dedicated Owner account and separate Operator accounts configured with different delegated permissions. Do not use synthetic Development seed accounts against production.
+
+| Journey | Acceptance checks |
+|---|---|
+| Sign-in/session | Login, reload the browser, navigate to a protected route, wait for access-token expiry/401, verify one refresh per concurrent burst, then logout and confirm refresh is rejected |
+| Catalogue/products | Owner and CanManageProducts operator can create/edit/deactivate; operator without permission receives 403; verify SKU uniqueness and ZAR prices |
+| Receiving | Owner and CanReceiveStock operator create a batch; verify quantity, unit cost, supplier, reference, expiry and positive movement in Neon |
+| Inventory | Verify product totals, batch details, expired stock exclusion from sellable quantity and movement ledger |
+| Checkout | Cash sale requires open shift; card sale requires external terminal confirmation; verify idempotent retry creates one sale and stock is allocated FEFO |
+| Price/stock conflict | Change a product price or sell the remaining batch concurrently; verify the operator must review updated price/availability before retrying |
+| Waste | Operator with CanAdjustStock records a batch-specific write-off; operator without permission receives 403; verify negative movement and audit event |
+| Expiry/Stock Rescue | Verify expired/expiring/safe grouping, FEFO ordering and the seven-day sales estimate; recommendations must not change prices or stock |
+| Refund | Owner and CanRefundSales operator refund a completed receipt once; confirm external cash/card refund, require an open shift for cash, optionally restock original batches, and verify cash drawer/report totals |
+| Cash reconciliation | Open a shift, complete cash sales and any cash refunds, close with actual counted cash, and verify variance plus audit event |
+| Reports | Compare gross/net sales, refunds by method, waste, sellable inventory, low stock and cash variance against the underlying Neon records for the selected SAST date |
+| Staff/RBAC | Grant and revoke each permission independently; verify navigation and server authorization both update; deactivate an operator and confirm refresh tokens are revoked |
+| Audit/settings | Update business details and staff/product/stock operations; confirm owner-only audit history contains actor, timestamp and action |
+
+The automated GitHub Actions workflow builds/tests the API and client and builds the frontend Docker image. It does not replace this live acceptance checklist or a browser-based test against Railway and Neon.
