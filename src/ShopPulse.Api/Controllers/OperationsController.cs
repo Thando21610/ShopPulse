@@ -304,15 +304,34 @@ public sealed class OperationsController : ControllerBase
     [Authorize(Policy = ShopPulsePolicies.ReceiveStock)]
     public async Task<IActionResult> ReceiveStock([FromBody] ReceiveStockRequest request, CancellationToken ct)
     {
-        if (request.ProductId == Guid.Empty || request.Quantity is < 1 or > 100000 || request.UnitCost < 0 || request.UnitCost > 10000000m)
-            return Failure(400, "VALIDATION_FAILED", "Choose a product and enter a positive quantity and a non-negative unit cost.");
-        if (request.ExpiryDate.HasValue && request.ExpiryDate.Value < DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date))
-            return Failure(400, "VALIDATION_FAILED", "Expiry date cannot be in the past.");
+        var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
+        if (request.ProductId == Guid.Empty)
+            errors[nameof(request.ProductId)] = ["Choose a product."];
+        if (request.Quantity is < 1 or > 100000)
+            errors[nameof(request.Quantity)] = ["Quantity must be between 1 and 100,000."];
+        if (request.UnitCost < 0 || request.UnitCost > 10000000m)
+            errors[nameof(request.UnitCost)] = ["Unit cost must be between R0.00 and R10,000,000.00."];
+        var shopToday = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
+        if (request.ExpiryDate.HasValue && request.ExpiryDate.Value < shopToday)
+            errors[nameof(request.ExpiryDate)] = ["Expiry date cannot be in the past."];
+        if (errors.Count > 0)
+        {
+            var problem = new ValidationProblemDetails(errors) { Status = 400, Title = "Validation failed" };
+            problem.Extensions["code"] = "VALIDATION_FAILED";
+            return BadRequest(problem);
+        }
 
         var product = await _db.Products.FirstOrDefaultAsync(x => x.Id == request.ProductId && x.IsActive, ct);
         if (product is null) return NotFound(new { code = "PRODUCT_NOT_FOUND", message = "The selected product could not be found." });
         if (product.HasExpiry && !request.ExpiryDate.HasValue)
-            return Failure(400, "VALIDATION_FAILED", "An expiry date is required for this product.");
+        {
+            var problem = new ValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                [nameof(request.ExpiryDate)] = ["An expiry date is required for this product."]
+            }) { Status = 400, Title = "Validation failed" };
+            problem.Extensions["code"] = "VALIDATION_FAILED";
+            return BadRequest(problem);
+        }
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         var batch = new StockBatch
