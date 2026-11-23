@@ -27,7 +27,7 @@ public sealed class StaffController : ControllerBase
     public async Task<IActionResult> List(CancellationToken ct)
     {
         var users = await _db.Users.AsNoTracking().OrderBy(x => x.Role).ThenBy(x => x.DisplayName)
-            .Select(x => new { x.Id, x.DisplayName, x.Email, x.Role, x.IsActive, x.CanAdjustStock, x.CreatedAtUtc })
+            .Select(x => new { x.Id, x.DisplayName, x.Email, x.Role, x.IsActive, x.CanAdjustStock, x.CanRefundSales, x.CreatedAtUtc })
             .ToListAsync(ct);
         return Ok(users);
     }
@@ -52,7 +52,7 @@ public sealed class StaffController : ControllerBase
             Role = "Operator", IsActive = true, CanAdjustStock = request.CanAdjustStock, CanRefundSales = request.CanRefundSales
         };
         _db.Users.Add(user);
-        AddAudit("StaffCreated", user.Id, new { user.DisplayName, user.Email, user.Role, user.CanAdjustStock });
+        AddAudit("StaffCreated", user.Id, new { user.DisplayName, user.Email, user.Role, user.CanAdjustStock, user.CanRefundSales });
         await _db.SaveChangesAsync(ct);
         return Created($"/api/staff/{user.Id}", ToDto(user));
     }
