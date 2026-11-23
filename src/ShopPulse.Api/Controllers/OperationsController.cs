@@ -74,9 +74,16 @@ public sealed class OperationsController : ControllerBase
 
         // Validate the open cash shift only for a new sale. Idempotent replays
         // must still return the original receipt if the shift was closed meanwhile.
-        if (method == "Cash" && !await _db.CashShifts.AnyAsync(
-                x => x.OperatorUserId == _current.UserId && x.Status == "Open", ct))
-            return Conflict(new { code = "CASH_SHIFT_REQUIRED", message = "Open your cash shift before completing a cash sale." });
+        CashShift? activeCashShift = null;
+        if (method == "Cash")
+        {
+            activeCashShift = await _db.CashShifts.FirstOrDefaultAsync(
+                x => x.OperatorUserId == _current.UserId && x.Status == "Open", ct);
+            if (activeCashShift is null)
+                return Conflict(new { code = "CASH_SHIFT_REQUIRED", message = "Open your cash shift before completing a cash sale." });
+            // A cash sale changes the expected drawer balance; serialize it with shift close.
+            activeCashShift.Version++;
+        }
 
         var productIds = normalized.Select(x => x.ProductId).ToArray();
         var products = await _db.Products.Where(x => productIds.Contains(x.Id) && x.IsActive).ToDictionaryAsync(x => x.Id, ct);
