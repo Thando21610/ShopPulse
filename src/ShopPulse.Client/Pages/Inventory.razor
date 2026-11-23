@@ -30,7 +30,7 @@
             @if (_products.Count == 0) { <p class="muted">No active products.</p> }
             else
             {
-                <div class="table-wrap"><table><thead><tr><th>PRODUCT</th><th>SKU</th><th>ON HAND</th><th>MINIMUM</th><th>PRICE (ZAR)</th><th>STATUS</th></tr></thead><tbody>
+                <div class="table-wrap"><table><thead><tr><th>PRODUCT</th><th>SKU</th><th>SELLABLE</th><th>MINIMUM</th><th>PRICE (ZAR)</th><th>STATUS</th></tr></thead><tbody>
                 @foreach (var p in _products)
                 {
                     <tr><td><strong>@p.Name</strong></td><td>@p.Sku</td><td>@p.Available</td><td>@p.MinimumStockLevel</td><td>@Money(p.UnitPrice)</td><td><span class="stock-status @(p.Available <= p.MinimumStockLevel ? "low" : "ok")">@(p.Available <= p.MinimumStockLevel ? "Low stock" : "In stock")</span></td></tr>
