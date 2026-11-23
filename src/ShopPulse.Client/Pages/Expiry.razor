@@ -17,7 +17,7 @@
         <div class="expiry-grid">
             <section class="panel expiry-panel expired"><div class="panel-heading"><h2>Expired</h2><span class="count-pill">@_batches.Count(x => x.Status == "Expired")</span></div>
                 @if (!_batches.Any(x => x.Status == "Expired")) { <p class="muted">No expired stock with remaining quantity.</p> }
-                @foreach(var b in _batches.Where(x => x.Status == "Expired")) { <article class="expiry-item"><div><strong>@b.ProductName</strong><small>@b.BatchReference · @b.RemainingQuantity units</small></div><span class="expiry-date">@b.ExpiryDate?.ToString("dd MMM yyyy")</span><a href="/stock/waste">Record waste</a></article> }
+                @foreach(var b in _batches.Where(x => x.Status == "Expired")) { <article class="expiry-item"><div><strong>@b.ProductName</strong><small>@b.BatchReference · @b.RemainingQuantity units</small></div><span class="expiry-date">@b.ExpiryDate?.ToString("dd MMM yyyy")</span>@if (Session.User?.Role == "Owner" || Session.User?.CanAdjustStock == true) { <a href="/stock/waste">Record waste</a> }</article> }
             </section>
             <section class="panel expiry-panel expiring"><div class="panel-heading"><h2>Expiring soon</h2><span class="count-pill">@_batches.Count(x => x.Status == "ExpiringSoon")</span></div>
                 @if (!_batches.Any(x => x.Status == "ExpiringSoon")) { <p class="muted">No stock expiring in this period.</p> }
