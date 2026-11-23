@@ -18,6 +18,20 @@
     else
     {
     @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+    @if (_loadingBatches)
+    {
+        <section class="panel empty-state" role="status">Loading stock batches…</section>
+    }
+    else if (_batches.Count == 0)
+    {
+        <section class="panel empty-state">
+            <strong>No stock batches available</strong>
+            <p class="muted">There is no remaining batch quantity to write off. Receive stock first, or check the inventory ledger.</p>
+            <a class="button button-quiet" href="/inventory">View inventory</a>
+        </section>
+    }
+    else
+    {
     <section class="panel form-panel">
         <EditForm EditContext="_editContext" OnValidSubmit="Submit">
             <DataAnnotationsValidator />
@@ -31,6 +45,7 @@
             <button class="button button-primary" type="submit" disabled="@_busy || _batches.Count == 0">@(_busy ? "Saving…" : "Record waste")</button>
         </EditForm>
     </section>
+    }
     @if (_success) { <div class="toast-inline" role="status">Waste recorded and stock updated.</div> }
     }
 </main>
@@ -39,7 +54,7 @@
     private List<BatchOption> _batches = [];
     private WasteForm _form = new();
     private EditContext _editContext = default!;
-    private bool _busy, _success, _forbidden;
+    private bool _busy, _success, _forbidden, _loadingBatches = true;
     private string? _error;
     protected override async Task OnInitializedAsync()
     {
@@ -49,6 +64,7 @@
         if (Session.User?.Role != "Owner" && Session.User?.CanAdjustStock != true) { _forbidden = true; return; }
         try { _batches = await Http.GetFromJsonAsync<List<BatchOption>>("api/stock/batches") ?? []; }
         catch (HttpRequestException) { _error = "Could not load stock batches."; }
+        finally { _loadingBatches = false; }
     }
     private async Task Submit()
     {
