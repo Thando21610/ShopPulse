@@ -126,8 +126,10 @@
                         && code.GetString() == "CASH_SHIFT_REQUIRED";
                     _error = _cashShiftRequired
                         ? "Open your cash shift before paying a cash refund."
-                        : problem?.RootElement.TryGetProperty("detail", out var detail) == true
-                            ? detail.GetString() : "The sale or original stock batch has changed. Refresh and review the refund.";
+                        : problem?.RootElement.TryGetProperty("message", out var message) == true
+                            ? message.GetString()
+                            : problem?.RootElement.TryGetProperty("detail", out var detail) == true
+                                ? detail.GetString() : "The sale or original stock batch has changed. Refresh and review the refund.";
                     return;
                 }
                 _error = await ApiErrorFormatter.FormatAsync(response, "The refund could not be recorded.");
