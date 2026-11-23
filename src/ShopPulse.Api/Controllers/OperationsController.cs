@@ -177,7 +177,7 @@ public sealed class OperationsController : ControllerBase
     {
         if (request.ProductId == Guid.Empty || request.Quantity is < 1 or > 100000 || request.UnitCost < 0 || request.UnitCost > 10000000m)
             return Failure(400, "VALIDATION_FAILED", "Choose a product and enter a positive quantity and a non-negative unit cost.");
-        if (request.ExpiryDate.HasValue && request.ExpiryDate.Value < DateOnly.FromDateTime(DateTime.UtcNow))
+        if (request.ExpiryDate.HasValue && request.ExpiryDate.Value < DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date))
             return Failure(400, "VALIDATION_FAILED", "Expiry date cannot be in the past.");
 
         var product = await _db.Products.FirstOrDefaultAsync(x => x.Id == request.ProductId && x.IsActive, ct);
@@ -224,7 +224,7 @@ public sealed class OperationsController : ControllerBase
     public async Task<IActionResult> Expiry([FromQuery] int days = 7, CancellationToken ct = default)
     {
         days = Math.Clamp(days, 1, 90);
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
         var cutoff = today.AddDays(days);
         var batches = await _db.StockBatches.AsNoTracking()
             .Where(x => x.RemainingQuantity > 0 && x.ExpiryDate != null && x.ExpiryDate <= cutoff)
@@ -340,8 +340,9 @@ public sealed class OperationsController : ControllerBase
     [Authorize(Policy = ShopPulsePolicies.ViewFinancialReports)]
     public async Task<IActionResult> ReportSummary([FromQuery] DateOnly? date, CancellationToken ct)
     {
-        var selected = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var start = new DateTimeOffset(selected.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+        var selected = date ?? DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
+        // South Africa uses SAST (UTC+02:00) year-round; report dates follow the shop calendar.
+        var start = new DateTimeOffset(selected.ToDateTime(TimeOnly.MinValue), TimeSpan.FromHours(2));
         var end = start.AddDays(1);
         var sales = _db.Sales.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end && x.Status == "Completed");
         var count = await sales.CountAsync(ct);
