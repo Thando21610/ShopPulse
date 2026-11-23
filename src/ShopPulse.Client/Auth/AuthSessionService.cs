@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace ShopPulse.Client.Auth;
 
-public sealed record SignedInUser(Guid Id, string DisplayName, string Email, string Role, Guid BusinessId, string BusinessName, bool CanAdjustStock);
+public sealed record SignedInUser(Guid Id, string DisplayName, string Email, string Role, Guid BusinessId, string BusinessName, bool CanAdjustStock, bool CanRefundSales);
 
 public sealed class AuthSessionService
 {
