@@ -25,12 +25,13 @@ public class ProductsController : ControllerBase
             var term = q.Trim().ToLower();
             query = query.Where(p => p.Name.ToLower().Contains(term) || p.Sku.ToLower().Contains(term));
         }
+        var shopToday = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
         var items = await query
             .OrderBy(p => p.Name)
             .Select(p => new
             {
                 p.Id, p.Sku, p.Name, p.Category, p.UnitPrice, p.MinimumStockLevel, p.HasExpiry,
-                Available = p.Batches.Sum(b => b.RemainingQuantity)
+                Available = p.Batches.Where(b => b.ExpiryDate == null || b.ExpiryDate >= shopToday).Sum(b => b.RemainingQuantity)
             })
             .ToListAsync(ct);
         return Ok(items);
@@ -43,13 +44,14 @@ public class ProductsController : ControllerBase
     [Authorize(Policy = ShopPulsePolicies.OwnerOnly)]
     public async Task<IActionResult> Manage(CancellationToken ct)
     {
+        var shopToday = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
         var items = await _db.Products.AsNoTracking()
             .OrderBy(x => x.Name)
             .Select(x => new
             {
                 x.Id, x.Sku, x.Name, x.Category, x.UnitPrice,
                 x.MinimumStockLevel, x.HasExpiry, x.IsActive,
-                Available = x.Batches.Sum(b => b.RemainingQuantity)
+                Available = x.Batches.Where(b => b.ExpiryDate == null || b.ExpiryDate >= shopToday).Sum(b => b.RemainingQuantity)
             }).ToListAsync(ct);
         return Ok(items);
     }
