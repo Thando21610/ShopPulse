@@ -19,8 +19,15 @@ if (!string.IsNullOrEmpty(port))
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 var jwtSection = builder.Configuration.GetSection("Jwt");
-var jwtKey = jwtSection["SigningKey"]
-    ?? "DEV_ONLY_ShopPulse_SigningKey_Change_In_Production_Min32Chars!";
+var jwtKey = jwtSection["SigningKey"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    if (!builder.Environment.IsDevelopment())
+        throw new InvalidOperationException("Jwt:SigningKey must be configured outside Development.");
+    jwtKey = "LOCAL-ONLY-ShopPulse-Development-Key-Change-Before-Deploy-2026";
+}
+if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
+    throw new InvalidOperationException("Jwt:SigningKey must contain at least 32 UTF-8 bytes.");
 var jwtIssuer = jwtSection["Issuer"] ?? "shoppulse-api";
 var jwtAudience = jwtSection["Audience"] ?? "shoppulse-app";
 
