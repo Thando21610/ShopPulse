@@ -21,8 +21,12 @@
                 <article class="panel metric-card"><span>Cash received</span><strong>@Money(_report.CashTotal)</strong><small>Cash transactions</small></article>
                 <article class="panel metric-card"><span>Card payments</span><strong>@Money(_report.CardTotal)</strong><small>Card transactions</small></article>
                 <article class="panel metric-card"><span>Recorded waste</span><strong>@Money(_report.WasteCost)</strong><small>Estimated stock cost</small></article>
+                <article class="panel metric-card"><span>Active products</span><strong>@_report.ActiveProducts</strong><small>Current catalogue</small></article>
+                <article class="panel metric-card"><span>Units in stock</span><strong>@_report.InventoryUnits</strong><small>Current on-hand quantity</small></article>
+                <article class="panel metric-card"><span>Low-stock products</span><strong>@_report.LowStockProducts</strong><small>At or below reorder threshold</small></article>
+                <article class="panel metric-card"><span>Staff actions</span><strong>@_report.StaffActions</strong><small>Audit events on selected date</small></article>
             </section>
-            <p class="muted small-note">All amounts are ZAR. Report dates follow the South African local calendar (SAST).</p>
+            <p class="muted small-note">Sales and waste follow the selected SAST date. Inventory figures show current stock at report time; staff actions count recorded audit events. All monetary amounts are ZAR.</p>
         }
     }
 </main>
@@ -44,5 +48,5 @@
         catch (HttpRequestException) { _error = "The report could not be loaded."; }
     }
     private static string Money(decimal v) => v.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
-    private sealed class ReportSummary { public int SalesCount { get; set; } public decimal SalesTotal { get; set; } public decimal CashTotal { get; set; } public decimal CardTotal { get; set; } public decimal WasteCost { get; set; } public string Currency { get; set; } = "ZAR"; }
+    private sealed class ReportSummary { public int SalesCount { get; set; } public decimal SalesTotal { get; set; } public decimal CashTotal { get; set; } public decimal CardTotal { get; set; } public decimal WasteCost { get; set; } public int ActiveProducts { get; set; } public int InventoryUnits { get; set; } public int LowStockProducts { get; set; } public int StaffActions { get; set; } public string Currency { get; set; } = "ZAR"; }
 }
