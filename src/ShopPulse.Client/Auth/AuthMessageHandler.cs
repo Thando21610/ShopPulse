@@ -10,6 +10,7 @@ public sealed class AuthMessageHandler : DelegatingHandler
 {
     private readonly TokenStore _tokens;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
+    private long _refreshAttemptVersion;
     private readonly Uri _apiBase;
 
     public AuthMessageHandler(TokenStore tokens, IConfiguration configuration)
@@ -29,6 +30,7 @@ public sealed class AuthMessageHandler : DelegatingHandler
             || path.Contains("/api/auth/logout", StringComparison.OrdinalIgnoreCase);
 
         var tokenUsed = _tokens.AccessToken;
+        var refreshVersionAtSend = Volatile.Read(ref _refreshAttemptVersion);
         if (!string.IsNullOrWhiteSpace(tokenUsed))
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenUsed);
 
@@ -46,27 +48,44 @@ public sealed class AuthMessageHandler : DelegatingHandler
                 return await RetryWithTokenAsync(request, _tokens.AccessToken!, cancellationToken);
             }
 
+            // A request waiting behind another failed refresh must not send
+            // a second refresh call for the same burst of concurrent 401 responses.
+            if (Volatile.Read(ref _refreshAttemptVersion) != refreshVersionAtSend)
+                return response;
+
             using var refresh = new HttpRequestMessage(HttpMethod.Post, new Uri(_apiBase, "api/auth/refresh"));
             refresh.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
-            using var refreshResponse = await base.SendAsync(refresh, cancellationToken);
-            if (!refreshResponse.IsSuccessStatusCode)
+            HttpResponseMessage refreshResponse;
+            try
             {
-                _tokens.Clear();
-                return response;
+                refreshResponse = await base.SendAsync(refresh, cancellationToken);
+            }
+            finally
+            {
+                Interlocked.Increment(ref _refreshAttemptVersion);
             }
 
-            using var payload = await refreshResponse.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
-            var nextToken = payload?.RootElement.TryGetProperty("accessToken", out var value) == true
-                ? value.GetString() : null;
-            if (string.IsNullOrWhiteSpace(nextToken))
+            using (refreshResponse)
             {
-                _tokens.Clear();
-                return response;
-            }
+                if (!refreshResponse.IsSuccessStatusCode)
+                {
+                    _tokens.Clear();
+                    return response;
+                }
 
-            _tokens.Set(nextToken);
-            response.Dispose();
-            return await RetryWithTokenAsync(request, nextToken, cancellationToken);
+                using var payload = await refreshResponse.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+                var nextToken = payload?.RootElement.TryGetProperty("accessToken", out var value) == true
+                    ? value.GetString() : null;
+                if (string.IsNullOrWhiteSpace(nextToken))
+                {
+                    _tokens.Clear();
+                    return response;
+                }
+
+                _tokens.Set(nextToken);
+                response.Dispose();
+                return await RetryWithTokenAsync(request, nextToken, cancellationToken);
+            }
         }
         finally
         {
