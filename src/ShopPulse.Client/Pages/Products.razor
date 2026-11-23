@@ -115,7 +115,7 @@
         try
         {
             using var response = await Http.PostAsync($"api/products/{item.Id}/deactivate", null);
-            if (!response.IsSuccessStatusCode) { _error = "The product could not be deactivated."; return; }
+            if (!response.IsSuccessStatusCode) { var message = await ApiErrorFormatter.FormatAsync(response, "The product could not be deactivated."); if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message; return; }
             Toast.ShowSuccess("Product deactivated. Historical sales and stock records are retained.");
             await Load();
         }
