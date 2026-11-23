@@ -631,7 +631,7 @@ public sealed class OperationsController : ControllerBase
         shift.Status = "Closed";
         AddAudit("CashShiftClosed", "CashShift", shift.Id, new { shift.ExpectedCash, shift.ActualCash, shift.Variance, shift.VarianceReason, cashSales, cashRefunds, cashIn, cashOut });
         await _db.SaveChangesAsync(ct);
-        return Ok(new { shift.Id, shift.OpeningFloat, shift.ExpectedCash, shift.ActualCash, shift.Variance, shift.VarianceReason, shift.ClosedAtUtc, shift.Status });
+        return Ok(new { shift.Id, shift.OpeningFloat, CashSales = cashSales, CashRefunds = cashRefunds, CashIn = cashIn, CashOut = cashOut, shift.ExpectedCash, shift.ActualCash, shift.Variance, shift.VarianceReason, shift.ClosedAtUtc, shift.Status });
     }
 
     [HttpGet("reports/summary")]
