@@ -175,8 +175,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-if (app.Environment.IsDevelopment())
-    app.MapOpenApi();
+// Expose the built-in OpenAPI document in all environments for deployment verification.
+app.MapOpenApi();
 
 app.UseRateLimiter();
 app.UseCors("frontend");
