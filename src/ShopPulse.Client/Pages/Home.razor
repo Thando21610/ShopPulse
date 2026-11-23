@@ -75,8 +75,10 @@
                 </div>
                 <div class="dashboard-actions">
                     <a class="button button-primary" href="/sales"><span class="material-symbols-outlined" aria-hidden="true">point_of_sale</span> New sale</a>
-                    @if (_role == "Owner") {
+                    @if (_role == "Owner" || Session.User?.CanManageProducts == true) {
                         <a class="button button-quiet" href="/products/manage"><span class="material-symbols-outlined" aria-hidden="true">inventory</span> Manage products</a>
+                    }
+                    @if (_role == "Owner" || Session.User?.CanReceiveStock == true) {
                         <a class="button button-quiet" href="/stock/receive"><span class="material-symbols-outlined" aria-hidden="true">add_box</span> Receive stock</a>
                     }
                     <span class="count-pill">@_products.Count products</span>
