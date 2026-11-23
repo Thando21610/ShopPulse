@@ -79,7 +79,7 @@ public sealed class AuthMessageHandler : DelegatingHandler
                 if (!refreshResponse.IsSuccessStatusCode)
                 {
                     _tokens.Clear();
-                    _navigation.NavigateTo("/");
+                    _navigation.NavigateTo("/", forceLoad: true);
                     return response;
                 }
 
