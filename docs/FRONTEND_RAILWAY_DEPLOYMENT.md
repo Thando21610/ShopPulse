@@ -6,7 +6,7 @@ The Blazor WebAssembly client is published as static files and served by Nginx. 
 
 `src/ShopPulse.Client`
 
-The client reads `ApiBaseUrl` from `wwwroot/appsettings.json`. The committed value currently targets the supplied ShopPulse Railway API origin. Change it to the actual API origin if that domain changes; do not include an API route suffix.
+The client reads `ApiBaseUrl` from `wwwroot/appsettings.json`. The frontend container also supports a Railway runtime variable named `ApiBaseUrl`: its Nginx entrypoint writes that value into the published appsettings file at container startup. Set it on the frontend service so the API origin can be changed without rebuilding the image. Do not include an API route suffix.
 
 ## Railway frontend service
 
