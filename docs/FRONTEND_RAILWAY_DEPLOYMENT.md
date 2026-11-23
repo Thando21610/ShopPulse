@@ -13,7 +13,8 @@ The client reads `ApiBaseUrl` from `wwwroot/appsettings.json`. The frontend cont
 1. Create a new service from the `Thando21610/ShopPulse` GitHub repository.
 2. Set the service Root Directory to `/src/ShopPulse.Client`.
 3. Set Builder to Dockerfile if Railway does not detect it automatically.
-4. Deploy and wait for the image build and deployment to complete.
+4. Add `ApiBaseUrl=https://shoppulse-production-e6673892.up.railway.app` to the frontend service variables.
+5. Deploy and wait for the image build and deployment to complete.
 5. Generate a public domain in the service Networking settings.
 6. Open the generated HTTPS domain and confirm the ShopPulse sign-in screen loads.
 
@@ -36,10 +37,10 @@ Use the exact origin only: scheme plus hostname, with no path and no trailing sl
 5. Submit a valid test login and confirm the product catalogue loads.
 6. Verify invalid credentials show a useful error and that an unauthorised request cannot retrieve products.
 
-## Current feature boundary
+## Implemented journeys and verification boundary
 
-The deployed client currently implements sign-in and the live product catalogue. Sales/checkout, stock receiving, waste, cash reconciliation and reporting are not implemented end-to-end yet. Do not expose those as working navigation/actions until the API contracts, authorization, persistence, UI and tests exist.
+The repository now contains UI flows wired to the API for sign-in/catalogue, checkout with cash/card selection and receipt printing, stock receipt, batch waste recording, expiry prioritisation, cash-shift opening/closing, and owner financial summaries. The API persists these operations, applies tenant query filters, records stock movements/audit events, and enforces server-side policies. The frontend includes a single-flight refresh handler, HttpOnly refresh-cookie restoration, shared success/error toasts, mobile layouts, and category-colour product initials rather than hero/product stock imagery.
 
-The access token is currently held in memory by the Blazor client. A browser reload clears it; refresh-cookie/session restoration across the separate frontend and API origins remains unfinished and must be tested before a production POS rollout.
+These are implemented code paths, not proof of successful production acceptance. Verify each journey against the deployed Railway API and Neon database using separate Owner and Operator accounts. In particular, confirm the refresh cookie is accepted by the browser across the deployed origins, validate that operators cannot access owner-only actions, and test concurrent checkout/stock updates before using the system for live trading.
 
 A successful static frontend deployment does not by itself prove Neon connectivity or database readiness. Confirm API deployment logs and test the authenticated catalogue flow against the deployed API.
