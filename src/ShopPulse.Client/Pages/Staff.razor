@@ -27,8 +27,7 @@
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanRefundSales" /> Allow this operator to refund sales</label></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanManageProducts" /> Allow this operator to manage products</label></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanReceiveStock" /> Allow this operator to receive stock</label></div>
-                    <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanManageProducts" /> Allow this operator to manage products and prices</label></div>
-                    <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanReceiveStock" /> Allow this operator to receive stock</label></div>
+
                 </div>
                 <p class="muted small-note">Give the initial password to the operator securely. Password reset and invitation email are not yet integrated.</p>
                 <button class="button button-primary" type="submit" disabled="@_busy">@(_busy ? "Creating…" : "Create operator")</button>
@@ -48,8 +47,7 @@
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanRefundSales" /> Can refund sales</label></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanManageProducts" /> Can manage products</label></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanReceiveStock" /> Can receive stock</label></div>
-                        <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanManageProducts" /> Can manage products and prices</label></div>
-                        <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanReceiveStock" /> Can receive stock</label></div>
+ 
                     </div>
                     <button class="button button-primary" type="submit" disabled="@_busy">Save staff access</button>
                 </EditForm>
