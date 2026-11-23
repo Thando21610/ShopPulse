@@ -537,7 +537,11 @@ public sealed class OperationsController : ControllerBase
         };
         _db.CashShifts.Add(shift);
         AddAudit("CashShiftOpened", "CashShift", shift.Id, new { shift.OpeningFloat });
-        await _db.SaveChangesAsync(ct);
+        try { await _db.SaveChangesAsync(ct); }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { code = "SHIFT_ALREADY_OPEN", message = "A cash shift was opened for this operator. Refresh the shift status." });
+        }
         return Created($"/api/cash-shifts/{shift.Id}", new { shift.Id, shift.OpeningFloat, shift.OpenedAtUtc, shift.Status });
     }
 
@@ -578,9 +582,14 @@ public sealed class OperationsController : ControllerBase
             OperatorUserId = shift.OperatorUserId, Direction = direction!, Amount = decimal.Round(request.Amount, 2),
             Reason = reason, ActorUserId = _current.UserId, CreatedAtUtc = DateTimeOffset.UtcNow
         };
+        shift.Version++;
         _db.CashMovements.Add(movement);
         AddAudit("CashMovementRecorded", "CashShift", shift.Id, new { movement.Direction, movement.Amount, movement.Reason, movement.OperatorUserId });
-        await _db.SaveChangesAsync(ct);
+        try { await _db.SaveChangesAsync(ct); }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { code = "SHIFT_CHANGED", message = "The cash shift changed while recording this movement. Refresh and try again." });
+        }
         return Created($"/api/cash-shifts/{shift.Id}/movements/{movement.Id}", new
         {
             movement.Id, movement.Direction, movement.Amount, movement.Reason, movement.CreatedAtUtc
@@ -623,6 +632,7 @@ public sealed class OperationsController : ControllerBase
         if (decimal.Round(request.ActualCash, 2) != decimal.Round(expected, 2)
             && string.IsNullOrWhiteSpace(request.VarianceReason))
             return Failure(400, "VALIDATION_FAILED", "Enter a variance explanation when counted cash differs from expected cash.");
+        shift.Version++;
         shift.ExpectedCash = expected;
         shift.ActualCash = decimal.Round(request.ActualCash, 2);
         shift.Variance = shift.ActualCash - expected;
@@ -630,7 +640,11 @@ public sealed class OperationsController : ControllerBase
         shift.ClosedAtUtc = DateTimeOffset.UtcNow;
         shift.Status = "Closed";
         AddAudit("CashShiftClosed", "CashShift", shift.Id, new { shift.ExpectedCash, shift.ActualCash, shift.Variance, shift.VarianceReason, cashSales, cashRefunds, cashIn, cashOut });
-        await _db.SaveChangesAsync(ct);
+        try { await _db.SaveChangesAsync(ct); }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { code = "SHIFT_CHANGED", message = "The cash shift changed during reconciliation. Refresh the shift and recalculate expected cash." });
+        }
         return Ok(new { shift.Id, shift.OpeningFloat, CashSales = cashSales, CashRefunds = cashRefunds, CashIn = cashIn, CashOut = cashOut, shift.ExpectedCash, shift.ActualCash, shift.Variance, shift.VarianceReason, shift.ClosedAtUtc, shift.Status });
     }
 
