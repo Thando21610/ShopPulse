@@ -15,6 +15,23 @@
     else
     {
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        @if (_loadingProducts)
+        {
+            <section class="panel empty-state" role="status">Loading products…</section>
+        }
+        else if (_products.Count == 0)
+        {
+            <section class="panel empty-state">
+                <strong>No active products available</strong>
+                <p class="muted">Stock cannot be received until at least one active product exists. Ask the store owner to add a product first.</p>
+                @if (Session.User?.Role == "Owner" || Session.User?.CanManageProducts == true)
+                {
+                    <a class="button button-quiet" href="/products/manage">Manage products</a>
+                }
+            </section>
+        }
+        else
+        {
         <section class="panel form-panel">
             <EditForm EditContext="_editContext" OnValidSubmit="Submit">
                 <DataAnnotationsValidator />
@@ -30,6 +47,7 @@
                 <button class="button button-primary" type="submit" disabled="@_busy">@(_busy ? "Saving receipt…" : "Receive stock")</button>
             </EditForm>
         </section>
+        }
     }
     @if (_success) { <div class="toast-inline" role="status">Stock received successfully.</div> }
 </main>
@@ -38,7 +56,7 @@
     private List<ProductOption> _products = [];
     private ReceiveForm _form = new();
     private EditContext _editContext = default!;
-    private bool _busy, _forbidden, _success;
+    private bool _busy, _forbidden, _success, _loadingProducts = true;
     private string? _error;
     protected override async Task OnInitializedAsync()
     {
@@ -48,6 +66,7 @@
         if (Session.User?.Role != "Owner" && Session.User?.CanReceiveStock != true) { _forbidden = true; return; }
         try { _products = await Http.GetFromJsonAsync<List<ProductOption>>("api/products") ?? []; }
         catch (HttpRequestException) { _error = "Could not load products. Try again."; }
+        finally { _loadingProducts = false; }
     }
     private async Task Submit()
     {
