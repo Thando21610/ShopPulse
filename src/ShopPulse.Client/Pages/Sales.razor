@@ -29,7 +29,7 @@
     {
         <div class="sales-grid">
             <section class="panel">
-                <div class="panel-heading"><h2>Products</h2><span class="count-pill">@_products.Count available</span></div>
+                <div class="panel-heading"><h2>Products</h2><div class="panel-actions"><span class="count-pill">@_products.Count available</span><button class="button button-quiet" @onclick="LoadProducts" disabled="@_loading">Refresh stock</button></div></div>
                 <input class="form-control" placeholder="Search product or SKU" @bind="_search" @bind:event="oninput" aria-label="Search products" />
                 @if (_loading) { <p class="muted">Loading products…</p> }
                 else if (_products.Count == 0) { <p class="muted">No active products are available.</p> }
@@ -56,6 +56,10 @@
                     }
                 }
                 <div class="cart-total"><span>Total due</span><strong>@Money(Total)</strong></div>
+                @if (_paymentMethod == "Cash" && !_checkingCashShift && _cashShift is null)
+                {
+                    <div class="inline-alert" role="status">Open a cash shift before accepting cash. <a href="/cash-shift">Open cash shift</a> · <button class="link-button" @onclick="LoadCashShift">Refresh status</button></div>
+                }
                 <label for="payment-method">Payment method</label>
                 <select id="payment-method" class="form-control" @bind="_paymentMethod" @bind:after="OnPaymentMethodChanged"><option value="Cash">Cash</option><option value="Card">Card</option></select>
                 @if (_paymentMethod == "Cash")
@@ -70,7 +74,7 @@
                     <label class="card-confirmation"><input type="checkbox" @bind="_cardPaymentConfirmed" @bind:after="ResetIdempotencyKey" /> I confirm the card terminal approved this payment.</label>
                     <p class="muted small-note">ShopPulse records the card payment; it does not process card details or replace your bank terminal.</p>
                 }
-                <button class="button button-primary checkout-button" @onclick="CompleteSale" disabled="@(_busy || _cart.Count == 0 || (_paymentMethod == "Cash" && ChangeDue < 0) || (_paymentMethod == "Card" && !_cardPaymentConfirmed))">@(_busy ? "Processing…" : "Complete sale")</button>
+                <button class="button button-primary checkout-button" @onclick="CompleteSale" disabled="@(_busy || _checkingCashShift || _cart.Count == 0 || (_paymentMethod == "Cash" && (ChangeDue < 0 || _cashShift is null)) || (_paymentMethod == "Card" && !_cardPaymentConfirmed))">@(_busy ? "Processing…" : "Complete sale")</button>
                 <p class="muted small-note">Stock is deducted by the API using first-expiry-first-out batch allocation.</p>
             </section>
         </div>
@@ -82,12 +86,13 @@
     private List<CartLine> _cart = [];
     private string _search = "", _paymentMethod = "Cash";
     private decimal _tendered;
-    private bool _loading = true, _busy, _cashShiftRequired;
+    private bool _loading = true, _busy, _cashShiftRequired, _checkingCashShift = true;
     private string? _error;
     private SaleResult? _receipt;
     // Retain the same key when a network response is lost so a retry cannot create a duplicate sale.
     private string? _idempotencyKey;
     private bool _cardPaymentConfirmed;
+    private CashShiftInfo? _cashShift;
     private decimal Total => _cart.Sum(x => x.Product.UnitPrice * x.Quantity);
     private decimal ChangeDue => _tendered - Total;
     private IEnumerable<ProductOption> FilteredProducts => _products.Where(p => string.IsNullOrWhiteSpace(_search) || p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || p.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase));
@@ -95,7 +100,14 @@
     protected override async Task OnInitializedAsync()
     {
         if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
-        await LoadProducts();
+        await Task.WhenAll(LoadProducts(), LoadCashShift());
+    }
+    private async Task LoadCashShift()
+    {
+        _checkingCashShift = true;
+        try { _cashShift = await Http.GetFromJsonAsync<CashShiftInfo>("api/cash-shifts/current"); }
+        catch (HttpRequestException) { _cashShift = null; _error = "Could not verify your cash shift. Refresh the status before accepting cash."; }
+        finally { _checkingCashShift = false; }
     }
     private async Task LoadProducts()
     {
@@ -162,6 +174,7 @@
     private static string Money(decimal amount) => amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
     private static string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
     private static string InitialStyle(string? category) => category?.ToLowerInvariant() switch { "bakery" or "bread" => "background:#f4e6d2;color:#80532a", "dairy" => "background:#e3eff8;color:#245a80", "beverages" => "background:#e6f2e9;color:#27643b", _ => "background:#edf0f5;color:#435064" };
+    private sealed class CashShiftInfo { public Guid Id { get; set; } public decimal OpeningFloat { get; set; } public DateTimeOffset OpenedAtUtc { get; set; } }
     private sealed class ProductOption { public Guid Id { get; set; } public string Name { get; set; } = ""; public string Sku { get; set; } = ""; public string? Category { get; set; } public decimal UnitPrice { get; set; } public int Available { get; set; } }
     private sealed class CartLine(ProductOption product) { public ProductOption Product { get; } = product; public int Quantity { get; set; } = 1; }
     private sealed record SaleResult(Guid Id, string ReceiptNumber, decimal Subtotal, decimal Discount, decimal GrandTotal, string PaymentMethod, decimal AmountTendered, decimal ChangeAmount, DateTimeOffset CreatedAtUtc, List<SaleLineResult> Items);
