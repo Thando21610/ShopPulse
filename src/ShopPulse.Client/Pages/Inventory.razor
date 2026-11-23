@@ -1,0 +1,104 @@
+@page "/inventory"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Inventory | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Inventory</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">STOCK CONTROL · LIVE</p><h1>Inventory</h1><p class="muted">Review on-hand quantities, batch traceability and the stock movement ledger.</p></section>
+    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+    <div class="metrics-grid inventory-metrics">
+        <article class="panel metric-card"><span>Active products</span><strong>@_products.Count</strong><small>In the catalogue</small></article>
+        <article class="panel metric-card"><span>Units on hand</span><strong>@_products.Sum(x => x.Available)</strong><small>Across all active products</small></article>
+        <article class="panel metric-card"><span>Low stock</span><strong>@_products.Count(x => x.Available <= x.MinimumStockLevel)</strong><small>At or below threshold</small></article>
+        <article class="panel metric-card"><span>Tracked batches</span><strong>@_batches.Count</strong><small>With remaining stock</small></article>
+    </div>
+    <div class="inventory-tabs" role="tablist" aria-label="Inventory views">
+        <button class="@TabClass("products")" role="tab" aria-selected="@(_tab == "products")" @onclick='() => _tab = "products"'>Products</button>
+        <button class="@TabClass("batches")" role="tab" aria-selected="@(_tab == "batches")" @onclick='() => _tab = "batches"'>Batches</button>
+        <button class="@TabClass("movements")" role="tab" aria-selected="@(_tab == "movements")" @onclick='() => _tab = "movements"'>Movement history</button>
+        <button class="button button-quiet" @onclick="Load" disabled="@_loading">Refresh</button>
+    </div>
+    <section class="panel products-panel">
+        @if (_loading) { <p class="muted">Loading inventory…</p> }
+        else if (_tab == "products")
+        {
+            <div class="panel-heading"><h2>Product stock levels</h2></div>
+            @if (_products.Count == 0) { <p class="muted">No active products.</p> }
+            else
+            {
+                <div class="table-wrap"><table><thead><tr><th>PRODUCT</th><th>SKU</th><th>ON HAND</th><th>MINIMUM</th><th>PRICE (ZAR)</th><th>STATUS</th></tr></thead><tbody>
+                @foreach (var p in _products)
+                {
+                    <tr><td><strong>@p.Name</strong></td><td>@p.Sku</td><td>@p.Available</td><td>@p.MinimumStockLevel</td><td>@Money(p.UnitPrice)</td><td><span class="stock-status @(p.Available <= p.MinimumStockLevel ? "low" : "ok")">@(p.Available <= p.MinimumStockLevel ? "Low stock" : "In stock")</span></td></tr>
+                }
+                </tbody></table></div>
+            }
+        }
+        else if (_tab == "batches")
+        {
+            <div class="panel-heading"><h2>Stock batches</h2></div>
+            @if (_batches.Count == 0) { <p class="muted">No batches with remaining stock.</p> }
+            else
+            {
+                <div class="table-wrap"><table><thead><tr><th>PRODUCT</th><th>BATCH</th><th>SUPPLIER</th><th>REMAINING</th><th>UNIT COST</th><th>EXPIRY</th></tr></thead><tbody>
+                @foreach (var b in _batches)
+                {
+                    <tr><td><strong>@b.ProductName</strong><small class="table-subtext">@b.Sku</small></td><td>@b.BatchReference</td><td>@(b.Supplier ?? "—")</td><td>@b.RemainingQuantity</td><td>@Money(b.UnitCost)</td><td>@(b.ExpiryDate?.ToString("dd MMM yyyy") ?? "Not tracked")</td></tr>
+                }
+                </tbody></table></div>
+            }
+        }
+        else
+        {
+            <div class="panel-heading"><h2>Recent stock movements</h2><span class="count-pill">Latest @_movements.Count</span></div>
+            @if (_movements.Count == 0) { <p class="muted">No stock movements recorded yet.</p> }
+            else
+            {
+                <div class="table-wrap"><table><thead><tr><th>WHEN (SAST)</th><th>PRODUCT</th><th>TYPE</th><th>CHANGE</th><th>ACTOR</th><th>REASON</th></tr></thead><tbody>
+                @foreach (var m in _movements)
+                {
+                    <tr><td>@m.CreatedAtUtc.ToOffset(TimeSpan.FromHours(2)).ToString("dd MMM HH:mm")</td><td>@m.ProductName</td><td>@m.MovementType</td><td class="@(m.QuantityChange < 0 ? "text-danger" : "text-success")">@((m.QuantityChange > 0 ? "+" : "") + m.QuantityChange)</td><td>@(m.ActorName ?? "System")</td><td>@m.Reason</td></tr>
+                }
+                </tbody></table></div>
+            }
+        }
+    </section>
+</main>
+@code {
+    private List<ProductRow> _products = [];
+    private List<BatchRow> _batches = [];
+    private List<MovementRow> _movements = [];
+    private string _tab = "products";
+    private bool _loading = true;
+    private string? _error;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
+        await Load();
+    }
+    private async Task Load()
+    {
+        _loading = true; _error = null;
+        try
+        {
+            var productsTask = Http.GetFromJsonAsync<List<ProductRow>>("api/products");
+            var batchesTask = Http.GetFromJsonAsync<List<BatchRow>>("api/stock/batches");
+            var movementsTask = Http.GetFromJsonAsync<List<MovementRow>>("api/stock/movements?take=250");
+            await Task.WhenAll(productsTask, batchesTask, movementsTask);
+            _products = productsTask.Result ?? [];
+            _batches = batchesTask.Result ?? [];
+            _movements = movementsTask.Result ?? [];
+        }
+        catch (HttpRequestException) { _error = "Inventory data could not be loaded. Check your connection and refresh."; }
+        finally { _loading = false; }
+    }
+    private string TabClass(string tab) => _tab == tab ? "button button-primary" : "button button-quiet";
+    private static string Money(decimal value) => value.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
+    private sealed class ProductRow { public Guid Id { get; set; } public string Name { get; set; } = ""; public string Sku { get; set; } = ""; public decimal UnitPrice { get; set; } public int MinimumStockLevel { get; set; } public int Available { get; set; } }
+    private sealed class BatchRow { public Guid Id { get; set; } public string ProductName { get; set; } = ""; public string Sku { get; set; } = ""; public string? BatchReference { get; set; } public string? Supplier { get; set; } public int RemainingQuantity { get; set; } public decimal UnitCost { get; set; } public DateOnly? ExpiryDate { get; set; } }
+    private sealed class MovementRow { public Guid Id { get; set; } public string ProductName { get; set; } = ""; public string MovementType { get; set; } = ""; public int QuantityChange { get; set; } public string? ActorName { get; set; } public string? Reason { get; set; } public DateTimeOffset CreatedAtUtc { get; set; } }
+}
