@@ -116,7 +116,8 @@ public class AuthController : ControllerBase
             Role = user.Role,
             BusinessId = user.BusinessId,
             BusinessName = business?.Name ?? "",
-            CanAdjustStock = user.CanAdjustStock
+            CanAdjustStock = user.CanAdjustStock,
+            CanRefundSales = user.CanRefundSales
         });
     }
 
