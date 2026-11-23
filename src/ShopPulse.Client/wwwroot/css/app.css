@@ -49,3 +49,45 @@
 .helper-message{margin:10px 0 0;color:#a33a32}
 @keyframes toast-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:600px){.toast-host{right:16px;top:76px;width:calc(100vw - 32px)}.toast-card{padding:13px}}
+
+/* ShopPulse design-system tokens and mobile-first interaction sizing */
+:root {
+  --ink: #1a2332;
+  --accent: #0b5f8a;
+  --bg-soft: #f4f7fa;
+  --danger: #c62828;
+  --card-border: #d7dee8;
+  --surface: #ffffff;
+  --text-muted: #667487;
+  --radius-card: 12px;
+  --touch-target: 44px;
+}
+body { color: var(--ink); background: var(--bg-soft); }
+.panel, .metric-card { background: var(--surface); border-color: var(--card-border); border-radius: var(--radius-card); }
+.dashboard-header, .dashboard-footer { border-color: var(--card-border); }
+.button, .login-form input, .field-group input, .field-group select { min-height: var(--touch-target); }
+.button-primary { background: var(--accent); color: #fff; }
+.button-primary:hover:not(:disabled) { background: #084c70; }
+.error-message, .field-group .validation-message, .login-form .validation-message, .helper-message { color: var(--danger); }
+.material-symbols-outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'liga';
+}
+@media (max-width: 680px) {
+  .button { min-height: 48px; }
+  .login-form input, .field-group input, .field-group select { min-height: 48px; }
+}
