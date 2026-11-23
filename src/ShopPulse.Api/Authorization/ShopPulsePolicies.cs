@@ -25,7 +25,7 @@ public static class ShopPulsePolicies
             policy.RequireAuthenticatedUser().AddRequirements(new CanAdjustStockRequirement()));
         options.AddPolicy(ManageStaff, policy => policy.RequireRole("Owner"));
         options.AddPolicy(ViewFinancialReports, policy => policy.RequireRole("Owner"));
-        options.AddPolicy(CloseCashShift, policy => policy.RequireRole("Owner"));
+        options.AddPolicy(CloseCashShift, policy => policy.RequireRole("Owner", "Operator"));
     }
 }
 
