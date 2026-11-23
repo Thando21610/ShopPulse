@@ -128,7 +128,7 @@ Then publish and deploy the client.
 
 ## 6. What is implemented vs next
 
-### Implemented and tested
+### Implemented (automated verification pending)
 
 - Domain model (products, batches, sales-ready, waste, shifts, audit, refresh tokens, idempotency)
 - JWT + rotating refresh cookie design (family reuse detection)
@@ -164,7 +164,7 @@ Then publish and deploy the client.
 
 ---
 
-## 8. Verified API behaviour (Release build)
+## 8. Verification status
 
 | Endpoint | Result |
 |----------|--------|

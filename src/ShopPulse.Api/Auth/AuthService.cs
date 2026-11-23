@@ -37,10 +37,9 @@ public class AuthService
     {
         _db = db;
         _config = config;
-        _jwt = config.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions
-        {
-            SigningKey = config["Jwt:SigningKey"] ?? "DEV_ONLY_CHANGE_ME_TO_A_LONG_RANDOM_SECRET_32+"
-        };
+        _jwt = config.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
+        _jwt.SigningKey = config["Jwt:SigningKey"]
+            ?? throw new InvalidOperationException("Jwt:SigningKey must be configured.");
         _rtOpt = config.GetSection("RefreshToken").Get<RefreshTokenOptions>() ?? new RefreshTokenOptions();
     }
 

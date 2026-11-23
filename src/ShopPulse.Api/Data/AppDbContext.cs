@@ -26,21 +26,21 @@ public class AppDbContext : DbContext
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
 
+    // Always apply tenant filters. EF caches the model, so conditionally adding
+    // filters based on the first request's scoped tenant would leak data across tenants.
+    private Guid CurrentBusinessId => _currentBusiness?.BusinessId ?? Guid.Empty;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Tenant filters (skip when no current business, e.g. during seed/login)
-        if (_currentBusiness is not null && _currentBusiness.BusinessId != Guid.Empty)
-        {
-            var bid = _currentBusiness.BusinessId;
-            modelBuilder.Entity<Product>().HasQueryFilter(p => p.BusinessId == bid);
-            modelBuilder.Entity<StockBatch>().HasQueryFilter(b => b.BusinessId == bid);
-            modelBuilder.Entity<StockMovement>().HasQueryFilter(m => m.BusinessId == bid);
-            modelBuilder.Entity<Sale>().HasQueryFilter(s => s.BusinessId == bid);
-            modelBuilder.Entity<WasteRecord>().HasQueryFilter(w => w.BusinessId == bid);
-            modelBuilder.Entity<CashShift>().HasQueryFilter(c => c.BusinessId == bid);
-            modelBuilder.Entity<AuditEvent>().HasQueryFilter(a => a.BusinessId == bid);
-            modelBuilder.Entity<IdempotencyRecord>().HasQueryFilter(i => i.BusinessId == bid);
-        }
+        modelBuilder.Entity<AppUser>().HasQueryFilter(u => u.BusinessId == CurrentBusinessId);
+        modelBuilder.Entity<Product>().HasQueryFilter(p => p.BusinessId == CurrentBusinessId);
+        modelBuilder.Entity<StockBatch>().HasQueryFilter(b => b.BusinessId == CurrentBusinessId);
+        modelBuilder.Entity<StockMovement>().HasQueryFilter(m => m.BusinessId == CurrentBusinessId);
+        modelBuilder.Entity<Sale>().HasQueryFilter(s => s.BusinessId == CurrentBusinessId);
+        modelBuilder.Entity<WasteRecord>().HasQueryFilter(w => w.BusinessId == CurrentBusinessId);
+        modelBuilder.Entity<CashShift>().HasQueryFilter(c => c.BusinessId == CurrentBusinessId);
+        modelBuilder.Entity<AuditEvent>().HasQueryFilter(a => a.BusinessId == CurrentBusinessId);
+        modelBuilder.Entity<IdempotencyRecord>().HasQueryFilter(i => i.BusinessId == CurrentBusinessId);
 
         modelBuilder.Entity<Business>(e =>
         {
