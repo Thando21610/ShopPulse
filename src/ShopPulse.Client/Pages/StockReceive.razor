@@ -55,8 +55,8 @@
             var payload = new { productId = _form.ProductId ?? Guid.Empty, quantity = _form.Quantity, unitCost = _form.UnitCost, expiryDate = _form.ExpiryDate?.ToString("yyyy-MM-dd"), supplier = _form.Supplier, batchReference = _form.BatchReference };
             using var response = await Http.PostAsJsonAsync("api/stock/receipts", payload);
             if (response.IsSuccessStatusCode) { _form = new(); _success = true; Toast.ShowSuccess("Stock received successfully."); return; }
-            var p = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
-            _error = p?.RootElement.TryGetProperty("detail", out var d) == true ? d.GetString() : "The stock receipt could not be saved.";
+            var message = await ApiErrorFormatter.FormatAsync(response, "The stock receipt could not be saved.");
+            if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
         }
         catch (HttpRequestException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
