@@ -41,7 +41,7 @@ public class ProductsController : ControllerBase
         int MinimumStockLevel, bool HasExpiry);
 
     [HttpGet("manage")]
-    [Authorize(Policy = ShopPulsePolicies.OwnerOnly)]
+    [Authorize(Policy = ShopPulsePolicies.CanManageProducts)]
     public async Task<IActionResult> Manage(CancellationToken ct)
     {
         var shopToday = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
