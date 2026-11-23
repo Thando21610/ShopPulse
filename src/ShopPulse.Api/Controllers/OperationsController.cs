@@ -213,6 +213,24 @@ public sealed class OperationsController : ControllerBase
         return Created($"/api/stock/batches/{batch.Id}", new { batch.Id, productId = product.Id, productName = product.Name, batch.ReceivedQuantity, batch.RemainingQuantity, batch.UnitCost, batch.ExpiryDate, batch.BatchReference });
     }
 
+    [HttpGet("stock/movements")]
+    public async Task<IActionResult> StockMovements([FromQuery] Guid? productId, [FromQuery] int take = 100, CancellationToken ct = default)
+    {
+        take = Math.Clamp(take, 1, 250);
+        var query = _db.StockMovements.AsNoTracking();
+        if (productId.HasValue) query = query.Where(x => x.ProductId == productId.Value);
+        var rows = await query.OrderByDescending(x => x.CreatedAtUtc).Take(take)
+            .Select(x => new
+            {
+                x.Id, x.ProductId,
+                ProductName = _db.Products.Where(product => product.Id == x.ProductId).Select(product => product.Name).FirstOrDefault(),
+                x.StockBatchId, x.MovementType, x.QuantityChange, x.ReferenceId, x.Reason, x.ActorUserId,
+                ActorName = _db.Users.Where(user => user.Id == x.ActorUserId).Select(user => user.DisplayName).FirstOrDefault(),
+                x.CreatedAtUtc
+            }).ToListAsync(ct);
+        return Ok(rows);
+    }
+
     [HttpGet("stock/batches")]
     public async Task<IActionResult> StockBatches([FromQuery] Guid? productId, CancellationToken ct)
     {
