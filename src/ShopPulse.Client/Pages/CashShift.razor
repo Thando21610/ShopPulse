@@ -59,20 +59,13 @@
             @if (IsOwner) { <p class="muted">Reconciliation for @(string.IsNullOrWhiteSpace(_shift.OperatorName) ? "the selected staff member" : _shift.OperatorName).</p> }
             <div class="summary-line"><span>Opening float</span><strong>@Money(_shift.OpeningFloat)</strong></div>
             <div class="summary-line"><span>Opened</span><strong>@_shift.OpenedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</strong></div>
-            @if (IsOwner)
-            {
-                <hr />
-                <h3>Close and reconcile</h3>
-                <label for="actual">Actual cash counted (ZAR)</label>
-                <input id="actual" class="form-control" type="number" min="0" step="0.01" @bind="_actualCash" />
-                <label for="variance">Variance explanation (required if different)</label>
-                <textarea id="variance" class="form-control" @bind="_varianceReason" maxlength="500"></textarea>
-                <button class="button button-primary" @onclick="Close" disabled="@_busy">@(_busy ? "Closing…" : "Close selected shift")</button>
-            }
-            else
-            {
-                <p class="muted">Ask the store owner to complete the end-of-day cash reconciliation.</p>
-            }
+            <hr />
+            <h3>Close and reconcile</h3>
+            <label for="actual">Actual cash counted (ZAR)</label>
+            <input id="actual" class="form-control" type="number" min="0" step="0.01" @bind="_actualCash" />
+            <label for="variance">Variance explanation (required if different)</label>
+            <textarea id="variance" class="form-control" @bind="_varianceReason" maxlength="500"></textarea>
+            <button class="button button-primary" @onclick="Close" disabled="@_busy">@(_busy ? "Closing…" : IsOwner ? "Close selected shift" : "Close my shift")</button>
         </section>
     }
 </main>
