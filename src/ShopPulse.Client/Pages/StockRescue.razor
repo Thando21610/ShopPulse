@@ -27,7 +27,7 @@
                         <div><span>Earliest expiry</span><strong>@item.EarliestExpiry.ToString("dd MMM yyyy")</strong></div>
                     </div>
                     <p class="rescue-recommendation">@item.Recommendation</p>
-                    @if (Session.User?.Role == "Owner" || Session.User?.CanAdjustStock == true) { <a class="button button-quiet" href="/stock/waste">Record waste or adjustment</a> }
+                    @if (Session.User?.Role == "Owner" || Session.User?.CanAdjustStock == true) { <a class="button button-quiet" href="/stock/waste">Record waste</a> }
                 </article>
             }
         </section>
