@@ -5,6 +5,7 @@
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
 @inject NavigationManager Nav
+@inject ShopPulse.Client.ToastService Toast
 @inject Microsoft.JSInterop.IJSRuntime JS
 
 <PageTitle>New sale | ShopPulse</PageTitle>
@@ -140,6 +141,7 @@
             if (!response.IsSuccessStatusCode) { _error = "The sale could not be completed. Please try again."; return; }
             _receipt = await response.Content.ReadFromJsonAsync<SaleResult>();
             _idempotencyKey = null;
+            if (_receipt is not null) Toast.ShowSuccess($"Sale completed. Receipt {_receipt.ReceiptNumber}.");
         }
         catch (HttpRequestException) { _error = "The service could not be reached. Check your connection before retrying."; }
         finally { _busy = false; }
