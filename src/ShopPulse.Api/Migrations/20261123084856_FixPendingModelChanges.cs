@@ -29,13 +29,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(int),
                 oldType: "INTEGER");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ProductId",
-                table: "WasteRecords",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""ProductId"" TYPE uuid USING ""ProductId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Notes",
@@ -54,29 +48,11 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "BusinessId",
-                table: "WasteRecords",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ActorUserId",
-                table: "WasteRecords",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""ActorUserId"" TYPE uuid USING ""ActorUserId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "WasteRecords",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Role",
@@ -155,32 +131,13 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(int),
                 oldType: "INTEGER");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "BusinessId",
-                table: "Users",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "Users",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ReferenceId",
-                table: "StockMovements",
-                type: "uuid",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""ReferenceId"" TYPE uuid USING ""ReferenceId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Reason",
@@ -199,13 +156,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(int),
                 oldType: "INTEGER");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ProductId",
-                table: "StockMovements",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""ProductId"" TYPE uuid USING ""ProductId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "MovementType",
@@ -223,29 +174,11 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "BusinessId",
-                table: "StockMovements",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ActorUserId",
-                table: "StockMovements",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""ActorUserId"" TYPE uuid USING ""ActorUserId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "StockMovements",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.AlterColumn<int>(
                 name: "Version",
@@ -288,13 +221,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ProductId",
-                table: "StockBatches",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""ProductId"" TYPE uuid USING ""ProductId""::uuid;");
 
             migrationBuilder.AlterColumn<DateOnly>(
                 name: "ExpiryDate",
@@ -305,13 +232,7 @@ namespace ShopPulse.Api.Migrations
                 oldType: "TEXT",
                 oldNullable: true);
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "BusinessId",
-                table: "StockBatches",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "BatchReference",
@@ -322,13 +243,7 @@ namespace ShopPulse.Api.Migrations
                 oldType: "TEXT",
                 oldNullable: true);
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "StockBatches",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Status",
@@ -356,13 +271,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "OperatorUserId",
-                table: "Sales",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""OperatorUserId"" TYPE uuid USING ""OperatorUserId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "IdempotencyKey",
@@ -381,21 +290,9 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "BusinessId",
-                table: "Sales",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "Sales",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
@@ -407,13 +304,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "SaleId",
-                table: "SaleItems",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""SaleId"" TYPE uuid USING ""SaleId""::uuid;");
 
             migrationBuilder.AlterColumn<int>(
                 name: "Quantity",
@@ -431,29 +322,11 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ProductId",
-                table: "SaleItems",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""ProductId"" TYPE uuid USING ""ProductId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "SaleItems",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "UserId",
-                table: "RefreshTokens",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""UserId"" TYPE uuid USING ""UserId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "UserAgent",
@@ -492,22 +365,9 @@ namespace ShopPulse.Api.Migrations
                 oldType: "TEXT",
                 oldNullable: true);
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ReplacedByTokenId",
-                table: "RefreshTokens",
-                type: "uuid",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""ReplacedByTokenId"" TYPE uuid USING ""ReplacedByTokenId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "FamilyId",
-                table: "RefreshTokens",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""FamilyId"" TYPE uuid USING ""FamilyId""::uuid;");
 
             migrationBuilder.AlterColumn<DateTimeOffset>(
                 name: "FamilyAbsoluteExpiryUtc",
@@ -543,13 +403,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "RefreshTokens",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Sku",
@@ -612,21 +466,9 @@ namespace ShopPulse.Api.Migrations
                 oldType: "TEXT",
                 oldNullable: true);
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "BusinessId",
-                table: "Products",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "Products",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.AlterColumn<int>(
                 name: "StatusCode",
@@ -678,21 +520,9 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "BusinessId",
-                table: "IdempotencyRecords",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "IdempotencyRecords",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "VarianceReason",
@@ -711,13 +541,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "OperatorUserId",
-                table: "CashShifts",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""OperatorUserId"" TYPE uuid USING ""OperatorUserId""::uuid;");
 
             migrationBuilder.AlterColumn<DateTimeOffset>(
                 name: "OpenedAtUtc",
@@ -736,21 +560,9 @@ namespace ShopPulse.Api.Migrations
                 oldType: "TEXT",
                 oldNullable: true);
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "BusinessId",
-                table: "CashShifts",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "CashShifts",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Name",
@@ -787,13 +599,7 @@ namespace ShopPulse.Api.Migrations
                 oldType: "TEXT",
                 oldNullable: true);
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "Businesses",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "EntityType",
@@ -803,14 +609,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "EntityId",
-                table: "AuditEvents",
-                type: "uuid",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""EntityId"" TYPE uuid USING ""EntityId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "DetailsJson",
@@ -829,22 +628,9 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "BusinessId",
-                table: "AuditEvents",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ActorUserId",
-                table: "AuditEvents",
-                type: "uuid",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""ActorUserId"" TYPE uuid USING ""ActorUserId""::uuid;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Action",
@@ -854,13 +640,7 @@ namespace ShopPulse.Api.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
-                table: "AuditEvents",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
         }
 
         /// <inheritdoc />
