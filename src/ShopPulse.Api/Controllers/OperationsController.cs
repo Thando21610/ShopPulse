@@ -31,7 +31,7 @@ public sealed class OperationsController : ControllerBase
     public sealed record ReceiveStockRequest(Guid ProductId, int Quantity, decimal UnitCost, DateOnly? ExpiryDate, string? Supplier, string? BatchReference);
     public sealed record WasteRequest(Guid ProductId, Guid StockBatchId, int Quantity, string Reason, string? Notes);
     public sealed record OpenCashShiftRequest(decimal OpeningFloat);
-    public sealed record CloseCashShiftRequest(decimal ActualCash, string? VarianceReason);
+    public sealed record CloseCashShiftRequest(Guid ShiftId, decimal ActualCash, string? VarianceReason);
 
     [HttpPost("sales")]
     [Authorize(Policy = ShopPulsePolicies.CompleteSales)]
@@ -278,10 +278,13 @@ public sealed class OperationsController : ControllerBase
     [HttpGet("cash-shifts/current")]
     public async Task<IActionResult> CurrentShift(CancellationToken ct)
     {
-        var shift = await _db.CashShifts.AsNoTracking()
-            .Where(x => x.OperatorUserId == _current.UserId && x.Status == "Open")
-            .OrderByDescending(x => x.OpenedAtUtc).FirstOrDefaultAsync(ct);
-        return Ok(shift is null ? null : new { shift.Id, shift.OpeningFloat, shift.OpenedAtUtc, shift.Status });
+        var query = _db.CashShifts.AsNoTracking().Where(x => x.Status == "Open");
+        // Owners reconcile the store's open shifts; operators see only their own shift.
+        if (!string.Equals(_current.Role, "Owner", StringComparison.OrdinalIgnoreCase))
+            query = query.Where(x => x.OperatorUserId == _current.UserId);
+
+        var shift = await query.OrderByDescending(x => x.OpenedAtUtc).FirstOrDefaultAsync(ct);
+        return Ok(shift is null ? null : new { shift.Id, shift.OperatorUserId, shift.OpeningFloat, shift.OpenedAtUtc, shift.Status });
     }
 
     [HttpPost("cash-shifts/open")]
@@ -306,17 +309,22 @@ public sealed class OperationsController : ControllerBase
     [Authorize(Policy = ShopPulsePolicies.CloseCashShift)]
     public async Task<IActionResult> CloseShift([FromBody] CloseCashShiftRequest request, CancellationToken ct)
     {
+        if (request.ShiftId == Guid.Empty)
+            return Failure(400, "VALIDATION_FAILED", "Select the cash shift you are closing.");
         if (request.ActualCash < 0 || request.ActualCash > 100000000m)
             return Failure(400, "VALIDATION_FAILED", "Enter a valid counted cash amount.");
         var shift = await _db.CashShifts
-            .Where(x => x.Status == "Open")
-            .OrderByDescending(x => x.OpenedAtUtc).FirstOrDefaultAsync(ct);
-        if (shift is null) return NotFound(new { code = "NO_OPEN_SHIFT", message = "There is no open cash shift to close." });
+            .Where(x => x.Id == request.ShiftId && x.Status == "Open")
+            .FirstOrDefaultAsync(ct);
+        if (shift is null) return NotFound(new { code = "NO_OPEN_SHIFT", message = "That cash shift is no longer open. Refresh and try again." });
 
         var cashSales = await _db.Sales.Where(x => x.OperatorUserId == shift.OperatorUserId
                 && x.PaymentMethod == "Cash" && x.Status == "Completed" && x.CreatedAtUtc >= shift.OpenedAtUtc)
             .SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
         var expected = shift.OpeningFloat + cashSales;
+        if (decimal.Round(request.ActualCash, 2) != decimal.Round(expected, 2)
+            && string.IsNullOrWhiteSpace(request.VarianceReason))
+            return Failure(400, "VALIDATION_FAILED", "Enter a variance explanation when counted cash differs from expected cash.");
         shift.ExpectedCash = expected;
         shift.ActualCash = decimal.Round(request.ActualCash, 2);
         shift.Variance = shift.ActualCash - expected;
