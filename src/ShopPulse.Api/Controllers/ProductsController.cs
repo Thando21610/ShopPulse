@@ -26,7 +26,7 @@ public class ProductsController : ControllerBase
             .OrderBy(p => p.Name)
             .Select(p => new
             {
-                p.Id, p.Sku, p.Name, p.UnitPrice, p.MinimumStockLevel, p.HasExpiry,
+                p.Id, p.Sku, p.Name, p.Category, p.UnitPrice, p.MinimumStockLevel, p.HasExpiry,
                 Available = p.Batches.Sum(b => b.RemainingQuantity)
             })
             .ToListAsync(ct);
