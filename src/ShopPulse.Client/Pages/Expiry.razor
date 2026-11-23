@@ -1,0 +1,43 @@
+@page "/expiry"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Expiry dashboard | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Stock health</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">INVENTORY · FEFO</p><h1>Expiry dashboard</h1><p class="muted">Prioritise stock that expires first and reduce avoidable waste.</p></section>
+    <div class="toolbar-row"><label for="days">Look ahead</label><select id="days" class="form-control compact-select" @bind="_days" @bind:after="Load"><option value="7">Next 7 days</option><option value="14">Next 14 days</option><option value="30">Next 30 days</option><option value="90">Next 90 days</option></select><button class="button button-quiet" @onclick="Load">Refresh</button></div>
+    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+    @if (_loading) { <section class="panel empty-state">Loading expiry batches…</section> }
+    else
+    {
+        <div class="expiry-grid">
+            <section class="panel expiry-panel expired"><div class="panel-heading"><h2>Expired</h2><span class="count-pill">@_batches.Count(x => x.Status == "Expired")</span></div>
+                @if (!_batches.Any(x => x.Status == "Expired")) { <p class="muted">No expired stock with remaining quantity.</p> }
+                @foreach(var b in _batches.Where(x => x.Status == "Expired")) { <article class="expiry-item"><div><strong>@b.ProductName</strong><small>@b.BatchReference · @b.RemainingQuantity units</small></div><span class="expiry-date">@b.ExpiryDate?.ToString("dd MMM yyyy")</span><a href="/stock/waste">Record waste</a></article> }
+            </section>
+            <section class="panel expiry-panel expiring"><div class="panel-heading"><h2>Expiring soon</h2><span class="count-pill">@_batches.Count(x => x.Status == "ExpiringSoon")</span></div>
+                @if (!_batches.Any(x => x.Status == "ExpiringSoon")) { <p class="muted">No stock expiring in this period.</p> }
+                @foreach(var b in _batches.Where(x => x.Status == "ExpiringSoon")) { <article class="expiry-item"><div><strong>@b.ProductName</strong><small>@b.BatchReference · @b.RemainingQuantity units</small></div><span class="expiry-date">@b.ExpiryDate?.ToString("dd MMM yyyy")</span><span class="priority-label">Prioritise this batch</span></article> }
+            </section>
+        </div>
+    }
+</main>
+@code {
+    private List<ExpiryBatch> _batches = [];
+    private int _days = 7;
+    private bool _loading;
+    private string? _error;
+    protected override async Task OnInitializedAsync() { if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; } await Load(); }
+    private async Task Load()
+    {
+        _loading = true; _error = null;
+        try { _batches = await Http.GetFromJsonAsync<List<ExpiryBatch>>($"api/stock/expiry?days={_days}") ?? []; }
+        catch (HttpRequestException) { _error = "The expiry list could not be loaded."; }
+        finally { _loading = false; }
+    }
+    private sealed class ExpiryBatch { public Guid Id { get; set; } public string ProductName { get; set; } = ""; public string? BatchReference { get; set; } public int RemainingQuantity { get; set; } public DateOnly? ExpiryDate { get; set; } public string Status { get; set; } = ""; }
+}
