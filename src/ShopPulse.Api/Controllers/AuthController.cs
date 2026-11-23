@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using ShopPulse.Api.Auth;
 using ShopPulse.Api.Data;
+using Microsoft.AspNetCore.Hosting;
 
 namespace ShopPulse.Api.Controllers;
 
@@ -12,11 +13,15 @@ public class AuthController : ControllerBase
 {
     private readonly AuthService _auth;
     private readonly AppDbContext _db;
+    private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _environment;
 
-    public AuthController(AuthService auth, AppDbContext db)
+    public AuthController(AuthService auth, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment)
     {
         _auth = auth;
         _db = db;
+        _configuration = configuration;
+        _environment = environment;
     }
 
     public record LoginRequest(string Email, string Password);
@@ -60,6 +65,7 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("auth")]
     public async Task<IActionResult> Refresh(CancellationToken ct)
     {
+        if (!IsAllowedRefreshOrigin()) return Forbid();
         var raw = Request.Cookies[_auth.CookieOptions.CookieName];
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
         var ua = Request.Headers.UserAgent.ToString();
@@ -90,6 +96,7 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Logout(CancellationToken ct)
     {
+        if (!IsAllowedRefreshOrigin()) return Forbid();
         var raw = Request.Cookies[_auth.CookieOptions.CookieName];
         await _auth.LogoutAsync(raw, ct);
         ClearRefreshCookie();
@@ -121,6 +128,19 @@ public class AuthController : ControllerBase
             CanManageProducts = user.CanManageProducts,
             CanReceiveStock = user.CanReceiveStock
         });
+    }
+
+    private bool IsAllowedRefreshOrigin()
+    {
+        var origin = Request.Headers.Origin.ToString().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(origin)) return false;
+
+        var allowed = _configuration.GetSection("Cors:Origins").Get<string[]>();
+        if ((allowed is null || allowed.Length == 0) && _environment.IsDevelopment())
+            allowed = ["http://localhost:5000", "https://localhost:5001"];
+
+        return allowed?.Any(value =>
+            string.Equals(value.TrimEnd('/'), origin, StringComparison.OrdinalIgnoreCase)) == true;
     }
 
     private void SetRefreshCookie(string raw)
