@@ -200,6 +200,8 @@ public sealed class OperationsController : ControllerBase
 
         var product = await _db.Products.FirstOrDefaultAsync(x => x.Id == request.ProductId && x.IsActive, ct);
         if (product is null) return NotFound(new { code = "PRODUCT_NOT_FOUND", message = "The selected product could not be found." });
+        if (product.HasExpiry && !request.ExpiryDate.HasValue)
+            return Failure(400, "VALIDATION_FAILED", "An expiry date is required for this product.");
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         var batch = new StockBatch
