@@ -29,7 +29,7 @@ public static class ShopPulsePolicies
     }
 }
 
-public sealed class CanAdjustStockRequirement : IAuthorizationRequirement;
+public sealed class CanAdjustStockRequirement : IAuthorizationRequirement { }
 
 public sealed class CanAdjustStockHandler : AuthorizationHandler<CanAdjustStockRequirement>
 {
