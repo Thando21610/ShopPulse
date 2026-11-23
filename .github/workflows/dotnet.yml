@@ -28,5 +28,7 @@ jobs:
         run: dotnet publish src/ShopPulse.Api/ShopPulse.Api.csproj --configuration Release --no-restore --output artifacts/api
       - name: Publish Blazor client
         run: dotnet publish src/ShopPulse.Client/ShopPulse.Client.csproj --configuration Release --no-restore --output artifacts/client
+      - name: Build API container
+        run: docker build --tag shoppulse-api:ci src/ShopPulse.Api
       - name: Build frontend container
         run: docker build --tag shoppulse-client:ci src/ShopPulse.Client
