@@ -124,8 +124,7 @@
                 _openShifts = await Http.GetFromJsonAsync<List<ShiftInfo>>("api/cash-shifts/open") ?? [];
                 if (!_openShifts.Any(x => x.Id == _selectedShiftId))
                     _selectedShiftId = _openShifts.FirstOrDefault()?.Id;
-                SelectShift();
-                await LoadMovements();
+                await SelectShift();
             }
             else
             {
@@ -136,12 +135,12 @@
         catch (HttpRequestException) { _error = "Could not load the current cash shifts. Check your session and try again."; }
     }
 
-    private void SelectShift()
+    private async Task SelectShift()
     {
         if (IsOwner)
         {
             _shift = _openShifts.FirstOrDefault(x => x.Id == _selectedShiftId);
-            _ = LoadMovements();
+            await LoadMovements();
         }
     }
 
