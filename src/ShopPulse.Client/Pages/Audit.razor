@@ -1,0 +1,70 @@
+@page "/audit"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Audit history | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Audit history</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">GOVERNANCE · OWNER</p><h1>Audit history</h1><p class="muted">Review important actions recorded by the application. Events are read-only in this screen.</p></section>
+    @if (_forbidden) { <div class="inline-alert" role="alert">Audit history is available to the store owner only.</div> }
+    else
+    {
+        <div class="toolbar-row"><label for="filter">Filter actions</label><input id="filter" class="form-control compact-select" @bind="_filter" @bind:event="oninput" placeholder="e.g. Sale, Stock, Staff" /><button class="button button-quiet" @onclick="Load">Apply</button></div>
+        @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        <section class="panel products-panel">
+            <div class="panel-heading"><h2>Recent events</h2><span class="count-pill">@_events.Count events</span></div>
+            @if (_loading) { <p class="muted">Loading audit history…</p> }
+            else if (_events.Count == 0) { <p class="muted">No matching audit events were found.</p> }
+            else
+            {
+                <div class="table-wrap"><table>
+                    <thead><tr><th>WHEN (SAST)</th><th>ACTOR</th><th>ACTION</th><th>RECORD</th><th>DETAILS</th></tr></thead>
+                    <tbody>
+                    @foreach (var item in _events)
+                    {
+                        <tr>
+                            <td>@item.CreatedAtUtc.ToOffset(TimeSpan.FromHours(2)).ToString("dd MMM yyyy HH:mm:ss")</td>
+                            <td>@(item.ActorName ?? "System")</td>
+                            <td><strong>@item.Action</strong></td>
+                            <td>@item.EntityType <small class="table-subtext">@item.EntityId</small></td>
+                            <td><details><summary>View</summary><pre class="audit-json">@item.DetailsJson</pre></details></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table></div>
+                <p class="muted small-note">Showing up to 250 most recent events. Audit data is scoped to your business.</p>
+            }
+        </section>
+    }
+</main>
+@code {
+    private List<AuditRow> _events = [];
+    private string? _filter, _error;
+    private bool _loading = true, _forbidden;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
+        if (Session.User?.Role != "Owner") { _forbidden = true; return; }
+        await Load();
+    }
+    private async Task Load()
+    {
+        _loading = true; _error = null;
+        try
+        {
+            var query = string.IsNullOrWhiteSpace(_filter) ? "" : $"&action={Uri.EscapeDataString(_filter.Trim())}";
+            _events = await Http.GetFromJsonAsync<List<AuditRow>>($"api/audit?take=250{query}") ?? [];
+        }
+        catch (HttpRequestException) { _error = "Audit history could not be loaded."; }
+        finally { _loading = false; }
+    }
+    private sealed class AuditRow
+    {
+        public Guid Id { get; set; } public string Action { get; set; } = ""; public string EntityType { get; set; } = "";
+        public Guid? EntityId { get; set; } public string? DetailsJson { get; set; } public DateTimeOffset CreatedAtUtc { get; set; }
+        public string? ActorName { get; set; }
+    }
+}
