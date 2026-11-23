@@ -13,40 +13,15 @@ namespace ShopPulse.Api.Migrations
         {
             migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Reason",
-                table: "WasteRecords",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""Reason"" TYPE text USING ""Reason""::text;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "Quantity",
-                table: "WasteRecords",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""Quantity"" TYPE integer USING ""Quantity""::integer;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""ProductId"" TYPE uuid USING ""ProductId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Notes",
-                table: "WasteRecords",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""Notes"" TYPE text USING ""Notes""::text;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedAtUtc",
-                table: "WasteRecords",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""CreatedAtUtc"" TYPE timestamp with time zone USING ""CreatedAtUtc""::timestamp with time zone;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
@@ -54,82 +29,23 @@ namespace ShopPulse.Api.Migrations
 
             migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Role",
-                table: "Users",
-                type: "character varying(32)",
-                maxLength: 32,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldMaxLength: 32);
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""Role"" TYPE character varying(32) USING ""Role""::character varying(32);");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "PasswordHash",
-                table: "Users",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""PasswordHash"" TYPE text USING ""PasswordHash""::text;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "LockoutEndUtc",
-                table: "Users",
-                type: "timestamp with time zone",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""LockoutEndUtc"" TYPE timestamp with time zone USING ""LockoutEndUtc""::timestamp with time zone;");
 
-            migrationBuilder.AlterColumn<bool>(
-                name: "IsActive",
-                table: "Users",
-                type: "boolean",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""IsActive"" TYPE boolean USING ""IsActive""::boolean;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "FailedLoginCount",
-                table: "Users",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""FailedLoginCount"" TYPE integer USING ""FailedLoginCount""::integer;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Email",
-                table: "Users",
-                type: "character varying(256)",
-                maxLength: 256,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldMaxLength: 256);
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""Email"" TYPE character varying(256) USING ""Email""::character varying(256);");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "DisplayName",
-                table: "Users",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""DisplayName"" TYPE text USING ""DisplayName""::text;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedAtUtc",
-                table: "Users",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""CreatedAtUtc"" TYPE timestamp with time zone USING ""CreatedAtUtc""::timestamp with time zone;");
 
-            migrationBuilder.AlterColumn<bool>(
-                name: "CanAdjustStock",
-                table: "Users",
-                type: "boolean",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""CanAdjustStock"" TYPE boolean USING ""CanAdjustStock""::boolean;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
@@ -139,40 +55,15 @@ namespace ShopPulse.Api.Migrations
 
             migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""ReferenceId"" TYPE uuid USING ""ReferenceId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Reason",
-                table: "StockMovements",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""Reason"" TYPE text USING ""Reason""::text;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "QuantityChange",
-                table: "StockMovements",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""QuantityChange"" TYPE integer USING ""QuantityChange""::integer;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""ProductId"" TYPE uuid USING ""ProductId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "MovementType",
-                table: "StockMovements",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""MovementType"" TYPE text USING ""MovementType""::text;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedAtUtc",
-                table: "StockMovements",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""CreatedAtUtc"" TYPE timestamp with time zone USING ""CreatedAtUtc""::timestamp with time zone;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
@@ -180,115 +71,37 @@ namespace ShopPulse.Api.Migrations
 
             migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "Version",
-                table: "StockBatches",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""Version"" TYPE integer USING ""Version""::integer;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Supplier",
-                table: "StockBatches",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""Supplier"" TYPE text USING ""Supplier""::text;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "RemainingQuantity",
-                table: "StockBatches",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""RemainingQuantity"" TYPE integer USING ""RemainingQuantity""::integer;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "ReceivedQuantity",
-                table: "StockBatches",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""ReceivedQuantity"" TYPE integer USING ""ReceivedQuantity""::integer;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "ReceivedAtUtc",
-                table: "StockBatches",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""ReceivedAtUtc"" TYPE timestamp with time zone USING ""ReceivedAtUtc""::timestamp with time zone;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""ProductId"" TYPE uuid USING ""ProductId""::uuid;");
 
-            migrationBuilder.AlterColumn<DateOnly>(
-                name: "ExpiryDate",
-                table: "StockBatches",
-                type: "date",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""ExpiryDate"" TYPE date USING ""ExpiryDate""::date;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BatchReference",
-                table: "StockBatches",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""BatchReference"" TYPE text USING ""BatchReference""::text;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Status",
-                table: "Sales",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""Status"" TYPE text USING ""Status""::text;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ReceiptNumber",
-                table: "Sales",
-                type: "character varying(32)",
-                maxLength: 32,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldMaxLength: 32);
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""ReceiptNumber"" TYPE character varying(32) USING ""ReceiptNumber""::character varying(32);");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "PaymentMethod",
-                table: "Sales",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""PaymentMethod"" TYPE text USING ""PaymentMethod""::text;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""OperatorUserId"" TYPE uuid USING ""OperatorUserId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "IdempotencyKey",
-                table: "Sales",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""IdempotencyKey"" TYPE text USING ""IdempotencyKey""::text;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedAtUtc",
-                table: "Sales",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""CreatedAtUtc"" TYPE timestamp with time zone USING ""CreatedAtUtc""::timestamp with time zone;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
@@ -296,31 +109,13 @@ namespace ShopPulse.Api.Migrations
 
             migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "SkuSnapshot",
-                table: "SaleItems",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""SkuSnapshot"" TYPE text USING ""SkuSnapshot""::text;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""SaleId"" TYPE uuid USING ""SaleId""::uuid;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "Quantity",
-                table: "SaleItems",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""Quantity"" TYPE integer USING ""Quantity""::integer;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ProductNameSnapshot",
-                table: "SaleItems",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""ProductNameSnapshot"" TYPE text USING ""ProductNameSnapshot""::text;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""ProductId"" TYPE uuid USING ""ProductId""::uuid;");
 
@@ -328,317 +123,99 @@ namespace ShopPulse.Api.Migrations
 
             migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""UserId"" TYPE uuid USING ""UserId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "UserAgent",
-                table: "RefreshTokens",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""UserAgent"" TYPE text USING ""UserAgent""::text;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "TokenHash",
-                table: "RefreshTokens",
-                type: "character varying(128)",
-                maxLength: 128,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldMaxLength: 128);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""TokenHash"" TYPE character varying(128) USING ""TokenHash""::character varying(128);");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "RevokedReason",
-                table: "RefreshTokens",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""RevokedReason"" TYPE text USING ""RevokedReason""::text;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "RevokedAtUtc",
-                table: "RefreshTokens",
-                type: "timestamp with time zone",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""RevokedAtUtc"" TYPE timestamp with time zone USING ""RevokedAtUtc""::timestamp with time zone;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""ReplacedByTokenId"" TYPE uuid USING ""ReplacedByTokenId""::uuid;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""FamilyId"" TYPE uuid USING ""FamilyId""::uuid;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "FamilyAbsoluteExpiryUtc",
-                table: "RefreshTokens",
-                type: "timestamp with time zone",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""FamilyAbsoluteExpiryUtc"" TYPE timestamp with time zone USING ""FamilyAbsoluteExpiryUtc""::timestamp with time zone;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "ExpiresAtUtc",
-                table: "RefreshTokens",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""ExpiresAtUtc"" TYPE timestamp with time zone USING ""ExpiresAtUtc""::timestamp with time zone;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedByIp",
-                table: "RefreshTokens",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""CreatedByIp"" TYPE text USING ""CreatedByIp""::text;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedAtUtc",
-                table: "RefreshTokens",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""CreatedAtUtc"" TYPE timestamp with time zone USING ""CreatedAtUtc""::timestamp with time zone;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Sku",
-                table: "Products",
-                type: "character varying(64)",
-                maxLength: 64,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldMaxLength: 64);
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""Sku"" TYPE character varying(64) USING ""Sku""::character varying(64);");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Name",
-                table: "Products",
-                type: "character varying(200)",
-                maxLength: 200,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldMaxLength: 200);
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""Name"" TYPE character varying(200) USING ""Name""::character varying(200);");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "MinimumStockLevel",
-                table: "Products",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""MinimumStockLevel"" TYPE integer USING ""MinimumStockLevel""::integer;");
 
-            migrationBuilder.AlterColumn<bool>(
-                name: "IsActive",
-                table: "Products",
-                type: "boolean",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""IsActive"" TYPE boolean USING ""IsActive""::boolean;");
 
-            migrationBuilder.AlterColumn<bool>(
-                name: "HasExpiry",
-                table: "Products",
-                type: "boolean",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""HasExpiry"" TYPE boolean USING ""HasExpiry""::boolean;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedAtUtc",
-                table: "Products",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""CreatedAtUtc"" TYPE timestamp with time zone USING ""CreatedAtUtc""::timestamp with time zone;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Category",
-                table: "Products",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""Category"" TYPE text USING ""Category""::text;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "StatusCode",
-                table: "IdempotencyRecords",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""StatusCode"" TYPE integer USING ""StatusCode""::integer;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ResponseJson",
-                table: "IdempotencyRecords",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""ResponseJson"" TYPE text USING ""ResponseJson""::text;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "RequestHash",
-                table: "IdempotencyRecords",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""RequestHash"" TYPE text USING ""RequestHash""::text;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Key",
-                table: "IdempotencyRecords",
-                type: "character varying(128)",
-                maxLength: 128,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldMaxLength: 128);
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""Key"" TYPE character varying(128) USING ""Key""::character varying(128);");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "ExpiresAtUtc",
-                table: "IdempotencyRecords",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""ExpiresAtUtc"" TYPE timestamp with time zone USING ""ExpiresAtUtc""::timestamp with time zone;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedAtUtc",
-                table: "IdempotencyRecords",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""CreatedAtUtc"" TYPE timestamp with time zone USING ""CreatedAtUtc""::timestamp with time zone;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "VarianceReason",
-                table: "CashShifts",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""VarianceReason"" TYPE text USING ""VarianceReason""::text;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Status",
-                table: "CashShifts",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""Status"" TYPE text USING ""Status""::text;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""OperatorUserId"" TYPE uuid USING ""OperatorUserId""::uuid;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "OpenedAtUtc",
-                table: "CashShifts",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""OpenedAtUtc"" TYPE timestamp with time zone USING ""OpenedAtUtc""::timestamp with time zone;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "ClosedAtUtc",
-                table: "CashShifts",
-                type: "timestamp with time zone",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""ClosedAtUtc"" TYPE timestamp with time zone USING ""ClosedAtUtc""::timestamp with time zone;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Name",
-                table: "Businesses",
-                type: "character varying(200)",
-                maxLength: 200,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldMaxLength: 200);
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""Name"" TYPE character varying(200) USING ""Name""::character varying(200);");
 
-            migrationBuilder.AlterColumn<bool>(
-                name: "IsActive",
-                table: "Businesses",
-                type: "boolean",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""IsActive"" TYPE boolean USING ""IsActive""::boolean;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedAtUtc",
-                table: "Businesses",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""CreatedAtUtc"" TYPE timestamp with time zone USING ""CreatedAtUtc""::timestamp with time zone;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Address",
-                table: "Businesses",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""Address"" TYPE text USING ""Address""::text;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "EntityType",
-                table: "AuditEvents",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""EntityType"" TYPE text USING ""EntityType""::text;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""EntityId"" TYPE uuid USING ""EntityId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "DetailsJson",
-                table: "AuditEvents",
-                type: "text",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "TEXT",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""DetailsJson"" TYPE text USING ""DetailsJson""::text;");
 
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedAtUtc",
-                table: "AuditEvents",
-                type: "timestamp with time zone",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""CreatedAtUtc"" TYPE timestamp with time zone USING ""CreatedAtUtc""::timestamp with time zone;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""BusinessId"" TYPE uuid USING ""BusinessId""::uuid;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""ActorUserId"" TYPE uuid USING ""ActorUserId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Action",
-                table: "AuditEvents",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "TEXT");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""Action"" TYPE text USING ""Action""::text;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""Id"" TYPE uuid USING ""Id""::uuid;");
         }
@@ -648,854 +225,211 @@ namespace ShopPulse.Api.Migrations
         {
             migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Reason",
-                table: "WasteRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""Reason"" TYPE TEXT USING ""Reason""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "Quantity",
-                table: "WasteRecords",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""Quantity"" TYPE INTEGER USING ""Quantity""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ProductId",
-                table: "WasteRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""ProductId"" TYPE TEXT USING ""ProductId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Notes",
-                table: "WasteRecords",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""Notes"" TYPE TEXT USING ""Notes""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedAtUtc",
-                table: "WasteRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""CreatedAtUtc"" TYPE TEXT USING ""CreatedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BusinessId",
-                table: "WasteRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""BusinessId"" TYPE TEXT USING ""BusinessId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ActorUserId",
-                table: "WasteRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""ActorUserId"" TYPE TEXT USING ""ActorUserId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "WasteRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""WasteRecords"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Role",
-                table: "Users",
-                type: "TEXT",
-                maxLength: 32,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(32)",
-                oldMaxLength: 32);
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""Role"" TYPE TEXT USING ""Role""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "PasswordHash",
-                table: "Users",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""PasswordHash"" TYPE TEXT USING ""PasswordHash""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "LockoutEndUtc",
-                table: "Users",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""LockoutEndUtc"" TYPE TEXT USING ""LockoutEndUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "IsActive",
-                table: "Users",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(bool),
-                oldType: "boolean");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""IsActive"" TYPE INTEGER USING ""IsActive""::INTEGER;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "FailedLoginCount",
-                table: "Users",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""FailedLoginCount"" TYPE INTEGER USING ""FailedLoginCount""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Email",
-                table: "Users",
-                type: "TEXT",
-                maxLength: 256,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(256)",
-                oldMaxLength: 256);
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""Email"" TYPE TEXT USING ""Email""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "DisplayName",
-                table: "Users",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""DisplayName"" TYPE TEXT USING ""DisplayName""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedAtUtc",
-                table: "Users",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""CreatedAtUtc"" TYPE TEXT USING ""CreatedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "CanAdjustStock",
-                table: "Users",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(bool),
-                oldType: "boolean");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""CanAdjustStock"" TYPE INTEGER USING ""CanAdjustStock""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BusinessId",
-                table: "Users",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""BusinessId"" TYPE TEXT USING ""BusinessId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "Users",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ReferenceId",
-                table: "StockMovements",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(Guid),
-                oldType: "uuid",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""ReferenceId"" TYPE TEXT USING ""ReferenceId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Reason",
-                table: "StockMovements",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""Reason"" TYPE TEXT USING ""Reason""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "QuantityChange",
-                table: "StockMovements",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""QuantityChange"" TYPE INTEGER USING ""QuantityChange""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ProductId",
-                table: "StockMovements",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""ProductId"" TYPE TEXT USING ""ProductId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "MovementType",
-                table: "StockMovements",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""MovementType"" TYPE TEXT USING ""MovementType""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedAtUtc",
-                table: "StockMovements",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""CreatedAtUtc"" TYPE TEXT USING ""CreatedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BusinessId",
-                table: "StockMovements",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""BusinessId"" TYPE TEXT USING ""BusinessId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ActorUserId",
-                table: "StockMovements",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""ActorUserId"" TYPE TEXT USING ""ActorUserId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "StockMovements",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockMovements"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "Version",
-                table: "StockBatches",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""Version"" TYPE INTEGER USING ""Version""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Supplier",
-                table: "StockBatches",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""Supplier"" TYPE TEXT USING ""Supplier""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "RemainingQuantity",
-                table: "StockBatches",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""RemainingQuantity"" TYPE INTEGER USING ""RemainingQuantity""::INTEGER;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "ReceivedQuantity",
-                table: "StockBatches",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""ReceivedQuantity"" TYPE INTEGER USING ""ReceivedQuantity""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ReceivedAtUtc",
-                table: "StockBatches",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""ReceivedAtUtc"" TYPE TEXT USING ""ReceivedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ProductId",
-                table: "StockBatches",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""ProductId"" TYPE TEXT USING ""ProductId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ExpiryDate",
-                table: "StockBatches",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(DateOnly),
-                oldType: "date",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""ExpiryDate"" TYPE TEXT USING ""ExpiryDate""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BusinessId",
-                table: "StockBatches",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""BusinessId"" TYPE TEXT USING ""BusinessId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BatchReference",
-                table: "StockBatches",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""BatchReference"" TYPE TEXT USING ""BatchReference""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "StockBatches",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""StockBatches"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Status",
-                table: "Sales",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""Status"" TYPE TEXT USING ""Status""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ReceiptNumber",
-                table: "Sales",
-                type: "TEXT",
-                maxLength: 32,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(32)",
-                oldMaxLength: 32);
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""ReceiptNumber"" TYPE TEXT USING ""ReceiptNumber""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "PaymentMethod",
-                table: "Sales",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""PaymentMethod"" TYPE TEXT USING ""PaymentMethod""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "OperatorUserId",
-                table: "Sales",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""OperatorUserId"" TYPE TEXT USING ""OperatorUserId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "IdempotencyKey",
-                table: "Sales",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""IdempotencyKey"" TYPE TEXT USING ""IdempotencyKey""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedAtUtc",
-                table: "Sales",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""CreatedAtUtc"" TYPE TEXT USING ""CreatedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BusinessId",
-                table: "Sales",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""BusinessId"" TYPE TEXT USING ""BusinessId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "Sales",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""Sales"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
             migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""StockBatchId"" TYPE uuid USING ""StockBatchId""::uuid;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "SkuSnapshot",
-                table: "SaleItems",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""SkuSnapshot"" TYPE TEXT USING ""SkuSnapshot""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "SaleId",
-                table: "SaleItems",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""SaleId"" TYPE TEXT USING ""SaleId""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "Quantity",
-                table: "SaleItems",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""Quantity"" TYPE INTEGER USING ""Quantity""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ProductNameSnapshot",
-                table: "SaleItems",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""ProductNameSnapshot"" TYPE TEXT USING ""ProductNameSnapshot""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ProductId",
-                table: "SaleItems",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""ProductId"" TYPE TEXT USING ""ProductId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "SaleItems",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""SaleItems"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "UserId",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""UserId"" TYPE TEXT USING ""UserId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "UserAgent",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""UserAgent"" TYPE TEXT USING ""UserAgent""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "TokenHash",
-                table: "RefreshTokens",
-                type: "TEXT",
-                maxLength: 128,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(128)",
-                oldMaxLength: 128);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""TokenHash"" TYPE TEXT USING ""TokenHash""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "RevokedReason",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""RevokedReason"" TYPE TEXT USING ""RevokedReason""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "RevokedAtUtc",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""RevokedAtUtc"" TYPE TEXT USING ""RevokedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ReplacedByTokenId",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(Guid),
-                oldType: "uuid",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""ReplacedByTokenId"" TYPE TEXT USING ""ReplacedByTokenId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "FamilyId",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""FamilyId"" TYPE TEXT USING ""FamilyId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "FamilyAbsoluteExpiryUtc",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""FamilyAbsoluteExpiryUtc"" TYPE TEXT USING ""FamilyAbsoluteExpiryUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ExpiresAtUtc",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""ExpiresAtUtc"" TYPE TEXT USING ""ExpiresAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedByIp",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""CreatedByIp"" TYPE TEXT USING ""CreatedByIp""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedAtUtc",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""CreatedAtUtc"" TYPE TEXT USING ""CreatedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "RefreshTokens",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""RefreshTokens"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Sku",
-                table: "Products",
-                type: "TEXT",
-                maxLength: 64,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(64)",
-                oldMaxLength: 64);
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""Sku"" TYPE TEXT USING ""Sku""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Name",
-                table: "Products",
-                type: "TEXT",
-                maxLength: 200,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(200)",
-                oldMaxLength: 200);
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""Name"" TYPE TEXT USING ""Name""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "MinimumStockLevel",
-                table: "Products",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""MinimumStockLevel"" TYPE INTEGER USING ""MinimumStockLevel""::INTEGER;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "IsActive",
-                table: "Products",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(bool),
-                oldType: "boolean");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""IsActive"" TYPE INTEGER USING ""IsActive""::INTEGER;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "HasExpiry",
-                table: "Products",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(bool),
-                oldType: "boolean");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""HasExpiry"" TYPE INTEGER USING ""HasExpiry""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedAtUtc",
-                table: "Products",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""CreatedAtUtc"" TYPE TEXT USING ""CreatedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Category",
-                table: "Products",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""Category"" TYPE TEXT USING ""Category""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BusinessId",
-                table: "Products",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""BusinessId"" TYPE TEXT USING ""BusinessId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "Products",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""Products"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "StatusCode",
-                table: "IdempotencyRecords",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""StatusCode"" TYPE INTEGER USING ""StatusCode""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ResponseJson",
-                table: "IdempotencyRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""ResponseJson"" TYPE TEXT USING ""ResponseJson""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "RequestHash",
-                table: "IdempotencyRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""RequestHash"" TYPE TEXT USING ""RequestHash""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Key",
-                table: "IdempotencyRecords",
-                type: "TEXT",
-                maxLength: 128,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(128)",
-                oldMaxLength: 128);
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""Key"" TYPE TEXT USING ""Key""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ExpiresAtUtc",
-                table: "IdempotencyRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""ExpiresAtUtc"" TYPE TEXT USING ""ExpiresAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedAtUtc",
-                table: "IdempotencyRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""CreatedAtUtc"" TYPE TEXT USING ""CreatedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BusinessId",
-                table: "IdempotencyRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""BusinessId"" TYPE TEXT USING ""BusinessId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "IdempotencyRecords",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""IdempotencyRecords"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "VarianceReason",
-                table: "CashShifts",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""VarianceReason"" TYPE TEXT USING ""VarianceReason""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Status",
-                table: "CashShifts",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""Status"" TYPE TEXT USING ""Status""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "OperatorUserId",
-                table: "CashShifts",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""OperatorUserId"" TYPE TEXT USING ""OperatorUserId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "OpenedAtUtc",
-                table: "CashShifts",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""OpenedAtUtc"" TYPE TEXT USING ""OpenedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ClosedAtUtc",
-                table: "CashShifts",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""ClosedAtUtc"" TYPE TEXT USING ""ClosedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BusinessId",
-                table: "CashShifts",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""BusinessId"" TYPE TEXT USING ""BusinessId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "CashShifts",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""CashShifts"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Name",
-                table: "Businesses",
-                type: "TEXT",
-                maxLength: 200,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(200)",
-                oldMaxLength: 200);
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""Name"" TYPE TEXT USING ""Name""::TEXT;");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "IsActive",
-                table: "Businesses",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(bool),
-                oldType: "boolean");
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""IsActive"" TYPE INTEGER USING ""IsActive""::INTEGER;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedAtUtc",
-                table: "Businesses",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""CreatedAtUtc"" TYPE TEXT USING ""CreatedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Address",
-                table: "Businesses",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""Address"" TYPE TEXT USING ""Address""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "Businesses",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""Businesses"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "EntityType",
-                table: "AuditEvents",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""EntityType"" TYPE TEXT USING ""EntityType""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "EntityId",
-                table: "AuditEvents",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(Guid),
-                oldType: "uuid",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""EntityId"" TYPE TEXT USING ""EntityId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "DetailsJson",
-                table: "AuditEvents",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "text",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""DetailsJson"" TYPE TEXT USING ""DetailsJson""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "CreatedAtUtc",
-                table: "AuditEvents",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "timestamp with time zone");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""CreatedAtUtc"" TYPE TEXT USING ""CreatedAtUtc""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "BusinessId",
-                table: "AuditEvents",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""BusinessId"" TYPE TEXT USING ""BusinessId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ActorUserId",
-                table: "AuditEvents",
-                type: "TEXT",
-                nullable: true,
-                oldClrType: typeof(Guid),
-                oldType: "uuid",
-                oldNullable: true);
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""ActorUserId"" TYPE TEXT USING ""ActorUserId""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Action",
-                table: "AuditEvents",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""Action"" TYPE TEXT USING ""Action""::TEXT;");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Id",
-                table: "AuditEvents",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditEvents"" ALTER COLUMN ""Id"" TYPE TEXT USING ""Id""::TEXT;");
         }
     }
 }
