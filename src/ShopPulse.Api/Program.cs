@@ -146,7 +146,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.ForwardLimit = 1;
     if (!builder.Environment.IsDevelopment())
     {
-        options.KnownNetworks.Clear();
+        options.KnownIPNetworks.Clear();
         options.KnownProxies.Clear();
     }
 });
