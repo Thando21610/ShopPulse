@@ -30,6 +30,8 @@ public class AppUser
     public bool IsActive { get; set; } = true;
     public bool CanAdjustStock { get; set; }
     public bool CanRefundSales { get; set; }
+    public bool CanManageProducts { get; set; }
+    public bool CanReceiveStock { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public int FailedLoginCount { get; set; }
     public DateTimeOffset? LockoutEndUtc { get; set; }
