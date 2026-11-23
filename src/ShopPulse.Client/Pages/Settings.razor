@@ -1,4 +1,5 @@
 @page "/settings"
+@using System.Text.Json
 @using System.Net.Http.Json
 @using System.ComponentModel.DataAnnotations
 @inject HttpClient Http
@@ -16,7 +17,8 @@
     {
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
         <section class="panel form-panel">
-            @if (_loading) { <p class="muted">Loading business profile…</p> }
+            @if (_loading) { <p class="muted" role="status">Loading business profile…</p> }
+            else if (_loadFailed) { <div class="empty-state"><strong>Business details are unavailable</strong><p class="muted">The form is locked so blank defaults cannot overwrite the saved business profile.</p><button class="button button-quiet" @onclick="Load" disabled="@_loading">Retry loading profile</button></div> }
             else
             {
                 <EditForm Model="_form" OnValidSubmit="Save">
@@ -25,7 +27,7 @@
                         <div class="field-group full"><label for="business-name">Business name</label><InputText id="business-name" class="form-control" @bind-Value="_form.Name" maxlength="200" /><ValidationMessage For="@(() => _form.Name)" /></div>
                         <div class="field-group full"><label for="business-address">Business address (optional)</label><InputTextArea id="business-address" class="form-control" @bind-Value="_form.Address" maxlength="500" /><ValidationMessage For="@(() => _form.Address)" /></div>
                     </div>
-                    <button class="button button-primary" type="submit" disabled="@_busy">@(_busy ? "Saving…" : "Save business details")</button>
+                    <button class="button button-primary" type="submit" disabled="@(_busy || _loadFailed)">@(_busy ? "Saving…" : "Save business details")</button>
                 </EditForm>
             }
         </section>
@@ -33,18 +35,24 @@
 </main>
 @code {
     private BusinessForm _form = new();
-    private bool _loading = true, _busy, _forbidden;
+    private bool _loading = true, _busy, _forbidden, _loadFailed;
     private string? _error;
     protected override async Task OnInitializedAsync()
     {
         if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
-        if (Session.User?.Role != "Owner") { _forbidden = true; return; }
+        if (Session.User?.Role != "Owner") { _forbidden = true; _loading = false; return; }
+        await Load();
+    }
+    private async Task Load()
+    {
+        _loading = true; _loadFailed = false; _error = null;
         try
         {
             var profile = await Http.GetFromJsonAsync<BusinessForm>("api/business/current");
-            if (profile is not null) _form = profile;
+            if (profile is null) { _loadFailed = true; _error = "The business profile returned no data. Retry before editing."; }
+            else _form = profile;
         }
-        catch (HttpRequestException) { _error = "Business details could not be loaded."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _loadFailed = true; _error = "Business details could not be loaded. Retry before editing."; }
         finally { _loading = false; }
     }
     private async Task Save()

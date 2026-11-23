@@ -1,4 +1,5 @@
 @page "/expiry"
+@using System.Text.Json
 @using System.Net.Http.Json
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
@@ -44,7 +45,7 @@
     {
         _loading = true; _error = null;
         try { _batches = await Http.GetFromJsonAsync<List<ExpiryBatch>>($"api/stock/expiry?days={_days}") ?? []; }
-        catch (HttpRequestException) { _error = "The expiry list could not be loaded."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The expiry list could not be loaded."; }
         finally { _loading = false; }
     }
     private sealed class ExpiryBatch { public Guid Id { get; set; } public string ProductName { get; set; } = ""; public string? BatchReference { get; set; } public int RemainingQuantity { get; set; } public DateOnly? ExpiryDate { get; set; } public string Status { get; set; } = ""; }
