@@ -33,7 +33,7 @@
                 <article class="panel metric-card"><span>Shifts closed</span><strong>@_report.ClosedShifts</strong><small>Cash shifts reconciled</small></article>
                 <article class="panel metric-card"><span>Cash variance</span><strong class="@(_report.CashVariance < 0 ? "text-danger" : "")">@Money(_report.CashVariance)</strong><small>Net variance across closed shifts</small></article>
             </section>
-            <p class="muted small-note">Sales and refunds are grouped by their respective transaction/refund dates; stock movements, waste and shift closures follow the selected SAST date. Inventory figures show current stock at report time; staff actions count recorded audit events. Refund totals are not included because the refund workflow is not yet implemented. All monetary amounts are ZAR.</p>
+            <p class="muted small-note">Sales and refunds are grouped by their respective transaction/refund dates; stock movements, waste and shift closures follow the selected SAST date. Inventory figures show current stock at report time; staff actions count recorded audit events. All monetary amounts are ZAR.</p>
         }
     }
 </main>
