@@ -2,6 +2,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -135,6 +136,20 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
+// Railway terminates public TLS at its edge and forwards the original scheme.
+// Railway overwrites these headers on public ingress; trust only services in this
+// Railway environment and keep the forwarded-header hop limit to one.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
+    if (!builder.Environment.IsDevelopment())
+    {
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    }
+});
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 // CORS: explicit origins only. Configure Cors__Origins on the hosting platform.
@@ -181,6 +196,7 @@ using (var scope = app.Services.CreateScope())
 // Expose the built-in OpenAPI document in all environments for deployment verification.
 app.MapOpenApi();
 
+app.UseForwardedHeaders();
 app.UseRateLimiter();
 app.UseCors("frontend");
 app.UseAuthentication();
