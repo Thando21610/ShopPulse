@@ -1,10 +1,12 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ShopPulse.Api.Auth;
+using ShopPulse.Api.Authorization;
 using ShopPulse.Api.Data;
 using ShopPulse.Api.Domain;
 
@@ -103,11 +105,8 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("OwnerOnly", p => p.RequireRole("Owner"));
-    options.AddPolicy("Staff", p => p.RequireRole("Owner", "Operator"));
-});
+builder.Services.AddScoped<IAuthorizationHandler, CanAdjustStockHandler>();
+builder.Services.AddAuthorization(ShopPulsePolicies.AddPolicies);
 
 // ─── Rate limiting ───────────────────────────────────────────────────────────
 builder.Services.AddRateLimiter(options =>
