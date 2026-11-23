@@ -1,0 +1,160 @@
+@page "/sales/refunds"
+@using System.Net.Http.Json
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+@inject ShopPulse.Client.ToastService Toast
+
+<PageTitle>Refund a sale | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Sales · Refunds</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">CUSTOMER SERVICE · CONTROLLED REVERSAL</p><h1>Refund a sale</h1><p class="muted">Find the original receipt, record the full refund and optionally return sale items to their original stock batches.</p></section>
+    @if (_forbidden)
+    {
+        <div class="inline-alert" role="alert">Your account is not authorised to refund sales. Ask the owner to grant refund permission.</div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        <section class="panel products-panel">
+            <div class="panel-heading"><h2>Recent refundable sales</h2><button class="button button-quiet" @onclick="Load" disabled="@_loading">Refresh</button></div>
+            @if (_loading) { <p class="muted">Loading sales…</p> }
+            else if (_sales.Count == 0) { <div class="empty-state"><strong>No completed sales available to refund.</strong><p class="muted">Refunded sales are retained in the audit history and cannot be refunded twice.</p></div> }
+            else
+            {
+                <div class="table-wrap"><table>
+                    <thead><tr><th>RECEIPT</th><th>DATE (SAST)</th><th>ITEMS</th><th>PAYMENT</th><th>TOTAL (ZAR)</th><th>ACTION</th></tr></thead>
+                    <tbody>
+                    @foreach (var sale in _sales)
+                    {
+                        <tr>
+                            <td><strong>@sale.ReceiptNumber</strong></td>
+                            <td>@sale.CreatedAtUtc.ToOffset(TimeSpan.FromHours(2)).ToString("dd MMM yyyy HH:mm")</td>
+                            <td>@sale.Items.Sum(x => x.Quantity) units</td>
+                            <td>@sale.PaymentMethod</td>
+                            <td>@Money(sale.GrandTotal)</td>
+                            <td><button class="button button-quiet" @onclick="() => Select(sale)">Review refund</button></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table></div>
+            }
+        </section>
+        @if (_selected is not null)
+        {
+            <section class="panel form-panel refund-panel">
+                <div class="panel-heading"><h2>Review @(_selected.ReceiptNumber)</h2><button class="button button-quiet" @onclick="Cancel">Cancel</button></div>
+                <div class="summary-line"><span>Original sale</span><strong>@Money(_selected.GrandTotal)</strong></div>
+                <div class="summary-line"><span>Refund method</span><strong>@_selected.PaymentMethod</strong></div>
+                <h3>Items on original receipt</h3>
+                <div class="table-wrap"><table><thead><tr><th>PRODUCT</th><th>QTY</th><th>UNIT PRICE</th><th>LINE TOTAL</th></tr></thead><tbody>
+                    @foreach (var item in _selected.Items)
+                    {
+                        <tr><td>@item.ProductNameSnapshot <small class="table-subtext">@item.SkuSnapshot</small></td><td>@item.Quantity</td><td>@Money(item.UnitPriceSnapshot)</td><td>@Money(item.LineTotal)</td></tr>
+                    }
+                </tbody></table></div>
+                <p class="refund-total">Full refund: <strong>@Money(_selected.GrandTotal)</strong></p>
+                <EditForm Model="_form" OnValidSubmit="Submit">
+                    <DataAnnotationsValidator />
+                    <div class="field-group">
+                        <label for="reason">Reason for refund</label>
+                        <InputTextArea id="reason" class="form-control" @bind-Value="_form.Reason" maxlength="500" />
+                        <ValidationMessage For="@(() => _form.Reason)" />
+                    </div>
+                    <div class="field-group checkbox-field">
+                        <label><InputCheckbox @bind-Value="_form.RestockItems" /> Returned items are physically checked and safe to put back into their original batch</label>
+                    </div>
+                    <p class="muted small-note">If selected, quantities return to their original batches. Expired batches remain marked expired and are not sellable at checkout.</p>
+                    <div class="field-group checkbox-field">
+                        <label><InputCheckbox @bind-Value="_form.RefundIssued" /> I confirm @(_selected.PaymentMethod == "Cash" ? "the cash refund has been paid to the customer" : "the refund has been approved on the external card terminal")</label>
+                    </div>
+                    <p class="muted small-note">ShopPulse records the refund; it does not move money or connect to a bank/card gateway. Refunds are full-value and use the original payment method.</p>
+                    <button class="button button-primary" type="submit" disabled="@_busy || !_form.RefundIssued">@(_busy ? "Recording refund…" : "Confirm full refund")</button>
+                </EditForm>
+            </section>
+        }
+    }
+</main>
+
+@code {
+    private List<SaleRow> _sales = [];
+    private SaleRow? _selected;
+    private RefundForm _form = new();
+    private bool _loading = true, _busy, _forbidden;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
+        if (Session.User?.Role != "Owner" && Session.User?.CanRefundSales != true) { _forbidden = true; return; }
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        _loading = true; _error = null;
+        try { _sales = await Http.GetFromJsonAsync<List<SaleRow>>("api/sales/refundable") ?? []; }
+        catch (HttpRequestException) { _error = "Refundable sales could not be loaded. Refresh and try again."; }
+        finally { _loading = false; }
+    }
+
+    private void Select(SaleRow sale) { _selected = sale; _form = new(); _error = null; }
+    private void Cancel() { _selected = null; _form = new(); _error = null; }
+
+    private async Task Submit()
+    {
+        if (_selected is null) return;
+        if (!_form.RefundIssued) { _error = "Confirm that the refund was issued through the original payment channel."; return; }
+        _busy = true; _error = null;
+        try
+        {
+            using var response = await Http.PostAsJsonAsync($"api/sales/{_selected.Id}/refunds", new
+            {
+                reason = _form.Reason,
+                restockItems = _form.RestockItems,
+                refundIssued = _form.RefundIssued
+            });
+            if (!response.IsSuccessStatusCode)
+            {
+                _error = await ApiErrorFormatter.FormatAsync(response, "The refund could not be recorded.");
+                return;
+            }
+            Toast.ShowSuccess($"Refund recorded for receipt {_selected.ReceiptNumber}.");
+            _selected = null; _form = new();
+            await Load();
+        }
+        catch (HttpRequestException) { _error = "The service could not be reached. Refresh the sales list before retrying."; }
+        finally { _busy = false; }
+    }
+
+    private static string Money(decimal amount) => amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
+
+    private sealed class RefundForm
+    {
+        [Required, StringLength(500, MinimumLength = 3, ErrorMessage = "Enter a reason of at least 3 characters.")]
+        public string Reason { get; set; } = "";
+        public bool RestockItems { get; set; }
+        public bool RefundIssued { get; set; }
+    }
+
+    private sealed class SaleRow
+    {
+        public Guid Id { get; set; }
+        public string ReceiptNumber { get; set; } = "";
+        public DateTimeOffset CreatedAtUtc { get; set; }
+        public decimal GrandTotal { get; set; }
+        public string PaymentMethod { get; set; } = "";
+        public List<SaleItemRow> Items { get; set; } = [];
+    }
+
+    private sealed class SaleItemRow
+    {
+        public string ProductNameSnapshot { get; set; } = "";
+        public string SkuSnapshot { get; set; } = "";
+        public int Quantity { get; set; }
+        public decimal UnitPriceSnapshot { get; set; }
+        public decimal LineTotal { get; set; }
+    }
+}
