@@ -144,24 +144,30 @@
     private void Edit(StaffRow person)
     {
         _editing = new EditStaffForm { Id = person.Id, DisplayName = person.DisplayName, IsActive = person.IsActive, CanAdjustStock = person.CanAdjustStock, CanRefundSales = person.CanRefundSales, CanManageProducts = person.CanManageProducts, CanReceiveStock = person.CanReceiveStock };
+        _editingContext = CreateContext(_editing);
         _error = null;
     }
-    private void CancelEdit() => _editing = null;
+    private void CancelEdit() { _editing = null; _editingContext = null; }
 
     private async Task Update()
     {
-        if (_editing is null) return;
+        if (_editing is null || _editingContext is null) return;
+        ApiErrorFormatter.ClearServerValidationErrors(_editingContext);
         _busy = true; _error = null;
         try
         {
             using var response = await Http.PutAsJsonAsync($"api/staff/{_editing.Id}", new { displayName = _editing.DisplayName, isActive = _editing.IsActive, canAdjustStock = _editing.CanAdjustStock, canRefundSales = _editing.CanRefundSales, canManageProducts = _editing.CanManageProducts, canReceiveStock = _editing.CanReceiveStock });
             if (!response.IsSuccessStatusCode)
             {
+                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                    && await ApiErrorFormatter.ApplyValidationErrorsAsync(response, _editingContext))
+                    return;
                 var message = await ApiErrorFormatter.FormatAsync(response, "Staff access could not be updated.");
                 if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
                 return;
             }
             _editing = null;
+            _editingContext = null;
             Toast.ShowSuccess("Staff access updated.");
             await Load();
         }
