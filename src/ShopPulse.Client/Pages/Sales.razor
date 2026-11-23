@@ -1,0 +1,150 @@
+@page "/sales"
+@using System.Net
+@using System.Net.Http.Json
+@using System.Text.Json
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>New sale | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">New sale</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">CHECKOUT · ZAR</p><h1>New sale</h1><p class="muted">Find products, build a basket and take payment.</p></section>
+    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+    @if (_receipt is not null)
+    {
+        <section class="panel receipt-panel" id="receipt">
+            <p class="eyebrow">SALE COMPLETE</p><h2>Thank you</h2><p>Receipt <strong>@_receipt.ReceiptNumber</strong></p>
+            @foreach (var line in _receipt.Items) { <div class="receipt-line"><span>@line.ProductName × @line.Quantity</span><span>@Money(line.LineTotal)</span></div> }
+            <div class="receipt-total"><span>Total</span><strong>@Money(_receipt.GrandTotal)</strong></div>
+            <p>Paid by @_receipt.PaymentMethod · Change @Money(_receipt.ChangeAmount)</p>
+            <button class="button button-primary" @onclick="PrintReceipt">Print receipt</button>
+            <button class="button button-quiet" @onclick="StartNextSale">Start next sale</button>
+        </section>
+    }
+    else
+    {
+        <div class="sales-grid">
+            <section class="panel">
+                <div class="panel-heading"><h2>Products</h2><span class="count-pill">@_products.Count available</span></div>
+                <input class="form-control" placeholder="Search product or SKU" @bind="_search" @bind:event="oninput" aria-label="Search products" />
+                @if (_loading) { <p class="muted">Loading products…</p> }
+                else if (_products.Count == 0) { <p class="muted">No active products are available.</p> }
+                <div class="product-picker">
+                    @foreach (var product in FilteredProducts)
+                    {
+                        <button class="product-pick" @onclick="() => Add(product)" disabled="@(product.Available <= 0)">
+                            <span class="product-initial" style="@InitialStyle(product.Category)">@Initial(product.Name)</span>
+                            <span class="product-pick-copy"><strong>@product.Name</strong><small>@product.Sku · @_ = ""</small></span>
+                            <span class="product-pick-price">@Money(product.UnitPrice)</span>
+                            <span class="product-stock">@product.Available left</span>
+                        </button>
+                    }
+                </div>
+            </section>
+            <section class="panel cart-panel">
+                <div class="panel-heading"><h2>Basket</h2><span class="count-pill">@_cart.Sum(x => x.Quantity) items</span></div>
+                @if (_cart.Count == 0) { <div class="empty-state"><strong>Your basket is empty</strong><p class="muted">Select products to start a sale.</p></div> }
+                else
+                {
+                    @foreach (var line in _cart)
+                    {
+                        <div class="cart-line"><div><strong>@line.Product.Name</strong><small>@Money(line.Product.UnitPrice) each</small></div><div class="quantity-control"><button aria-label="Decrease @line.Product.Name" @onclick="() => Change(line, -1)">−</button><strong>@line.Quantity</strong><button aria-label="Increase @line.Product.Name" @onclick="() => Change(line, 1)">+</button></div><strong>@Money(line.Product.UnitPrice * line.Quantity)</strong></div>
+                    }
+                }
+                <div class="cart-total"><span>Total due</span><strong>@Money(Total)</strong></div>
+                <label for="payment-method">Payment method</label>
+                <select id="payment-method" class="form-control" @bind="_paymentMethod"><option value="Cash">Cash</option><option value="Card">Card</option></select>
+                @if (_paymentMethod == "Cash")
+                {
+                    <label for="tendered">Cash received (ZAR)</label>
+                    <input id="tendered" class="form-control" type="number" min="0" step="0.01" @bind="_tendered" />
+                    <div class="change-preview"><span>Change</span><strong class="@(ChangeDue < 0 ? "text-danger" : "")">@Money(Math.Max(0, ChangeDue))</strong></div>
+                    @if (ChangeDue < 0 && _cart.Count > 0) { <p class="field-error">Cash received is less than the total due.</p> }
+                }
+                <button class="button button-primary checkout-button" @onclick="CompleteSale" disabled="@(_busy || _cart.Count == 0 || (_paymentMethod == "Cash" && ChangeDue < 0))">@(_busy ? "Processing…" : "Complete sale")</button>
+                <p class="muted small-note">Stock is deducted by the API using first-expiry-first-out batch allocation.</p>
+            </section>
+        </div>
+    }
+</main>
+
+@code {
+    private List<ProductOption> _products = [];
+    private List<CartLine> _cart = [];
+    private string _search = "", _paymentMethod = "Cash";
+    private decimal _tendered;
+    private bool _loading = true, _busy;
+    private string? _error;
+    private SaleResult? _receipt;
+    private decimal Total => _cart.Sum(x => x.Product.UnitPrice * x.Quantity);
+    private decimal ChangeDue => _tendered - Total;
+    private IEnumerable<ProductOption> FilteredProducts => _products.Where(p => string.IsNullOrWhiteSpace(_search) || p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || p.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
+        await LoadProducts();
+    }
+    private async Task LoadProducts()
+    {
+        _loading = true;
+        try { _products = await Http.GetFromJsonAsync<List<ProductOption>>("api/products") ?? []; }
+        catch (HttpRequestException) { _error = "The catalogue could not be reached. Try again."; }
+        finally { _loading = false; }
+    }
+    private void Add(ProductOption product)
+    {
+        if (product.Available <= 0) return;
+        var line = _cart.FirstOrDefault(x => x.Product.Id == product.Id);
+        if (line is null) _cart.Add(new CartLine(product)); else if (line.Quantity < product.Available) line.Quantity++;
+        _error = null;
+    }
+    private void Change(CartLine line, int amount)
+    {
+        line.Quantity = Math.Max(0, Math.Min(line.Product.Available, line.Quantity + amount));
+        if (line.Quantity == 0) _cart.Remove(line);
+    }
+    private async Task CompleteSale()
+    {
+        if (_cart.Count == 0) { _error = "Add at least one product to the basket."; return; }
+        if (_paymentMethod == "Cash" && _tendered < Total) { _error = "Enter enough cash to cover the sale."; return; }
+        _busy = true; _error = null;
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/sales")
+            {
+                Content = JsonContent.Create(new { items = _cart.Select(x => new { productId = x.Product.Id, quantity = x.Quantity }), paymentMethod = _paymentMethod, amountTendered = _paymentMethod == "Cash" ? _tendered : Total })
+            };
+            request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("N"));
+            using var response = await Http.SendAsync(request);
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                var problem = await response.Content.ReadFromJsonAsync<JsonDocument>();
+                _error = problem?.RootElement.TryGetProperty("message", out var m) == true ? m.GetString() : "Stock changed while you were checking out. Review the basket.";
+                return;
+            }
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                var problem = await response.Content.ReadFromJsonAsync<JsonDocument>();
+                _error = problem?.RootElement.TryGetProperty("detail", out var d) == true ? d.GetString() : "Check the payment details and try again.";
+                return;
+            }
+            if (!response.IsSuccessStatusCode) { _error = "The sale could not be completed. Please try again."; return; }
+            _receipt = await response.Content.ReadFromJsonAsync<SaleResult>();
+        }
+        catch (HttpRequestException) { _error = "The service could not be reached. Check your connection before retrying."; }
+        finally { _busy = false; }
+    }
+    private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _ = LoadProducts(); }
+    private async Task PrintReceipt() => await JS.InvokeVoidAsync("window.print");
+    [Microsoft.AspNetCore.Components.Inject] private Microsoft.JSInterop.IJSRuntime JS { get; set; } = default!;
+    private static string Money(decimal amount) => amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
+    private static string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
+    private static string InitialStyle(string? category) => category?.ToLowerInvariant() switch { "bakery" or "bread" => "background:#f4e6d2;color:#80532a", "dairy" => "background:#e3eff8;color:#245a80", "beverages" => "background:#e6f2e9;color:#27643b", _ => "background:#edf0f5;color:#435064" };
+    private sealed class ProductOption { public Guid Id { get; set; } public string Name { get; set; } = ""; public string Sku { get; set; } = ""; public string? Category { get; set; } public decimal UnitPrice { get; set; } public int Available { get; set; } }
+    private sealed class CartLine(ProductOption product) { public ProductOption Product { get; } = product; public int Quantity { get; set; } = 1; }
+    private sealed record SaleResult(Guid Id, string ReceiptNumber, decimal Subtotal, decimal Discount, decimal GrandTotal, string PaymentMethod, decimal AmountTendered, decimal ChangeAmount, DateTimeOffset CreatedAtUtc, List<SaleLineResult> Items);
+    private sealed record SaleLineResult(string ProductName, string Sku, int Quantity, decimal UnitPrice, decimal LineTotal);
+}
