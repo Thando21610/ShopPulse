@@ -291,7 +291,30 @@ public sealed class OperationsController : ControllerBase
             query = query.Where(x => x.OperatorUserId == _current.UserId);
 
         var shift = await query.OrderByDescending(x => x.OpenedAtUtc).FirstOrDefaultAsync(ct);
-        return Ok(shift is null ? null : new { shift.Id, shift.OperatorUserId, shift.OpeningFloat, shift.OpenedAtUtc, shift.Status });
+        var operatorName = shift is null ? null : await _db.Users.AsNoTracking()
+            .Where(x => x.Id == shift.OperatorUserId).Select(x => x.DisplayName).FirstOrDefaultAsync(ct);
+        return Ok(shift is null ? null : new { shift.Id, shift.OperatorUserId, OperatorName = operatorName, shift.OpeningFloat, shift.OpenedAtUtc, shift.Status });
+    }
+
+    [HttpGet("cash-shifts/open")]
+    [Authorize(Policy = ShopPulsePolicies.OwnerOnly)]
+    public async Task<IActionResult> OpenShifts(CancellationToken ct)
+    {
+        var shifts = await _db.CashShifts.AsNoTracking()
+            .Where(x => x.Status == "Open")
+            .OrderBy(x => x.OpenedAtUtc)
+            .Select(x => new
+            {
+                x.Id,
+                x.OperatorUserId,
+                OperatorName = _db.Users.Where(user => user.Id == x.OperatorUserId)
+                    .Select(user => user.DisplayName).FirstOrDefault(),
+                x.OpeningFloat,
+                x.OpenedAtUtc,
+                x.Status
+            })
+            .ToListAsync(ct);
+        return Ok(shifts);
     }
 
     [HttpPost("cash-shifts/open")]
