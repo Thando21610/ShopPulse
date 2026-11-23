@@ -110,13 +110,11 @@
         _busy = true; _error = null;
         try
         {
-            using var response = await Http.PostAsJsonAsync($"api/sales/{_selected.Id}/refund", new
+            using var response = await Http.PostAsJsonAsync($"api/sales/{_selected.Id}/refunds", new
             {
                 reason = _form.Reason.Trim(),
-                refundPaymentMethod = _selected.PaymentMethod,
-                cashRefundConfirmed = _selected.PaymentMethod == "Cash" && _form.RefundIssued,
-                cardRefundConfirmed = _selected.PaymentMethod == "Card" && _form.RefundIssued,
-                restockItems = _form.RestockItems
+                restockItems = _form.RestockItems,
+                refundIssued = _form.RefundIssued
             });
             if (!response.IsSuccessStatusCode)
             {
