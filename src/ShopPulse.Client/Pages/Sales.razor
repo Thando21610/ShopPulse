@@ -120,7 +120,7 @@
     private async Task LoadCashShift()
     {
         _checkingCashShift = true;
-        try { _cashShift = await Http.GetFromJsonAsync<CashShiftInfo>("api/cash-shifts/current"); }
+        try { _cashShift = await Http.GetFromJsonAsync<CashShiftInfo>("api/cash-shifts/current"); if (_cashShift is not null) _cashShiftRequired = false; }
         catch (HttpRequestException) { _cashShift = null; _error = "Could not verify your cash shift. Refresh the status before accepting cash."; }
         finally { _checkingCashShift = false; }
     }
@@ -200,7 +200,7 @@
         finally { _busy = false; }
     }
     private void ToggleRushMode() => _rushMode = !_rushMode;
-    private void OpenPaymentModal() { _error = null; _cardPaymentConfirmed = false; ResetIdempotencyKey(); _showPaymentModal = true; }
+    private void OpenPaymentModal() { _error = null; _cashShiftRequired = false; _cardPaymentConfirmed = false; ResetIdempotencyKey(); _showPaymentModal = true; }
     private void ClosePaymentModal() { if (!_busy) { _showPaymentModal = false; _cardPaymentConfirmed = false; ResetIdempotencyKey(); } }
     private void ResetIdempotencyKey() => _idempotencyKey = null;
     private void OnPaymentMethodChanged() { ResetIdempotencyKey(); _cardPaymentConfirmed = false; }
