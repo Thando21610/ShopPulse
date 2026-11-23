@@ -3,6 +3,7 @@
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
 @inject NavigationManager Nav
+@inject ShopPulse.Client.ToastService Toast
 
 <PageTitle>Receive stock | ShopPulse</PageTitle>
 <main class="feature-page">
@@ -51,7 +52,7 @@
         {
             var payload = new { productId = _form.ProductId, quantity = _form.Quantity, unitCost = _form.UnitCost, expiryDate = _form.ExpiryDate?.ToString("yyyy-MM-dd"), supplier = _form.Supplier, batchReference = _form.BatchReference };
             using var response = await Http.PostAsJsonAsync("api/stock/receipts", payload);
-            if (response.IsSuccessStatusCode) { _form = new(); _success = true; return; }
+            if (response.IsSuccessStatusCode) { _form = new(); _success = true; Toast.ShowSuccess("Stock received successfully."); return; }
             var p = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
             _error = p?.RootElement.TryGetProperty("detail", out var d) == true ? d.GetString() : "The stock receipt could not be saved.";
         }
