@@ -684,21 +684,6 @@ namespace ShopPulse.Api.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("ShopPulse.Api.Domain.CashMovement", b =>
-                {
-                    b.HasOne("ShopPulse.Api.Domain.Business", null)
-                        .WithMany()
-                        .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ShopPulse.Api.Domain.CashShift", null)
-                        .WithMany()
-                        .HasForeignKey("CashShiftId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("ShopPulse.Api.Domain.Business", b =>
                 {
                     b.Navigation("Products");
