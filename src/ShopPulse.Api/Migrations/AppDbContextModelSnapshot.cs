@@ -183,6 +183,8 @@ namespace ShopPulse.Api.Migrations
 
                     b.HasIndex("BusinessId", "CashShiftId", "CreatedAtUtc");
 
+                    b.HasIndex("CashShiftId");
+
                     b.ToTable("CashMovements");
                 });
 
