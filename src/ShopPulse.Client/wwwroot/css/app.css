@@ -272,3 +272,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; c
 .inventory-tabs [role="tab"] { min-height:44px; }
 .inventory-metrics { margin-top:8px; }
 @media(max-width:600px) { .inventory-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .inventory-tabs>button:last-child { grid-column:1/-1; } }
+
+
+.rescue-list { display:grid; gap:14px; }
+.rescue-card { display:grid; gap:14px; }
+.rescue-card-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+.rescue-card-heading h2 { margin:0; font-size:19px; }
+.rescue-card-heading .eyebrow { margin:0 0 5px; }
+.rescue-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.rescue-stats>div { display:grid; gap:4px; padding:12px; border-radius:10px; background:var(--bg-soft); }
+.rescue-stats span { color:var(--text-muted); font-size:11px; }
+.rescue-stats strong { color:var(--ink); font-size:17px; font-variant-numeric:tabular-nums; }
+.rescue-recommendation { margin:0; padding:12px 14px; border-left:3px solid var(--accent); background:#f1f7fa; border-radius:0 8px 8px 0; font-size:13px; }
+@media(max-width:600px) { .rescue-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .rescue-card-heading { align-items:flex-start; flex-direction:column; } }
