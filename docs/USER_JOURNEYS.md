@@ -1,58 +1,92 @@
-# ShopPulse user journeys and API wiring
+# ShopPulse user journeys, use-case coverage and verification
 
-This document describes the current implementation in the Blazor WebAssembly client and ASP.NET Core API. It is an implementation map, not a substitute for live acceptance testing against Railway and Neon.
+This is the implementation status for the full ShopPulse solution design. It distinguishes implemented code from work that still needs a backend contract, migration, provider integration or production acceptance test.
 
-## Authentication and session
+## Use-case coverage
 
-1. Staff enters email and password on the sign-in screen.
-2. Client sends POST /api/auth/login; API returns a short-lived access token and sets an HttpOnly refresh cookie.
-3. Client keeps the access token in memory and calls GET /api/auth/me for the staff profile and role.
-4. On a browser reload or protected-page entry, client calls POST /api/auth/refresh and restores the profile.
-5. The API request handler serializes concurrent refresh attempts. If refresh fails, the client clears the access token and returns to the sign-in route.
+| ID / feature | Current status | Implemented journey / boundary |
+|---|---|---|
+| UC-01 Authentication | Implemented | Login, logout, in-memory access token, HttpOnly refresh cookie, session restoration and single-flight refresh |
+| UC-02 Product management | Implemented | Owner can create, edit, deactivate products; SKU uniqueness, ZAR price and minimum-stock validation; audit event |
+| UC-03 Receive stock | Implemented | Owner creates a batch with quantity, unit cost, supplier, reference and optional expiry; stock movement and audit event |
+| UC-04 View inventory | Implemented | Product totals, live batch list and stock movement history |
+| UC-05 Process sale | Implemented | Search, basket, cash/card selection, idempotency, FEFO allocation, receipt and browser printing |
+| UC-06 Refund sale | Not implemented | Requires a refund ledger, partial/full refund rules, cash-shift treatment, original batch/restock policy and external card-terminal confirmation. No fake refund button is exposed. |
+| UC-07 Record waste | Implemented | Batch-specific write-off, reason, permission check, stock movement and audit event |
+| UC-08 Monitor expiry | Implemented | Expired, expiring-soon and safe batches; FEFO prioritisation |
+| UC-09 Cash shift | Implemented | Operator opens/closes own shift; owner can review and reconcile any open shift |
+| UC-10 Anonymous queue | Deferred / optional | Deliberately excluded until a real shop pilot confirms the need |
+| UC-11 Reports | Partially implemented | Sales, cash/card, waste, current inventory, low-stock count and audit-action count. Refund totals, full cash-shift breakdown and detailed stock movement summaries remain outstanding. |
+| UC-12 Audit history | Implemented | Owner-only, tenant-scoped, read-only event history |
+| UC-13 Manage staff | Implemented | Owner creates operator accounts, activates/deactivates them and grants/revokes stock-waste permission |
+| UC-14 Business settings | Implemented | Owner edits business name and address |
+| Rush Mode | Implemented | Larger checkout product tiles and touch-friendly layout |
+| Stock Rescue | Implemented | Rules-based estimate using recent 7-day sales and expiry dates; shows assumptions and never changes prices or stock automatically |
 
-The browser sends credentials with API requests. The deployed frontend origin must be included in the API's explicit CORS origin list.
-
-## Role and permission matrix
+## Roles and access
 
 | Journey | Owner | Operator |
 |---|---|---|
-| View catalogue | Yes | Yes |
+| View catalogue and inventory | Yes | Yes |
 | Complete sale | Yes | Yes |
+| Manage products | Yes | No |
 | Receive stock | Yes | No |
-| Record waste | Yes | Only with CanAdjustStock permission |
-| View expiry batches | Yes | Yes |
-| Open own cash shift | Yes | Yes |
-| Reconcile/close a cash shift | Yes | No |
-| View financial reports | Yes | No |
+| Record waste | Yes | Only when granted CanAdjustStock |
+| View expiry and Stock Rescue | Yes | Yes |
+| Open/close own cash shift | Yes | Yes |
+| Review/reconcile another operator's shift | Yes | No |
+| Financial reports | Yes | No |
+| Audit history | Yes | No |
+| Manage staff and business settings | Yes | No |
 
-The API authorization policies are authoritative. Hiding a navigation link is not a security boundary.
+The API is the security boundary. Hiding navigation controls is only a usability measure.
 
-## Catalogue and low-stock awareness
+## Authentication and session restoration
 
-- Client loads GET /api/products.
-- The API returns SKU, product name/category, ZAR unit price, available batch quantity and minimum stock level.
-- The dashboard highlights items at or below their minimum stock threshold.
-- Checkout product tiles use category-coloured initials; the design intentionally uses no hero or remote product photos.
+1. Staff enters email and password on the sign-in screen.
+2. Client sends POST /api/auth/login; API returns a short-lived access token and sets an HttpOnly refresh cookie.
+3. Client keeps the access token in memory and loads GET /api/auth/me.
+4. On browser reload, the home page and protected pages call POST /api/auth/refresh and restore the user profile.
+5. AuthMessageHandler serializes refresh attempts. When another request has already refreshed the token, the waiting request retries with that token instead of sending another refresh.
+6. If refresh fails, the token store is cleared and the user is returned to the sign-in route.
+
+The browser includes credentials on API calls. The deployed frontend origin must be in the API's explicit CORS allow-list. Cross-origin cookie behaviour must be tested in the actual target browsers.
+
+## Product and inventory journeys
+
+### Product management
+
+1. Owner opens Manage products.
+2. Owner creates or edits SKU, name, category, selling price (ZAR), minimum-stock threshold and expiry tracking.
+3. API validates fields and business-scoped SKU uniqueness, then records an audit event.
+4. Deactivation is a soft state change; historical sales and stock records are retained.
+
+### Inventory view
+
+- GET /api/products returns active products and total available quantities.
+- GET /api/stock/batches returns remaining batches with supplier, cost and expiry.
+- GET /api/stock/movements returns the latest stock ledger events.
+- Low-stock status compares current available quantity with the configured minimum-stock threshold.
 
 ## Checkout (UC-05)
 
 1. Staff opens New sale and searches by product name or SKU.
 2. Staff adds products and adjusts quantities in the basket.
 3. The client previews subtotal, cash tendered and change.
-4. Cash sales require the operator to have an open cash shift. If no shift exists, the API returns a conflict and the UI links to Cash shift.
-5. For card, the operator must confirm that the external card terminal approved the payment. ShopPulse records the payment method; it does not process card details or integrate with a bank terminal.
-6. Client sends POST /api/sales with an idempotency key.
+4. Cash sales require an open cash shift; the page checks shift status before enabling checkout.
+5. For card, the operator confirms that a separate external terminal approved the payment. ShopPulse records the method but does not process card details or integrate with a bank terminal.
+6. Client sends POST /api/sales with an Idempotency-Key.
 7. API validates products/payment, allocates stock FEFO, records sale lines, stock movements, audit event and idempotency response in a database transaction.
 8. On success, UI shows the receipt, change and print action. A retry after a lost response reuses the same idempotency key while the basket/payment data remains unchanged.
 
-Stock conflicts return HTTP 409 and keep the basket available for review.
+A stock conflict returns HTTP 409 and keeps the basket available for review. The server's StockBatch.Version is an optimistic concurrency token; concurrent write conflicts still require explicit acceptance testing.
 
 ## Stock receiving (UC-03)
 
 1. Owner opens Receive stock.
 2. Client loads active products with GET /api/products.
 3. Owner enters product, quantity, unit cost (ZAR), optional expiry date, supplier and batch reference.
-4. Client-side field validation runs first; API validates again.
+4. Client-side field validation runs first; API validates again using the South African calendar date.
 5. Client sends POST /api/stock/receipts.
 6. API creates the stock batch, positive stock movement and audit event in a transaction.
 7. Success toast confirms the receipt.
@@ -62,31 +96,65 @@ Stock conflicts return HTTP 409 and keep the basket available for review.
 1. Staff with stock-adjustment permission opens Record waste.
 2. Client loads available batches with GET /api/stock/batches.
 3. Staff selects a batch, quantity, reason (Expired, Damaged, Missing, Spoiled or Other) and optional notes.
-4. Client checks quantity against the latest displayed batch amount; API rechecks authoritative availability.
+4. API rechecks authoritative availability and permission.
 5. Client sends POST /api/stock/waste.
 6. API decreases batch quantity and writes waste record, negative stock movement and audit event in a transaction.
 7. A 403 is shown as a permission message; a 409 stock conflict is shown inline.
 
-## Expiry and FEFO (UC-08)
+## Expiry and Stock Rescue (UC-08)
 
-- Client requests GET /api/stock/expiry?days=N.
-- API returns remaining batches expiring in the selected window, ordered by expiry date.
-- UI separates expired (red) and expiring soon (amber) stock, with a link to record waste for expired batches.
+- GET /api/stock/expiry?days=N groups remaining batches as Expired, ExpiringSoon or Safe.
 - Checkout independently allocates sale quantities using FEFO ordering.
+- GET /api/stock/rescue?days=N compares expiring stock with completed sales over the last seven days.
+- The recommendation shows recent sales, average daily sales, earliest expiry and estimated at-risk units.
+- With no sales history, the UI says the estimate is unavailable. The system never applies a markdown or writes off stock automatically.
 
-## Cash shift and reconciliation
+## Cash shift and reconciliation (UC-09)
 
-1. Operator opens Cash shift and records opening float in ZAR with POST /api/cash-shifts/open.
-2. Operator's current shift is returned by GET /api/cash-shifts/current.
-3. Owner sees all open staff shifts through GET /api/cash-shifts/open, selects a specific shift and enters actual cash counted.
-4. Owner closes the selected shift with POST /api/cash-shifts/close including the shift ID.
-5. API calculates expected cash from opening float plus completed cash sales, records variance and audit event, and rejects a non-zero variance without an explanation.
+1. Operator opens a shift and records opening float in ZAR.
+2. Operator can view and close their own shift; owner can review all open shifts and select one to reconcile.
+3. Close request includes the selected shift ID, actual cash and a variance explanation when actual differs from expected.
+4. API calculates expected cash from opening float plus completed cash sales, records variance and audit event.
+5. Cash refunds are not yet supported and therefore are not included in expected-cash calculations.
 
-## Reports
+## Reports (UC-11)
 
-- Owner selects a date; client requests GET /api/reports/summary?date=YYYY-MM-DD.
-- API returns completed sales count/total, cash/card totals and recorded waste cost.
-- Monetary values display in South African Rand. API report boundaries use the South African calendar (UTC+02:00).
+- GET /api/reports/summary?date=YYYY-MM-DD returns completed sales count/total, cash/card totals, waste cost, active product count, current inventory units, low-stock products and audit actions for the selected SAST date.
+- Inventory values are a current snapshot at report time, not historical stock-at-midnight.
+- All monetary values are ZAR. Refund totals and detailed cash-shift/stock-movement summaries remain future work.
+
+## Audit history (UC-12)
+
+- GET /api/audit?take=N&action=... is owner-only and tenant-scoped.
+- Product, staff, business, sale, stock, waste and cash-shift operations add audit events.
+- The UI is read-only; there is no edit or delete action for audit events.
+
+## Staff and business settings (UC-13 / UC-14)
+
+- Owner creates Operator accounts with an initial password of at least 12 characters.
+- Owner can activate/deactivate an operator and grant/revoke CanAdjustStock.
+- Owner accounts are protected from changes through the staff-management screen.
+- Password reset, invitation email and self-service account recovery are not integrated.
+- Business settings currently cover business name and address only.
+
+## Visual and interaction rules
+
+- System font stack, accent #0b5f8a, ink #1a2332 and danger #c62828.
+- White bordered cards, mobile-first layout and touch targets of at least 44px.
+- Material Symbols for interface icons.
+- No hero images or remote product photos; product initials use category colours.
+- Rush Mode enlarges product tiles for quick checkout.
+- Validation is shown inline; successful writes use success feedback; stock conflicts and permission failures remain visible.
+
+## Not yet implemented / not safe to claim
+
+- Refunds and payment reversals.
+- Anonymous queue / customer ticket display (optional and deferred).
+- External card gateway or card-terminal integration.
+- Password reset/invitation workflow.
+- Historical inventory snapshots and a full financial/cash-shift report.
+- Offline-first write queue and explicit cold-start/offline banners.
+- Full end-to-end browser acceptance tests against the deployed Railway and Neon services.
 
 ## Verification still required before live trading
 
@@ -94,7 +162,8 @@ Stock conflicts return HTTP 409 and keep the basket available for review.
 - Set frontend ApiBaseUrl and API Cors__Origins__0 to the exact deployed origins.
 - Verify refresh-cookie persistence in the target mobile/desktop browsers.
 - Test Owner and Operator accounts separately, including an Operator without CanAdjustStock.
-- Exercise each journey against the live Neon database; verify stock quantities, sale receipts, stock movements, waste records, cash variance and audit events.
-- Test duplicate checkout submission, lost network response, concurrent sales of the same batch, and stale stock conflict handling.
-- Verify print layout on the intended receipt printer. Browser print is implemented; thermal-printer-specific integration is not.
+- Exercise product create/edit/deactivate, receiving, sales, waste, expiry, stock rescue, cash shift, reports, audit, staff and business settings against Neon.
+- Verify stock quantities, sale receipts, stock movements, waste records, cash variance and audit events after each write.
+- Test duplicate checkout submission, lost network response, concurrent sales of the same batch and stale stock conflict handling.
+- Verify receipt printing on the intended receipt printer. Browser print is implemented; thermal-printer-specific integration is not.
 - Verify external card-terminal payment out of band. No card gateway is integrated.
