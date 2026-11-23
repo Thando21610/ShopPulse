@@ -10,7 +10,7 @@
 <main class="feature-page">
     <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Staff access</span></header>
     <ShopPulse.Client.Shared.WorkspaceNav />
-    <section class="feature-heading"><p class="eyebrow">TEAM · OWNER</p><h1>Manage staff</h1><p class="muted">Create operator accounts and control access to stock adjustments.</p></section>
+    <section class="feature-heading"><p class="eyebrow">TEAM · OWNER</p><h1>Manage staff</h1><p class="muted">Create operator accounts and control stock and refund permissions.</p></section>
     @if (_forbidden) { <div class="inline-alert" role="alert">Only the store owner can manage staff accounts.</div> }
     else
     {
@@ -24,6 +24,7 @@
                     <div class="field-group"><label for="staff-email">Email address</label><InputText id="staff-email" class="form-control" type="email" @bind-Value="_newStaff.Email" autocomplete="off" /><ValidationMessage For="@(() => _newStaff.Email)" /></div>
                     <div class="field-group"><label for="staff-password">Initial password</label><InputText id="staff-password" class="form-control" type="password" @bind-Value="_newStaff.Password" autocomplete="new-password" /><ValidationMessage For="@(() => _newStaff.Password)" /></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanAdjustStock" /> Allow this operator to record stock waste</label></div>
+                    <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanRefundSales" /> Allow this operator to refund sales</label></div>
                 </div>
                 <p class="muted small-note">Give the initial password to the operator securely. Password reset and invitation email are not yet integrated.</p>
                 <button class="button button-primary" type="submit" disabled="@_busy">@(_busy ? "Creating…" : "Create operator")</button>
@@ -40,6 +41,7 @@
                         <div class="field-group full"><label for="edit-name">Display name</label><InputText id="edit-name" class="form-control" @bind-Value="_editing.DisplayName" maxlength="120" /><ValidationMessage For="@(() => _editing.DisplayName)" /></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.IsActive" /> Account active</label></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanAdjustStock" /> Can record stock waste</label></div>
+                        <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanRefundSales" /> Can refund sales</label></div>
                     </div>
                     <button class="button button-primary" type="submit" disabled="@_busy">Save staff access</button>
                 </EditForm>
@@ -60,7 +62,7 @@
                         <tr>
                             <td><strong>@person.DisplayName</strong><small class="table-subtext">@person.Email</small></td>
                             <td>@person.Role</td>
-                            <td>@(person.Role == "Owner" ? "Full owner access" : person.CanAdjustStock ? "Stock adjustments" : "Sales only")</td>
+                            <td>@(person.Role == "Owner" ? "Full owner access" : person.CanAdjustStock && person.CanRefundSales ? "Stock waste · Refunds" : person.CanAdjustStock ? "Stock waste" : person.CanRefundSales ? "Refunds" : "Sales only")</td>
                             <td><span class="stock-status @(person.IsActive ? "ok" : "low")">@(person.IsActive ? "Active" : "Inactive")</span></td>
                             <td>@if (person.Role != "Owner") { <button class="button button-quiet" @onclick="() => Edit(person)">Edit access</button> } else { <span class="muted">Protected</span> }</td>
                         </tr>
@@ -99,7 +101,7 @@
         _busy = true; _error = null;
         try
         {
-            using var response = await Http.PostAsJsonAsync("api/staff", new { displayName = _newStaff.DisplayName, email = _newStaff.Email, password = _newStaff.Password, canAdjustStock = _newStaff.CanAdjustStock });
+            using var response = await Http.PostAsJsonAsync("api/staff", new { displayName = _newStaff.DisplayName, email = _newStaff.Email, password = _newStaff.Password, canAdjustStock = _newStaff.CanAdjustStock, canRefundSales = _newStaff.CanRefundSales });
             if (!response.IsSuccessStatusCode)
             {
                 var message = await ApiErrorFormatter.FormatAsync(response, "The operator account could not be created.");
@@ -116,7 +118,7 @@
 
     private void Edit(StaffRow person)
     {
-        _editing = new EditStaffForm { Id = person.Id, DisplayName = person.DisplayName, IsActive = person.IsActive, CanAdjustStock = person.CanAdjustStock };
+        _editing = new EditStaffForm { Id = person.Id, DisplayName = person.DisplayName, IsActive = person.IsActive, CanAdjustStock = person.CanAdjustStock, CanRefundSales = person.CanRefundSales };
         _error = null;
     }
     private void CancelEdit() => _editing = null;
@@ -127,7 +129,7 @@
         _busy = true; _error = null;
         try
         {
-            using var response = await Http.PutAsJsonAsync($"api/staff/{_editing.Id}", new { displayName = _editing.DisplayName, isActive = _editing.IsActive, canAdjustStock = _editing.CanAdjustStock });
+            using var response = await Http.PutAsJsonAsync($"api/staff/{_editing.Id}", new { displayName = _editing.DisplayName, isActive = _editing.IsActive, canAdjustStock = _editing.CanAdjustStock, canRefundSales = _editing.CanRefundSales });
             if (!response.IsSuccessStatusCode)
             {
                 var message = await ApiErrorFormatter.FormatAsync(response, "Staff access could not be updated.");
@@ -148,6 +150,7 @@
         [Required, EmailAddress, StringLength(256)] public string Email { get; set; } = "";
         [Required, StringLength(128, MinimumLength = 12)] public string Password { get; set; } = "";
         public bool CanAdjustStock { get; set; }
+        public bool CanRefundSales { get; set; }
     }
     private sealed class EditStaffForm
     {
@@ -159,6 +162,6 @@
     private sealed class StaffRow
     {
         public Guid Id { get; set; } public string DisplayName { get; set; } = ""; public string Email { get; set; } = "";
-        public string Role { get; set; } = ""; public bool IsActive { get; set; } public bool CanAdjustStock { get; set; }
+        public string Role { get; set; } = ""; public bool IsActive { get; set; } public bool CanAdjustStock { get; set; } public bool CanRefundSales { get; set; }
     }
 }
