@@ -173,6 +173,21 @@ public class CashShift
     public string Status { get; set; } = "Open"; // Open | Closed
 }
 
+// ─── Cash drawer movements ───────────────────────────────────────────────────
+public class CashMovement
+{
+    public Guid Id { get; set; }
+    public Guid BusinessId { get; set; }
+    public Guid CashShiftId { get; set; }
+    public Guid OperatorUserId { get; set; }
+    public string Direction { get; set; } = "In"; // In | Out
+    [Column(TypeName = "numeric(18,2)")]
+    public decimal Amount { get; set; }
+    public string Reason { get; set; } = default!;
+    public Guid ActorUserId { get; set; }
+    public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+}
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 public class RefreshToken
 {
