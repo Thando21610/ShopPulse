@@ -243,3 +243,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; c
 .dashboard-actions .button { text-decoration:none; }
 .dashboard-actions .button-primary { margin-top:0; }
 @media(max-width:680px) { .dashboard-actions { justify-content:flex-start; margin-top:14px; } }
+
+
+.card-confirmation { display:flex; align-items:flex-start; gap:10px; margin:12px 0; color:#35445a; font-size:13px; line-height:1.5; }
+.card-confirmation input { width:20px; height:20px; min-width:20px; margin:0; accent-color:var(--accent); }
