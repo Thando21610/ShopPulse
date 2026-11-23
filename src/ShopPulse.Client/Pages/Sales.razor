@@ -79,7 +79,7 @@
                     }
                 }
                 <div class="cart-total" aria-live="polite" aria-atomic="true"><span>Total due</span><strong>@Money(Total)</strong></div>
-                <button @ref="_checkoutButton" class="button button-primary checkout-button" @onclick="OpenPaymentModal" disabled="@(_busy || _cart.Count == 0 || CartHasUnavailableProduct)">Proceed to payment</button>
+                <button @ref="_checkoutButton" class="button button-primary checkout-button" @onclick="OpenPaymentModal" disabled="@(_busy || _checkoutOutcomeUnknown || _catalogueLoadFailed || _cart.Count == 0 || CartHasUnavailableProduct)">Proceed to payment</button>
                 <p class="muted small-note">Stock is deducted by the API using first-expiry-first-out batch allocation.</p>
             </section>
         </div>
@@ -87,12 +87,13 @@
     @if (_showPaymentModal)
     {
         <div class="payment-modal-backdrop">
-            <section class="payment-modal" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+            <section class="payment-modal" @ref="_paymentDialog" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title" aria-describedby="payment-modal-help" @onkeydown="HandlePaymentModalKeyDown" @onkeydown:stopPropagation="true">
                 <div class="panel-heading">
                     <div><p class="eyebrow">CHECKOUT · PAYMENT</p><h2 id="payment-modal-title">Take payment</h2></div>
                     <button class="button button-quiet" type="button" @onclick="ClosePaymentModal" disabled="@_busy">Close</button>
                 </div>
                 <div class="summary-line"><span>Total due</span><strong>@Money(Total)</strong></div>
+                <p id="payment-modal-help" class="muted small-note">Choose how the customer is paying. Cash payments require your open cash shift. Card payments must first be approved on your external terminal.</p>
                 @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
                 @if (_cashShiftRequired) { <div class="inline-alert" role="alert">Open your cash shift before continuing. <a href="/cash-shift">Open cash shift</a></div> }
                 @if (_checkingCashShift && _paymentMethod == "Cash") { <p class="muted" role="status">Checking cash-shift status…</p> }
@@ -105,20 +106,20 @@
                     <div class="inline-alert" role="status">Open a cash shift before accepting cash. <a href="/cash-shift">Open cash shift</a></div>
                 }
                 <label for="payment-method">Payment method</label>
-                <select id="payment-method" class="form-control" @bind="_paymentMethod" @bind:after="OnPaymentMethodChanged"><option value="Cash">Cash</option><option value="Card">Card</option></select>
+                <select id="payment-method" class="form-control" disabled="@_checkoutOutcomeUnknown" @bind="_paymentMethod" @bind:after="OnPaymentMethodChanged"><option value="Cash">Cash</option><option value="Card">Card</option></select>
                 @if (_paymentMethod == "Cash")
                 {
                     <label for="tendered">Cash received (ZAR)</label>
-                    <input id="tendered" class="form-control" type="number" min="0" step="0.01" @bind="_tendered" @bind:after="ResetIdempotencyKey" />
+                    <input id="tendered" class="form-control" disabled="@_checkoutOutcomeUnknown" type="number" min="0" step="0.01" @bind="_tendered" @bind:after="ResetIdempotencyKey" />
                     <div class="change-preview" role="status" aria-live="polite" aria-atomic="true"><span>Change due</span><strong class="@(ChangeDue < 0 ? "text-danger" : "")">@Money(Math.Max(0, ChangeDue))</strong></div>
                     @if (ChangeDue < 0) { <p class="field-error">Cash received is less than the total due.</p> }
                 }
                 else
                 {
-                    <label class="card-confirmation"><input type="checkbox" @bind="_cardPaymentConfirmed" @bind:after="ResetIdempotencyKey" /> I confirm the card terminal approved this payment.</label>
-                    <p id="payment-modal-help" class="muted small-note">ShopPulse records the payment confirmation; it does not process card details or replace your bank terminal.</p>
+                    <label class="card-confirmation"><input type="checkbox" disabled="@_checkoutOutcomeUnknown" @bind="_cardPaymentConfirmed" @bind:after="ResetIdempotencyKey" /> I confirm the card terminal approved this payment.</label>
+                    <p class="muted small-note">ShopPulse records the payment confirmation; it does not process card details or replace your bank terminal.</p>
                 }
-                <button class="button button-primary checkout-button" @onclick="CompleteSale" disabled="@(_busy || _checkingCashShift || CartHasUnavailableProduct || (_paymentMethod == "Cash" && (_cashShiftLoadFailed || ChangeDue < 0 || _cashShift is null)) || (_paymentMethod == "Card" && !_cardPaymentConfirmed))">@(_busy ? "Processing…" : "Complete sale")</button>
+                <button class="button button-primary checkout-button" @onclick="CompleteSale" disabled="@(_busy || _checkingCashShift || _catalogueLoadFailed || CartHasUnavailableProduct || (_paymentMethod == "Cash" && (_cashShiftLoadFailed || ChangeDue < 0 || _cashShift is null)) || (_paymentMethod == "Card" && !_cardPaymentConfirmed))">@(_busy ? "Processing…" : _checkoutOutcomeUnknown ? "Retry same checkout" : "Complete sale")</button>
             </section>
         </div>
     }
@@ -129,7 +130,7 @@
     private List<CartLine> _cart = [];
     private string _search = "", _paymentMethod = "Cash";
     private decimal _tendered;
-    private bool _loading = true, _busy, _cashShiftRequired, _checkingCashShift = true, _rushMode, _catalogueLoadFailed, _cashShiftLoadFailed, _modalFocusActive, _restoreFocusAfterModal, _focusReceiptAfterRender;
+    private bool _loading = true, _busy, _cashShiftRequired, _checkingCashShift = true, _rushMode, _catalogueLoadFailed, _cashShiftLoadFailed, _modalFocusActive, _restoreFocusAfterModal, _focusReceiptAfterRender, _checkoutOutcomeUnknown;
     private string? _error, _basketNotice;
     private SaleResult? _receipt;
     private ElementReference _paymentDialog, _checkoutButton, _receiptHeading;
@@ -194,7 +195,7 @@
             _catalogueLoadFailed = false;
             if (changed) _basketNotice = "Product prices or available quantities changed. Review the updated basket before payment.";
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _catalogueLoadFailed = true; _error = "The catalogue could not be reached. Try again."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _products = []; _catalogueLoadFailed = true; _error = "The catalogue could not be reached. Try again."; }
         finally { _loading = false; }
     }
     private void Add(ProductOption product)
@@ -214,6 +215,7 @@
     private async Task CompleteSale()
     {
         if (_cart.Count == 0) { _error = "Add at least one product to the basket."; return; }
+        if (_catalogueLoadFailed) { _error = "Refresh the product catalogue before completing this sale."; return; }
         if (CartHasUnavailableProduct) { _error = "Refresh stock and correct the affected basket quantities before payment."; return; }
         if (_paymentMethod == "Cash" && _tendered < Total) { _error = "Enter enough cash to cover the sale."; return; }
         if (_paymentMethod == "Card" && !_cardPaymentConfirmed) { _error = "Confirm the payment was approved on your card terminal."; return; }
@@ -229,6 +231,7 @@
             using var response = await Http.SendAsync(request);
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
+                _checkoutOutcomeUnknown = false;
                 var problem = await response.Content.ReadFromJsonAsync<JsonDocument>();
                 var code = problem?.RootElement.TryGetProperty("code", out var codeValue) == true ? codeValue.GetString() : null;
                 _cashShiftRequired = code == "CASH_SHIFT_REQUIRED";
@@ -249,33 +252,36 @@
             }
             if (response.StatusCode == HttpStatusCode.BadRequest)
             {
+                _checkoutOutcomeUnknown = false;
                 _error = await ApiErrorFormatter.FormatAsync(response, "Check the payment details and try again.");
                 return;
             }
             if (!response.IsSuccessStatusCode)
             {
+                _checkoutOutcomeUnknown = (int)response.StatusCode >= 500;
                 var message = await ApiErrorFormatter.FormatAsync(response, "The sale could not be completed. Please try again.");
                 if ((int)response.StatusCode >= 500) Toast.ShowError(message);
                 else _error = message;
                 return;
             }
             _receipt = await response.Content.ReadFromJsonAsync<SaleResult>() ?? throw new JsonException("The API returned an empty receipt.");
+            _checkoutOutcomeUnknown = false;
             _showPaymentModal = false;
             _idempotencyKey = null;
             _focusReceiptAfterRender = true;
             Toast.ShowSuccess($"Sale completed. Receipt {_receipt.ReceiptNumber}.");
         }
-        catch (HttpRequestException) { _error = "The service could not be reached. The sale may not have completed. Retry using this same checkout screen so the idempotency key can prevent a duplicate."; }
-        catch (JsonException) { _error = "The sale response could not be read. Do not start another sale; retry this checkout so the server can return the original receipt safely."; }
+        catch (HttpRequestException) { _checkoutOutcomeUnknown = true; _error = "The service could not be reached. The sale may have completed. Retry this exact checkout; its original idempotency key is retained to prevent a duplicate."; }
+        catch (JsonException) { _checkoutOutcomeUnknown = true; _error = "The sale response could not be read. Do not start another sale; retry this exact checkout so the server can return the original receipt safely."; }
         finally { _busy = false; }
     }
     private void ToggleRushMode() => _rushMode = !_rushMode;
     private void OpenPaymentModal() { _error = null; _cashShiftRequired = false; _cardPaymentConfirmed = false; ResetIdempotencyKey(); _showPaymentModal = true; }
-    private void ClosePaymentModal() { if (!_busy) { _showPaymentModal = false; _cardPaymentConfirmed = false; _restoreFocusAfterModal = true; ResetIdempotencyKey(); } }
+    private void ClosePaymentModal() { if (!_busy && !_checkoutOutcomeUnknown) { _showPaymentModal = false; _cardPaymentConfirmed = false; _restoreFocusAfterModal = true; ResetIdempotencyKey(); } }
     private void HandlePaymentModalKeyDown(KeyboardEventArgs args) { if (args.Key == "Escape" && !_busy) ClosePaymentModal(); }
-    private void ResetIdempotencyKey() => _idempotencyKey = null;
+    private void ResetIdempotencyKey() { if (!_checkoutOutcomeUnknown) _idempotencyKey = null; }
     private void OnPaymentMethodChanged() { ResetIdempotencyKey(); _cardPaymentConfirmed = false; }
-    private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _basketNotice = null; _cardPaymentConfirmed = false; _showPaymentModal = false; ResetIdempotencyKey(); _ = LoadProducts(); }
+    private void StartNextSale() { _checkoutOutcomeUnknown = false; _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _basketNotice = null; _cardPaymentConfirmed = false; _showPaymentModal = false; ResetIdempotencyKey(); _ = LoadProducts(); }
     private async Task PrintReceipt() => await JS.InvokeVoidAsync("window.print");
     private static string Money(decimal amount) => amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
     private static string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
