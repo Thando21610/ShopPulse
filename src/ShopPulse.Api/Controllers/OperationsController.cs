@@ -485,7 +485,7 @@ public sealed class OperationsController : ControllerBase
             .SumAsync(x => (int?)x.QuantityChange, ct) ?? 0;
         var unitsSold = await movements.Where(x => x.MovementType == "Sale")
             .SumAsync(x => (int?)x.QuantityChange, ct) ?? 0;
-        var stockAdjustments = await movements.CountAsync(x => x.MovementType is "Waste" or "Adjustment", ct);
+        var stockAdjustments = await movements.CountAsync(x => (x.MovementType == "Waste" || x.MovementType == "Adjustment"), ct);
         var closedShifts = await _db.CashShifts.Where(x => x.ClosedAtUtc >= start && x.ClosedAtUtc < end && x.Status == "Closed")
             .ToListAsync(ct);
         var cashVariance = closedShifts.Sum(x => x.Variance ?? 0m);
