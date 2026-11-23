@@ -135,25 +135,17 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-// CORS: allow configured origins, or any origin for the demo when "*" is set
+// CORS: explicit origins only. Configure Cors__Origins on the hosting platform.
 var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-    ?? new[] { "http://localhost:5000", "https://localhost:5001", "https://shoppulse.pages.dev" };
+    ?? (builder.Environment.IsDevelopment() ? new[] { "http://localhost:5000", "https://localhost:5001" } : Array.Empty<string>());
+if (corsOrigins.Length == 0)
+    throw new InvalidOperationException("Configure Cors:Origins with the exact deployed frontend origin.");
 builder.Services.AddCors(o => o.AddPolicy("frontend", policy =>
 {
-    if (corsOrigins.Length == 1 && corsOrigins[0] == "*")
-    {
-        policy.SetIsOriginAllowed(_ => true)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    }
-    else
-    {
-        policy.WithOrigins(corsOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    }
+    policy.WithOrigins(corsOrigins)
+          .AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowCredentials();
 }));
 
 var app = builder.Build();
