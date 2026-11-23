@@ -3,6 +3,7 @@
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
 @inject NavigationManager Nav
+@inject ShopPulse.Client.ToastService Toast
 
 <PageTitle>Cash shift | ShopPulse</PageTitle>
 <main class="feature-page">
@@ -44,7 +45,7 @@
     private async Task Open()
     {
         _busy = true; _error = null;
-        try { using var r = await Http.PostAsJsonAsync("api/cash-shifts/open", new { openingFloat = _openingFloat }); if (!r.IsSuccessStatusCode) { _error = "The cash shift could not be opened. Check that no shift is already open."; return; } await Load(); }
+        try { using var r = await Http.PostAsJsonAsync("api/cash-shifts/open", new { openingFloat = _openingFloat }); if (!r.IsSuccessStatusCode) { using var problem = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>(); _error = problem?.RootElement.TryGetProperty("detail", out var detail) == true ? detail.GetString() : problem?.RootElement.TryGetProperty("message", out var message) == true ? message.GetString() : "The cash shift could not be opened. Check that no shift is already open."; return; } Toast.ShowSuccess("Cash shift opened."); await Load(); }
         catch (HttpRequestException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
     }
@@ -55,7 +56,7 @@
         {
             using var r = await Http.PostAsJsonAsync("api/cash-shifts/close", new { shiftId = _shift!.Id, actualCash = _actualCash, varianceReason = _varianceReason });
             if (!r.IsSuccessStatusCode) { using var problem = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>(); _error = problem?.RootElement.TryGetProperty("detail", out var detail) == true ? detail.GetString() : problem?.RootElement.TryGetProperty("message", out var message) == true ? message.GetString() : "The cash shift could not be closed. Verify the counted cash and permissions."; return; }
-            _result = await r.Content.ReadFromJsonAsync<CloseResult>(); _shift = null;
+            _result = await r.Content.ReadFromJsonAsync<CloseResult>(); _shift = null; Toast.ShowSuccess("Cash shift closed and reconciled.");
         }
         catch (HttpRequestException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
