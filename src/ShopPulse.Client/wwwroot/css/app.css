@@ -342,3 +342,37 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   outline: 3px solid rgba(11, 95, 138, .28);
   outline-offset: 2px;
 }
+
+
+/* Checkout: readable basket rows and an accessible, scrollable payment sheet. */
+.cart-line { grid-template-columns:minmax(0,1fr) auto minmax(76px,auto); }
+.cart-line>div:first-child { min-width:0; }
+.cart-line>div:first-child strong { overflow-wrap:anywhere; }
+.quantity-control button { width:44px; height:44px; min-width:44px; font-size:20px; }
+.payment-modal:focus { outline:3px solid rgba(11,95,138,.28); outline-offset:3px; }
+.payment-modal .panel-heading { gap:12px; }
+.payment-modal .panel-heading>div { min-width:0; }
+.payment-modal label { display:block; margin:16px 0 7px; color:#35445a; font-size:13px; font-weight:700; }
+.payment-modal .form-control { min-height:48px; }
+.receipt-meta { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px 16px; color:var(--text-muted); font-size:12px; }
+.receipt-meta p { margin:0 0 10px; }
+.receipt-items { border-top:1px solid var(--card-border); }
+.receipt-item-details { display:grid; gap:4px; min-width:0; }
+.receipt-item-details small { color:var(--text-muted); font-size:11px; }
+.receipt-breakdown { display:grid; gap:8px; margin-top:12px; font-size:13px; }
+.receipt-breakdown>div:not(.receipt-total) { display:flex; justify-content:space-between; gap:12px; }
+.receipt-total { margin-top:8px; }
+@media(max-width:600px) {
+  .product-picker { grid-template-columns:1fr; }
+  .cart-line { grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+  .cart-line>strong { grid-column:2; text-align:right; }
+  .quantity-control { gap:6px; }
+  .quantity-control button { width:44px; height:44px; }
+  .payment-modal-backdrop { overscroll-behavior:contain; }
+  .payment-modal { overflow-y:auto; overscroll-behavior:contain; }
+  .receipt-line { align-items:flex-start; }
+}
+@media print {
+  .receipt-meta,.receipt-breakdown,.receipt-items { break-inside:avoid; }
+  #receipt { padding:0!important; }
+}
