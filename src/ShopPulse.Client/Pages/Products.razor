@@ -11,7 +11,7 @@
     <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Product management</span></header>
     <ShopPulse.Client.Shared.WorkspaceNav />
     <section class="feature-heading"><p class="eyebrow">CATALOGUE · OWNER</p><h1>Manage products</h1><p class="muted">Create and maintain product details, selling prices and low-stock thresholds.</p></section>
-    @if (_forbidden) { <div class="inline-alert" role="alert">Only the store owner can manage products.</div> }
+    @if (_forbidden) { <div class="inline-alert" role="alert">Your account does not have permission to manage products. Ask the owner to grant access.</div> }
     else
     {
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
@@ -65,7 +65,7 @@
     protected override async Task OnInitializedAsync()
     {
         if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
-        if (Session.User?.Role != "Owner") { _forbidden = true; return; }
+        if (Session.User?.Role != "Owner" && Session.User?.CanManageProducts != true) { _forbidden = true; return; }
         await Load();
     }
 
