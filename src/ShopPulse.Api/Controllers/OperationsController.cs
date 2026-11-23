@@ -379,12 +379,11 @@ public sealed class OperationsController : ControllerBase
     [HttpGet("cash-shifts/current")]
     public async Task<IActionResult> CurrentShift(CancellationToken ct)
     {
-        var query = _db.CashShifts.AsNoTracking().Where(x => x.Status == "Open");
-        // Owners reconcile the store's open shifts; operators see only their own shift.
-        if (!string.Equals(_current.Role, "Owner", StringComparison.OrdinalIgnoreCase))
-            query = query.Where(x => x.OperatorUserId == _current.UserId);
-
-        var shift = await query.OrderByDescending(x => x.OpenedAtUtc).FirstOrDefaultAsync(ct);
+        // Checkout must always verify the signed-in operator's own shift.
+        // Owners use GET /api/cash-shifts/open to review staff shifts separately.
+        var shift = await _db.CashShifts.AsNoTracking()
+            .Where(x => x.Status == "Open" && x.OperatorUserId == _current.UserId)
+            .OrderByDescending(x => x.OpenedAtUtc).FirstOrDefaultAsync(ct);
         var operatorName = shift is null ? null : await _db.Users.AsNoTracking()
             .Where(x => x.Id == shift.OperatorUserId).Select(x => x.DisplayName).FirstOrDefaultAsync(ct);
         return Ok(shift is null ? null : new { shift.Id, shift.OperatorUserId, OperatorName = operatorName, shift.OpeningFloat, shift.OpenedAtUtc, shift.Status });
