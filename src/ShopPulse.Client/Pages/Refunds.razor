@@ -56,7 +56,7 @@
                     }
                 </tbody></table></div>
                 <p class="refund-total">Full refund: <strong>@Money(_selected.GrandTotal)</strong></p>
-                <EditForm Model="_form" OnValidSubmit="Submit">
+                <EditForm EditContext="_editContext" OnValidSubmit="Submit">
                     <DataAnnotationsValidator />
                     <div class="field-group">
                         <label for="reason">Reason for refund</label>
@@ -100,8 +100,8 @@
         finally { _loading = false; }
     }
 
-    private void Select(SaleRow sale) { _selected = sale; _form = new(); _error = null; }
-    private void Cancel() { _selected = null; _form = new(); _error = null; }
+    private void Select(SaleRow sale) { _selected = sale; _form = new(); _editContext = CreateContext(_form); _error = null; }
+    private void Cancel() { _selected = null; _form = new(); _editContext = CreateContext(_form); _error = null; }
 
     private async Task Submit()
     {
