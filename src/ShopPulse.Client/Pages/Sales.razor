@@ -56,6 +56,21 @@
                     }
                 }
                 <div class="cart-total"><span>Total due</span><strong>@Money(Total)</strong></div>
+                <button class="button button-primary checkout-button" @onclick="OpenPaymentModal" disabled="@(_busy || _cart.Count == 0)">Proceed to payment</button>
+                <p class="muted small-note">Stock is deducted by the API using first-expiry-first-out batch allocation.</p>
+            </section>
+        </div>
+    }
+    @if (_showPaymentModal)
+    {
+        <div class="payment-modal-backdrop">
+            <section class="payment-modal" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+                <div class="panel-heading">
+                    <div><p class="eyebrow">CHECKOUT · PAYMENT</p><h2 id="payment-modal-title">Take payment</h2></div>
+                    <button class="button button-quiet" type="button" @onclick="ClosePaymentModal" disabled="@_busy">Close</button>
+                </div>
+                <div class="summary-line"><span>Total due</span><strong>@Money(Total)</strong></div>
+                @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
                 @if (_paymentMethod == "Cash" && !_checkingCashShift && _cashShift is null)
                 {
                     <div class="inline-alert" role="status">Open a cash shift before accepting cash. <a href="/cash-shift">Open cash shift</a> · <button class="link-button" @onclick="LoadCashShift">Refresh status</button></div>
@@ -66,16 +81,15 @@
                 {
                     <label for="tendered">Cash received (ZAR)</label>
                     <input id="tendered" class="form-control" type="number" min="0" step="0.01" @bind="_tendered" @bind:after="ResetIdempotencyKey" />
-                    <div class="change-preview"><span>Change</span><strong class="@(ChangeDue < 0 ? "text-danger" : "")">@Money(Math.Max(0, ChangeDue))</strong></div>
-                    @if (ChangeDue < 0 && _cart.Count > 0) { <p class="field-error">Cash received is less than the total due.</p> }
+                    <div class="change-preview"><span>Change due</span><strong class="@(ChangeDue < 0 ? "text-danger" : "")">@Money(Math.Max(0, ChangeDue))</strong></div>
+                    @if (ChangeDue < 0) { <p class="field-error">Cash received is less than the total due.</p> }
                 }
                 else
                 {
                     <label class="card-confirmation"><input type="checkbox" @bind="_cardPaymentConfirmed" @bind:after="ResetIdempotencyKey" /> I confirm the card terminal approved this payment.</label>
                     <p class="muted small-note">ShopPulse records the card payment; it does not process card details or replace your bank terminal.</p>
                 }
-                <button class="button button-primary checkout-button" @onclick="CompleteSale" disabled="@(_busy || _checkingCashShift || _cart.Count == 0 || (_paymentMethod == "Cash" && (ChangeDue < 0 || _cashShift is null)) || (_paymentMethod == "Card" && !_cardPaymentConfirmed))">@(_busy ? "Processing…" : "Complete sale")</button>
-                <p class="muted small-note">Stock is deducted by the API using first-expiry-first-out batch allocation.</p>
+                <button class="button button-primary checkout-button" @onclick="CompleteSale" disabled="@(_busy || _checkingCashShift || (_paymentMethod == "Cash" && (ChangeDue < 0 || _cashShift is null)) || (_paymentMethod == "Card" && !_cardPaymentConfirmed))">@(_busy ? "Processing…" : "Complete sale")</button>
             </section>
         </div>
     }
@@ -91,7 +105,7 @@
     private SaleResult? _receipt;
     // Retain the same key when a network response is lost so a retry cannot create a duplicate sale.
     private string? _idempotencyKey;
-    private bool _cardPaymentConfirmed;
+    private bool _cardPaymentConfirmed, _showPaymentModal;
     private CashShiftInfo? _cashShift;
     private decimal Total => _cart.Sum(x => x.Product.UnitPrice * x.Quantity);
     private decimal ChangeDue => _tendered - Total;
@@ -177,6 +191,7 @@
                 return;
             }
             _receipt = await response.Content.ReadFromJsonAsync<SaleResult>();
+            _showPaymentModal = false;
             _idempotencyKey = null;
             if (_receipt is not null) Toast.ShowSuccess($"Sale completed. Receipt {_receipt.ReceiptNumber}.");
         }
@@ -184,9 +199,11 @@
         finally { _busy = false; }
     }
     private void ToggleRushMode() => _rushMode = !_rushMode;
+    private void OpenPaymentModal() { _error = null; _showPaymentModal = true; }
+    private void ClosePaymentModal() { if (!_busy) _showPaymentModal = false; }
     private void ResetIdempotencyKey() => _idempotencyKey = null;
     private void OnPaymentMethodChanged() { ResetIdempotencyKey(); _cardPaymentConfirmed = false; }
-    private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _cardPaymentConfirmed = false; ResetIdempotencyKey(); _ = LoadProducts(); }
+    private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _cardPaymentConfirmed = false; _showPaymentModal = false; ResetIdempotencyKey(); _ = LoadProducts(); }
     private async Task PrintReceipt() => await JS.InvokeVoidAsync("window.print");
     private static string Money(decimal amount) => amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
     private static string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
