@@ -17,6 +17,10 @@
         <section class="panel form-panel">
             <p class="eyebrow">SHIFT CLOSED</p><h2>Cash reconciliation</h2>
             <div class="summary-line"><span>Opening float</span><strong>@Money(_result.OpeningFloat)</strong></div>
+            <div class="summary-line"><span>Cash sales</span><strong>@Money(_result.CashSales)</strong></div>
+            <div class="summary-line"><span>Cash refunds</span><strong>−@Money(_result.CashRefunds)</strong></div>
+            <div class="summary-line"><span>Cash in</span><strong>+@Money(_result.CashIn)</strong></div>
+            <div class="summary-line"><span>Cash out</span><strong>−@Money(_result.CashOut)</strong></div>
             <div class="summary-line"><span>Expected cash</span><strong>@Money(_result.ExpectedCash)</strong></div>
             <div class="summary-line"><span>Actual cash counted</span><strong>@Money(_result.ActualCash)</strong></div>
             <div class="summary-line"><span>Variance</span><strong class="@(_result.Variance < 0 ? "text-danger" : "")">@Money(_result.Variance)</strong></div>
@@ -258,6 +262,10 @@
     private sealed class CloseResult
     {
         public decimal OpeningFloat { get; set; }
+        public decimal CashSales { get; set; }
+        public decimal CashRefunds { get; set; }
+        public decimal CashIn { get; set; }
+        public decimal CashOut { get; set; }
         public decimal ExpectedCash { get; set; }
         public decimal ActualCash { get; set; }
         public decimal Variance { get; set; }
