@@ -57,7 +57,7 @@
                 }
                 <div class="cart-total"><span>Total due</span><strong>@Money(Total)</strong></div>
                 <label for="payment-method">Payment method</label>
-                <select id="payment-method" class="form-control" @bind="_paymentMethod" @bind:after="ResetIdempotencyKey"><option value="Cash">Cash</option><option value="Card">Card</option></select>
+                <select id="payment-method" class="form-control" @bind="_paymentMethod" @bind:after="OnPaymentMethodChanged"><option value="Cash">Cash</option><option value="Card">Card</option></select>
                 @if (_paymentMethod == "Cash")
                 {
                     <label for="tendered">Cash received (ZAR)</label>
@@ -65,7 +65,12 @@
                     <div class="change-preview"><span>Change</span><strong class="@(ChangeDue < 0 ? "text-danger" : "")">@Money(Math.Max(0, ChangeDue))</strong></div>
                     @if (ChangeDue < 0 && _cart.Count > 0) { <p class="field-error">Cash received is less than the total due.</p> }
                 }
-                <button class="button button-primary checkout-button" @onclick="CompleteSale" disabled="@(_busy || _cart.Count == 0 || (_paymentMethod == "Cash" && ChangeDue < 0))">@(_busy ? "Processing…" : "Complete sale")</button>
+                else
+                {
+                    <label class="card-confirmation"><input type="checkbox" @bind="_cardPaymentConfirmed" @bind:after="ResetIdempotencyKey" /> I confirm the card terminal approved this payment.</label>
+                    <p class="muted small-note">ShopPulse records the card payment; it does not process card details or replace your bank terminal.</p>
+                }
+                <button class="button button-primary checkout-button" @onclick="CompleteSale" disabled="@(_busy || _cart.Count == 0 || (_paymentMethod == "Cash" && ChangeDue < 0) || (_paymentMethod == "Card" && !_cardPaymentConfirmed))">@(_busy ? "Processing…" : "Complete sale")</button>
                 <p class="muted small-note">Stock is deducted by the API using first-expiry-first-out batch allocation.</p>
             </section>
         </div>
@@ -82,6 +87,7 @@
     private SaleResult? _receipt;
     // Retain the same key when a network response is lost so a retry cannot create a duplicate sale.
     private string? _idempotencyKey;
+    private bool _cardPaymentConfirmed;
     private decimal Total => _cart.Sum(x => x.Product.UnitPrice * x.Quantity);
     private decimal ChangeDue => _tendered - Total;
     private IEnumerable<ProductOption> FilteredProducts => _products.Where(p => string.IsNullOrWhiteSpace(_search) || p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || p.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase));
@@ -116,12 +122,13 @@
     {
         if (_cart.Count == 0) { _error = "Add at least one product to the basket."; return; }
         if (_paymentMethod == "Cash" && _tendered < Total) { _error = "Enter enough cash to cover the sale."; return; }
+        if (_paymentMethod == "Card" && !_cardPaymentConfirmed) { _error = "Confirm the payment was approved on your card terminal."; return; }
         _busy = true; _error = null;
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/sales")
             {
-                Content = JsonContent.Create(new { items = _cart.Select(x => new { productId = x.Product.Id, quantity = x.Quantity }), paymentMethod = _paymentMethod, amountTendered = _paymentMethod == "Cash" ? _tendered : Total })
+                Content = JsonContent.Create(new { items = _cart.Select(x => new { productId = x.Product.Id, quantity = x.Quantity }), paymentMethod = _paymentMethod, amountTendered = _paymentMethod == "Cash" ? _tendered : Total, cardPaymentConfirmed = _paymentMethod == "Card" && _cardPaymentConfirmed })
             };
             _idempotencyKey ??= Guid.NewGuid().ToString("N");
             request.Headers.Add("Idempotency-Key", _idempotencyKey);
@@ -147,7 +154,8 @@
         finally { _busy = false; }
     }
     private void ResetIdempotencyKey() => _idempotencyKey = null;
-    private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; ResetIdempotencyKey(); _ = LoadProducts(); }
+    private void OnPaymentMethodChanged() { ResetIdempotencyKey(); _cardPaymentConfirmed = false; }
+    private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _cardPaymentConfirmed = false; ResetIdempotencyKey(); _ = LoadProducts(); }
     private async Task PrintReceipt() => await JS.InvokeVoidAsync("window.print");
     private static string Money(decimal amount) => amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
     private static string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
