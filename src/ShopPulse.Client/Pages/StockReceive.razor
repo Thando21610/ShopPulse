@@ -11,7 +11,7 @@
     <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Inventory</span></header>
     <ShopPulse.Client.Shared.WorkspaceNav />
     <section class="feature-heading"><p class="eyebrow">INVENTORY · INBOUND</p><h1>Receive stock</h1><p class="muted">Record a delivery and create a traceable stock batch.</p></section>
-    @if (_forbidden) { <div class="inline-alert" role="alert">Only a store owner can receive stock. Ask the owner to complete this action.</div> }
+    @if (_forbidden) { <div class="inline-alert" role="alert">Your account is not authorised to receive stock. Ask the owner to grant stock-receiving permission.</div> }
     else
     {
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
