@@ -403,3 +403,18 @@ For any failing command, capture the first meaningful error and the full relevan
 ---
 
 **Handoff rule:** The next conversation should begin by re-reading the current repository and this document, then work from the first unchecked release gate. Do not assume deployment, migration, CI, database connectivity or browser acceptance has succeeded until the result is directly observed.
+
+
+---
+
+## 9. Follow-up verification — 23 November 2026
+
+The current `main` branch was rechecked after the original handoff was written.
+
+- `src/ShopPulse.Api/Migrations/AppDbContextModelSnapshot.cs` exists.
+- The expected initial migration file `src/ShopPulse.Api/Migrations/20261123000000_InitialPostgres.cs` does **not** exist (GitHub returned 404 for that exact path). Re-list the migrations directory before generating anything, to ensure no differently named migration has since been added.
+- The fetched model snapshot contains SQLite-style store types such as `TEXT` and `INTEGER`, while the intended production provider is Npgsql/PostgreSQL. Treat this as a provider-specific snapshot requiring careful regeneration/verification under the Npgsql provider; do not assume it is a valid PostgreSQL migration snapshot.
+- `src/ShopPulse.Client/wwwroot/appsettings.json` still contains the placeholder API URL `https://YOUR-API-URL.up.railway.app`; it must be replaced with the actual API origin before publishing the client.
+- Root `START_HERE.md` previously contained dangerous instructions to recursively delete repository-root contents and copy an unverified ZIP, plus a Railway `UseSqlite=true` instruction. That file has now been replaced with safe instructions that prohibit destructive repository replacement and require Neon PostgreSQL for the hosted deployment. See [START_HERE.md](../START_HERE.md).
+
+These checks do not establish a successful Railway deployment, successful PostgreSQL connection, or successful Release build. Those outcomes still require direct build, CI and database verification.
