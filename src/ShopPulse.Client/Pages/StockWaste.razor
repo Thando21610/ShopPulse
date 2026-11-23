@@ -1,5 +1,6 @@
 @page "/stock/waste"
 @using System.Net.Http.Json
+@using System.ComponentModel.DataAnnotations
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
 @inject NavigationManager Nav
@@ -14,8 +15,8 @@
     <section class="panel form-panel">
         <EditForm Model="_form" OnValidSubmit="Submit">
             <div class="form-grid">
-                <div class="field-group full"><label for="batch">Stock batch</label><InputSelect id="batch" class="form-control" @bind-Value="_form.BatchId"><option value="">Choose a batch</option>@foreach(var b in _batches){<option value="@b.Id">@b.ProductName · @b.RemainingQuantity available · @b.BatchReference</option>}</InputSelect></div>
-                <div class="field-group"><label for="quantity">Quantity to write off</label><InputNumber id="quantity" class="form-control" @bind-Value="_form.Quantity" min="1" /></div>
+                <div class="field-group full"><label for="batch">Stock batch</label><InputSelect id="batch" class="form-control" @bind-Value="_form.BatchId"><option value="">Choose a batch</option>@foreach(var b in _batches){<option value="@b.Id">@b.ProductName · @b.RemainingQuantity available · @b.BatchReference</option>}</InputSelect><ValidationMessage For="@(() => _form.BatchId)" /></div>
+                <div class="field-group"><label for="quantity">Quantity to write off</label><InputNumber id="quantity" class="form-control" @bind-Value="_form.Quantity" min="1" /><ValidationMessage For="@(() => _form.Quantity)" /></div>
                 <div class="field-group"><label for="reason">Reason</label><InputSelect id="reason" class="form-control" @bind-Value="_form.Reason"><option>Expired</option><option>Damaged</option><option>Missing</option><option>Spoiled</option><option>Other</option></InputSelect></div>
                 <div class="field-group full"><label for="notes">Notes (optional)</label><InputTextArea id="notes" class="form-control" @bind-Value="_form.Notes" maxlength="500" /></div>
             </div>
@@ -58,6 +59,14 @@
         catch (HttpRequestException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
     }
-    private sealed class WasteForm { public Guid BatchId { get; set; } public int Quantity { get; set; } = 1; public string Reason { get; set; } = "Expired"; public string? Notes { get; set; } }
+    private sealed class WasteForm
+    {
+        [Required(ErrorMessage = "Choose a stock batch.")]
+        public Guid? BatchId { get; set; }
+        [Range(1, 100000, ErrorMessage = "Enter a quantity greater than zero.")]
+        public int Quantity { get; set; } = 1;
+        public string Reason { get; set; } = "Expired";
+        [StringLength(500)] public string? Notes { get; set; }
+    }
     private sealed class BatchOption { public Guid Id { get; set; } public Guid ProductId { get; set; } public string ProductName { get; set; } = ""; public string? BatchReference { get; set; } public int RemainingQuantity { get; set; } }
 }
