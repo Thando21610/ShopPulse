@@ -15,7 +15,11 @@
     {
         <div class="toolbar-row"><label for="report-date">Report date</label><input id="report-date" class="form-control compact-select" type="date" @bind="_date" @bind:after="Load" /><button class="button button-quiet" @onclick="Load">Refresh</button></div>
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
-        @if (_report is not null)
+        @if (_loading)
+        {
+            <section class="panel empty-state" role="status">Loading the daily report…</section>
+        }
+        else if (_report is not null)
         {
             <section class="metrics-grid">
                 <article class="panel metric-card"><span>Net sales total</span><strong>@Money(_report.SalesTotal)</strong><small>@_report.SalesCount sales recorded</small></article>
@@ -42,7 +46,7 @@
 @code {
     private DateTime _date = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date;
     private ReportSummary? _report;
-    private bool _forbidden;
+    private bool _forbidden, _loading = true;
     private string? _error;
     protected override async Task OnInitializedAsync()
     {
@@ -52,9 +56,10 @@
     }
     private async Task Load()
     {
-        _error = null;
+        _loading = true; _error = null;
         try { _report = await Http.GetFromJsonAsync<ReportSummary>($"api/reports/summary?date={_date:yyyy-MM-dd}"); }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The report could not be loaded."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _report = null; _error = "The report could not be loaded. Check your connection and retry."; }
+        finally { _loading = false; }
     }
     private static string Money(decimal v) => v.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
     private sealed class ReportSummary { public int SalesCount { get; set; } public decimal SalesTotal { get; set; } public decimal RefundTotal { get; set; } public decimal CashRefundTotal { get; set; } public decimal CardRefundTotal { get; set; } public decimal AverageTransactionValue { get; set; } public decimal CashTotal { get; set; } public decimal CardTotal { get; set; } public decimal WasteCost { get; set; } public int ActiveProducts { get; set; } public int InventoryUnits { get; set; } public int LowStockProducts { get; set; } public int StaffActions { get; set; } public int UnitsReceived { get; set; } public int UnitsSold { get; set; } public int StockAdjustments { get; set; } public int ClosedShifts { get; set; } public decimal CashVariance { get; set; } public decimal CashIn { get; set; } public decimal CashOut { get; set; } public string Currency { get; set; } = "ZAR"; }
