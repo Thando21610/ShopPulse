@@ -61,7 +61,7 @@
             if (_form.ExpiryDate.HasValue && _form.ExpiryDate.Value.Date < DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date) { ApiErrorFormatter.SetFieldValidationError(_editContext, nameof(ReceiveForm.ExpiryDate), "Expiry date cannot be in the past."); return; }
             var payload = new { productId = _form.ProductId ?? Guid.Empty, quantity = _form.Quantity, unitCost = _form.UnitCost, expiryDate = _form.ExpiryDate?.ToString("yyyy-MM-dd"), supplier = _form.Supplier, batchReference = _form.BatchReference };
             using var response = await Http.PostAsJsonAsync("api/stock/receipts", payload);
-            if (response.IsSuccessStatusCode) { _form = new(); _editContext = new EditContext(_form); _success = true; Toast.ShowSuccess("Stock received successfully."); return; }
+            if (response.IsSuccessStatusCode) { _form = new(); _editContext = new EditContext(_form); _editContext.OnFieldChanged += (_, _) => ApiErrorFormatter.ClearServerValidationErrors(_editContext); _success = true; Toast.ShowSuccess("Stock received successfully."); return; }
             if (response.StatusCode == System.Net.HttpStatusCode.BadRequest
                 && await ApiErrorFormatter.ApplyValidationErrorsAsync(response, _editContext))
                 return;
