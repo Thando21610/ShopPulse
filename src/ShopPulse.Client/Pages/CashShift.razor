@@ -101,6 +101,8 @@
     private List<ShiftInfo> _openShifts = [];
     private Guid? _selectedShiftId;
     private CloseResult? _result;
+    private List<CashMovementInfo> _movements = [];
+    private CashMovementForm _movement = new();
     private decimal _openingFloat, _actualCash;
     private string? _varianceReason, _error;
     private bool _busy;
@@ -123,10 +125,12 @@
                 if (!_openShifts.Any(x => x.Id == _selectedShiftId))
                     _selectedShiftId = _openShifts.FirstOrDefault()?.Id;
                 SelectShift();
+                await LoadMovements();
             }
             else
             {
                 _shift = await Http.GetFromJsonAsync<ShiftInfo>("api/cash-shifts/current");
+                await LoadMovements();
             }
         }
         catch (HttpRequestException) { _error = "Could not load the current cash shifts. Check your session and try again."; }
@@ -135,7 +139,47 @@
     private void SelectShift()
     {
         if (IsOwner)
+        {
             _shift = _openShifts.FirstOrDefault(x => x.Id == _selectedShiftId);
+            _ = LoadMovements();
+        }
+    }
+
+    private async Task LoadMovements()
+    {
+        _movements = [];
+        if (_shift is null) return;
+        try { _movements = await Http.GetFromJsonAsync<List<CashMovementInfo>>($"api/cash-shifts/{_shift.Id}/movements") ?? []; }
+        catch (HttpRequestException) { _error = "Cash movement history could not be loaded."; }
+    }
+
+    private async Task RecordMovement()
+    {
+        if (_shift is null) return;
+        if (_movement.Amount <= 0 || string.IsNullOrWhiteSpace(_movement.Reason))
+        {
+            _error = "Enter a positive amount and a reason for the cash movement.";
+            return;
+        }
+        _busy = true; _error = null;
+        try
+        {
+            using var response = await Http.PostAsJsonAsync("api/cash-shifts/movements", new
+            {
+                shiftId = _shift.Id, direction = _movement.Direction,
+                amount = _movement.Amount, reason = _movement.Reason
+            });
+            if (!response.IsSuccessStatusCode)
+            {
+                _error = await ShopPulse.Client.ApiErrorFormatter.FormatAsync(response, "The cash movement could not be recorded.");
+                return;
+            }
+            Toast.ShowSuccess($"Cash {_movement.Direction.ToLowerInvariant()} recorded.");
+            _movement = new();
+            await LoadMovements();
+        }
+        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        finally { _busy = false; }
     }
 
     private async Task Open()
@@ -194,6 +238,22 @@
         public string? OperatorName { get; set; }
         public decimal OpeningFloat { get; set; }
         public DateTimeOffset OpenedAtUtc { get; set; }
+    }
+
+    private sealed class CashMovementForm
+    {
+        public string Direction { get; set; } = "In";
+        public decimal Amount { get; set; }
+        public string Reason { get; set; } = "";
+    }
+
+    private sealed class CashMovementInfo
+    {
+        public Guid Id { get; set; }
+        public string Direction { get; set; } = "";
+        public decimal Amount { get; set; }
+        public string Reason { get; set; } = "";
+        public DateTimeOffset CreatedAtUtc { get; set; }
     }
 
     private sealed class CloseResult
