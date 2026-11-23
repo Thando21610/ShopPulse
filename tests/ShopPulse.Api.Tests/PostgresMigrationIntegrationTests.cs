@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using ShopPulse.Api.Auth;
+using ShopPulse.Api.Domain;
 using Npgsql;
 using ShopPulse.Api.Data;
 using Xunit;
@@ -48,6 +51,67 @@ public sealed class PostgresMigrationIntegrationTests
             await db.Database.MigrateAsync();
             Assert.Empty(await db.Database.GetPendingMigrationsAsync());
             Assert.True(await db.Database.CanConnectAsync());
+
+            // Exercise refresh rotation using two independent request scopes/DbContexts.
+            var businessId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+            var familyId = Guid.NewGuid();
+            var rawRefreshToken = Guid.NewGuid().ToString("N");
+            db.Businesses.Add(new Business { Id = businessId, Name = "Refresh concurrency test" });
+            db.Users.Add(new AppUser
+            {
+                Id = userId,
+                BusinessId = businessId,
+                Email = $"refresh-{userId:N}@example.test",
+                PasswordHash = "not-used",
+                DisplayName = "Refresh Test User",
+                Role = "Owner",
+                IsActive = true
+            });
+            db.RefreshTokens.Add(new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                FamilyId = familyId,
+                TokenHash = AuthService.Hash(rawRefreshToken),
+                CreatedAtUtc = DateTimeOffset.UtcNow,
+                ExpiresAtUtc = DateTimeOffset.UtcNow.AddDays(7),
+                FamilyAbsoluteExpiryUtc = DateTimeOffset.UtcNow.AddDays(30)
+            });
+            await db.SaveChangesAsync();
+
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["Jwt:SigningKey"] = "CI-only-signing-key-with-at-least-32-bytes",
+                    ["Jwt:Issuer"] = "shoppulse-tests",
+                    ["Jwt:Audience"] = "shoppulse-tests",
+                    ["RefreshToken:AbsoluteDays"] = "30",
+                    ["Jwt:AccessTokenMinutes"] = "15"
+                }).Build();
+
+            await using var requestDb1 = new AppDbContext(options, new NullCurrentBusiness());
+            await using var requestDb2 = new AppDbContext(options, new NullCurrentBusiness());
+            var auth1 = new AuthService(requestDb1, configuration);
+            var auth2 = new AuthService(requestDb2, configuration);
+
+            var rotations = await Task.WhenAll(
+                auth1.RefreshAsync(rawRefreshToken, "127.0.0.1", "ci", CancellationToken.None),
+                auth2.RefreshAsync(rawRefreshToken, "127.0.0.1", "ci", CancellationToken.None));
+
+            Assert.Equal(1, rotations.Count(result => result.Ok));
+
+            await using var verificationDb = new AppDbContext(options, new NullCurrentBusiness());
+            var familyTokens = await verificationDb.RefreshTokens
+                .IgnoreQueryFilters()
+                .Where(token => token.FamilyId == familyId)
+                .ToListAsync();
+
+            Assert.Equal(2, familyTokens.Count); // Original plus at most one successor.
+            Assert.InRange(
+                familyTokens.Count(token => token.RevokedAtUtc == null),
+                0,
+                1); // Reuse detection may revoke the winner's successor; duplicates are never active.
         }
         finally
         {
