@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.AspNetCore.Components.Forms;
 
 namespace ShopPulse.Client;
 
@@ -47,6 +48,50 @@ public static class ApiErrorFormatter
         catch (JsonException) { return fallback; }
         catch (IOException) { return fallback; }
         finally { document?.Dispose(); }
+    }
+
+    public static async Task<bool> ApplyValidationErrorsAsync(
+        HttpResponseMessage response,
+        EditContext editContext,
+        CancellationToken cancellationToken = default)
+    {
+        if (response.StatusCode != HttpStatusCode.BadRequest) return false;
+
+        try
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var document = JsonDocument.Parse(body);
+            if (!document.RootElement.TryGetProperty("errors", out var errors)
+                || errors.ValueKind != JsonValueKind.Object) return false;
+
+            var store = new ValidationMessageStore(editContext);
+            store.Clear();
+            var properties = editContext.Model.GetType().GetProperties();
+            var applied = false;
+
+            foreach (var error in errors.EnumerateObject())
+            {
+                var fieldName = error.Name.Split('.').Last();
+                var property = properties.FirstOrDefault(x =>
+                    string.Equals(x.Name, fieldName, StringComparison.OrdinalIgnoreCase));
+                if (property is null || error.Value.ValueKind != JsonValueKind.Array) continue;
+
+                var field = new FieldIdentifier(editContext.Model, property.Name);
+                foreach (var message in error.Value.EnumerateArray())
+                {
+                    if (message.ValueKind != JsonValueKind.String) continue;
+                    var value = message.GetString();
+                    if (string.IsNullOrWhiteSpace(value)) continue;
+                    store.Add(field, value);
+                    applied = true;
+                }
+            }
+
+            if (applied) editContext.NotifyValidationStateChanged();
+            return applied;
+        }
+        catch (JsonException) { return false; }
+        catch (IOException) { return false; }
     }
 
     private static string? TryString(JsonElement root, string property)
