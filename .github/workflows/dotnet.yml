@@ -36,22 +36,6 @@ jobs:
           dotnet-version: 10.0.x
       - name: Restore
         run: dotnet restore ShopPulse.slnx
-      - name: Install EF Core CLI
-        run: |
-          dotnet tool install --global dotnet-ef --version 10.0.15
-          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
-          export PATH="$HOME/.dotnet/tools:$PATH"
-      - name: Scaffold current EF model snapshot (diagnostic)
-        env:
-          ASPNETCORE_ENVIRONMENT: Development
-          UseSqlite: "false"
-          ConnectionStrings__Default: ${{ env.SHOPPULSE_TEST_POSTGRES_CONNECTION }}
-        run: |
-          dotnet-ef migrations add AlignCurrentModel --project src/ShopPulse.Api/ShopPulse.Api.csproj --startup-project src/ShopPulse.Api/ShopPulse.Api.csproj --output-dir Migrations
-          echo "===== GENERATED MIGRATION ====="
-          cat src/ShopPulse.Api/Migrations/*_AlignCurrentModel.cs
-          echo "===== GENERATED SNAPSHOT FILTERS ====="
-          grep -n -A2 -B2 "HasQueryFilter" src/ShopPulse.Api/Migrations/AppDbContextModelSnapshot.cs
       - name: Build
         run: dotnet build ShopPulse.slnx --configuration Release --no-restore
       - name: Test
