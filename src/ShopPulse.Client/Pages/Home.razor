@@ -104,11 +104,11 @@
                 {
                     <div class="table-wrap">
                         <table>
-                            <thead><tr><th scope="col">PRODUCT</th><th scope="col">SKU</th><th scope="col">AVAILABLE</th><th scope="col">UNIT PRICE (ZAR)</th></tr></thead>
+                            <thead><tr><th scope="col">PRODUCT</th><th scope="col">SKU</th><th scope="col">AVAILABLE</th><th scope="col">STOCK STATUS</th><th scope="col">UNIT PRICE (ZAR)</th></tr></thead>
                             <tbody>
                                 @foreach (var item in _products)
                                 {
-                                    <tr><td><strong>@item.Name</strong></td><td><span class="sku">@item.Sku</span></td><td>@item.Available</td><td>@item.UnitPrice.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"))</td></tr>
+                                    <tr><td><strong>@item.Name</strong></td><td><span class="sku">@item.Sku</span></td><td>@item.Available</td><td><span class="stock-status @(item.Available <= item.MinimumStockLevel ? "low" : "ok")">@(item.Available <= item.MinimumStockLevel ? "Low stock" : "In stock")</span></td><td>@item.UnitPrice.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"))</td></tr>
                                 }
                             </tbody>
                         </table>
@@ -225,5 +225,5 @@
         [Required(ErrorMessage = "Enter your password.")]
         public string Password { get; set; } = "";
     }
-    private sealed class ProductRow { public string Name { get; set; } = ""; public string Sku { get; set; } = ""; public decimal UnitPrice { get; set; } public int Available { get; set; } }
+    private sealed class ProductRow { public string Name { get; set; } = ""; public string Sku { get; set; } = ""; public decimal UnitPrice { get; set; } public int Available { get; set; } public int MinimumStockLevel { get; set; } }
 }
