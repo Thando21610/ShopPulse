@@ -13,7 +13,11 @@
     <section class="feature-heading"><p class="eyebrow">DAILY OPERATIONS · CASH</p><h1>Cash shift</h1><p class="muted">Record opening float, track cash sales and reconcile the drawer at close.</p></section>
     @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
 
-    @if (_result is not null)
+    @if (_loading)
+    {
+        <section class="panel empty-state" role="status">Loading cash-shift information…</section>
+    }
+    else if (_result is not null)
     {
         <section class="panel form-panel">
             <p class="eyebrow">SHIFT CLOSED</p><h2>Cash reconciliation</h2>
@@ -110,7 +114,7 @@
     private CashMovementForm _movement = new();
     private decimal _openingFloat, _actualCash;
     private string? _varianceReason, _error;
-    private bool _busy;
+    private bool _busy, _loading = true;
     private bool IsOwner => Session.User?.Role == "Owner";
 
     protected override async Task OnInitializedAsync()
@@ -121,7 +125,7 @@
 
     private async Task Load()
     {
-        _error = null;
+        _loading = true; _error = null;
         try
         {
             if (IsOwner)
@@ -138,6 +142,7 @@
             }
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "Could not load the current cash shifts. Check your session and try again."; }
+        finally { _loading = false; }
     }
 
     private async Task SelectShift()
