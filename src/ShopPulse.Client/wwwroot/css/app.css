@@ -266,3 +266,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; c
 
 @media(max-width:980px) { .expiry-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .expiry-grid { grid-template-columns:1fr; } }
+
+
+.inventory-tabs { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:18px 0 12px; }
+.inventory-tabs [role="tab"] { min-height:44px; }
+.inventory-metrics { margin-top:8px; }
+@media(max-width:600px) { .inventory-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .inventory-tabs>button:last-child { grid-column:1/-1; } }
