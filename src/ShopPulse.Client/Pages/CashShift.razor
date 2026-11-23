@@ -11,11 +11,15 @@
     <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Cash control</span></header>
     <ShopPulse.Client.Shared.WorkspaceNav />
     <section class="feature-heading"><p class="eyebrow">DAILY OPERATIONS · CASH</p><h1>Cash shift</h1><p class="muted">Record opening float, track cash sales and reconcile the drawer at close.</p></section>
-    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error @if (_loadFailed) { <button class="link-button" @onclick="Load" disabled="@_loading">Retry loading shifts</button> }</div> }
 
     @if (_loading)
     {
         <section class="panel empty-state" role="status">Loading cash-shift information…</section>
+    }
+    else if (_loadFailed)
+    {
+        <section class="panel empty-state"><strong>Cash-shift information is unavailable</strong><p class="muted">The shift state could not be verified. Retry before opening or reconciling a drawer.</p><button class="button button-quiet" @onclick="Load" disabled="@_loading">Retry</button></section>
     }
     else if (_result is not null)
     {
@@ -114,7 +118,7 @@
     private CashMovementForm _movement = new();
     private decimal _openingFloat, _actualCash;
     private string? _varianceReason, _error;
-    private bool _busy, _loading = true;
+    private bool _busy, _loading = true, _loadFailed;
     private bool IsOwner => Session.User?.Role == "Owner";
 
     protected override async Task OnInitializedAsync()
@@ -125,7 +129,7 @@
 
     private async Task Load()
     {
-        _loading = true; _error = null;
+        _loading = true; _loadFailed = false; _error = null;
         try
         {
             if (IsOwner)
@@ -141,7 +145,7 @@
                 await LoadMovements();
             }
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "Could not load the current cash shifts. Check your session and try again."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _loadFailed = true; _error = "Could not load the current cash shifts. Check your session and try again."; }
         finally { _loading = false; }
     }
 
