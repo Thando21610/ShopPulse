@@ -234,13 +234,14 @@ public sealed class OperationsController : ControllerBase
         var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
         var cutoff = today.AddDays(days);
         var batches = await _db.StockBatches.AsNoTracking()
-            .Where(x => x.RemainingQuantity > 0 && x.ExpiryDate != null && x.ExpiryDate <= cutoff)
+            .Where(x => x.RemainingQuantity > 0 && x.ExpiryDate != null)
             .OrderBy(x => x.ExpiryDate).ThenBy(x => x.Product.Name)
+            .Take(500)
             .Select(x => new
             {
                 x.Id, x.ProductId, ProductName = x.Product.Name, x.Product.Sku,
                 x.BatchReference, x.RemainingQuantity, x.UnitCost, x.ExpiryDate,
-                Status = x.ExpiryDate < today ? "Expired" : "ExpiringSoon"
+                Status = x.ExpiryDate < today ? "Expired" : x.ExpiryDate <= cutoff ? "ExpiringSoon" : "Safe"
             }).ToListAsync(ct);
         return Ok(batches);
     }
