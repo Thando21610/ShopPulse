@@ -36,11 +36,7 @@ namespace ShopPulse.Api.Migrations
                     b.Property<bool>("CanRefundSales")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("CanManageProducts")
-                        .HasColumnType("boolean");
 
-                    b.Property<bool>("CanReceiveStock")
-                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -394,9 +390,7 @@ namespace ShopPulse.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer");
+
 
                     b.Property<decimal>("Subtotal")
                         .HasPrecision(18, 2)
