@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
 
 namespace ShopPulse.Client.Auth;
@@ -9,13 +10,15 @@ namespace ShopPulse.Client.Auth;
 public sealed class AuthMessageHandler : DelegatingHandler
 {
     private readonly TokenStore _tokens;
+    private readonly NavigationManager _navigation;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private long _refreshAttemptVersion;
     private readonly Uri _apiBase;
 
-    public AuthMessageHandler(TokenStore tokens, IConfiguration configuration)
+    public AuthMessageHandler(TokenStore tokens, IConfiguration configuration, NavigationManager navigation)
     {
         _tokens = tokens;
+        _navigation = navigation;
         var configured = configuration["ApiBaseUrl"];
         _apiBase = new Uri(string.IsNullOrWhiteSpace(configured) ? "/" : configured.TrimEnd('/') + "/",
             string.IsNullOrWhiteSpace(configured) ? UriKind.RelativeOrAbsolute : UriKind.Absolute);
@@ -60,6 +63,12 @@ public sealed class AuthMessageHandler : DelegatingHandler
             {
                 refreshResponse = await base.SendAsync(refresh, cancellationToken);
             }
+            catch (HttpRequestException)
+            {
+                _tokens.Clear();
+                _navigation.NavigateTo("/");
+                return response;
+            }
             finally
             {
                 Interlocked.Increment(ref _refreshAttemptVersion);
@@ -70,6 +79,7 @@ public sealed class AuthMessageHandler : DelegatingHandler
                 if (!refreshResponse.IsSuccessStatusCode)
                 {
                     _tokens.Clear();
+                    _navigation.NavigateTo("/");
                     return response;
                 }
 
@@ -79,6 +89,7 @@ public sealed class AuthMessageHandler : DelegatingHandler
                 if (string.IsNullOrWhiteSpace(nextToken))
                 {
                     _tokens.Clear();
+                    _navigation.NavigateTo("/");
                     return response;
                 }
 
