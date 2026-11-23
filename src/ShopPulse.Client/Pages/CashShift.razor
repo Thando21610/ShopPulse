@@ -120,10 +120,7 @@
             using var response = await Http.PostAsJsonAsync("api/cash-shifts/open", new { openingFloat = _openingFloat });
             if (!response.IsSuccessStatusCode)
             {
-                using var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
-                _error = problem?.RootElement.TryGetProperty("detail", out var detail) == true ? detail.GetString()
-                    : problem?.RootElement.TryGetProperty("message", out var message) == true ? message.GetString()
-                    : "The cash shift could not be opened. Check that no shift is already open.";
+                _error = await ApiErrorFormatter.FormatAsync(response, "The cash shift could not be opened. Check that no shift is already open.");
                 return;
             }
             _result = null;
