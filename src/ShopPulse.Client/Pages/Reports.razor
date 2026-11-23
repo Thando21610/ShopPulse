@@ -27,7 +27,7 @@
     }
 </main>
 @code {
-    private DateTime _date = DateTime.Today;
+    private DateTime _date = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date;
     private ReportSummary? _report;
     private bool _forbidden;
     private string? _error;
