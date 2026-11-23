@@ -28,6 +28,23 @@ After the frontend domain has been generated, set this variable on the API servi
 
 Use the exact origin only: scheme plus hostname, with no path and no trailing slash. Do not use `*`; the API allows credentials and must keep an explicit origin allow-list. Redeploy the API after changing the variable.
 
+
+## Database migration notes
+
+The API applies pending EF Core migrations during Production startup when `UseSqlite=false`. The latest schema additions include full-sale refund metadata, delegated operator permissions, cash drawer movement records and cash-shift concurrency controls.
+
+Before deploying the cash-shift unique index to an existing Neon database, check for duplicate open shifts:
+
+```sql
+SELECT "BusinessId", "OperatorUserId", COUNT(*)
+FROM "CashShifts"
+WHERE "Status" = 'Open'
+GROUP BY "BusinessId", "OperatorUserId"
+HAVING COUNT(*) > 1;
+```
+
+If this returns rows, reconcile those shifts deliberately before the migration. Do not delete or close records automatically. After API deployment, confirm the new migration IDs appear in `__EFMigrationsHistory` and inspect Railway startup logs before testing cash operations.
+
 ## Smoke tests
 
 1. Open `https://YOUR-API-DOMAIN/health`; expect HTTP 200 and a small JSON health response.
