@@ -130,14 +130,14 @@ Partial refunds are not implemented; the current workflow is a full-sale refund.
 5. API calculates expected cash as opening float + cash sales − cash refunds + cash in − cash out, records variance and audit event.
 ## Reports (UC-11)
 
-- GET /api/reports/summary?date=YYYY-MM-DD returns gross and net sales, refunds by payment method, cash/card totals, waste cost, active product count, current sellable inventory units, low-stock products, audit actions and cash-shift variance for the selected SAST date.
+- GET /api/reports/summary?date=YYYY-MM-DD returns gross and net sales, refunds by payment method, cash/card totals, cash-in/out totals, waste cost, active product count, current sellable inventory units, low-stock products, audit actions and cash-shift variance for the selected SAST date.
 - Inventory values are a current sellable-stock snapshot at report time, not historical stock-at-midnight.
 - All monetary values are ZAR. Detailed historical cash-shift and stock-movement analytics remain future work.
 
 ## Audit history (UC-12)
 
 - GET /api/audit?take=N&action=... is owner-only and tenant-scoped.
-- Product, staff, business, sale, stock, waste and cash-shift operations add audit events.
+- Product, staff, business, sale, stock, waste, cash-in/out and cash-shift operations add audit events.
 - The UI is read-only; there is no edit or delete action for audit events.
 
 ## Staff and business settings (UC-13 / UC-14)
