@@ -4,7 +4,7 @@
 
 > Smarter operations. Less waste. Better business.
 
-ShopPulse is an evolving retail operations platform. Its current verified application surface is intentionally limited to authentication and a live product catalogue. Sales, receiving, waste, cash reconciliation and reporting must not be treated as complete until their API workflows, permissions, tests and UI are implemented.
+ShopPulse is an evolving retail operations platform. Its currently implemented application surface is intentionally limited to authentication and a live product catalogue. Sales, receiving, waste, cash reconciliation and reporting must not be treated as complete until their API workflows, permissions, tests and UI are implemented.
 
 ## Project profile
 
@@ -17,7 +17,7 @@ ShopPulse is an evolving retail operations platform. Its current verified applic
 | Local/demo database | SQLite |
 | Production database target | PostgreSQL with durable managed storage |
 | Authentication | JWT access token + HttpOnly refresh-token cookie (client session restoration still incomplete) |
-| Architecture | Currently a two-project solution; Clean Architecture separation is planned, not yet completed |
+| Architecture | Currently a two-project application solution; Clean Architecture separation is planned, not yet completed |
 
 ## Repository structure
 
@@ -28,19 +28,14 @@ ShopPulse/
 │   ├── PR1_IMPLEMENTATION_AND_VERIFICATION.md
 │   └── DEPLOY_LIVE_URL.md
 ├── ShopPulse.slnx
-└── src/
-    ├── ShopPulse.Api/
-    │   ├── Auth/
-    │   ├── Controllers/
-    │   ├── Data/
-    │   └── Domain/
-    └── ShopPulse.Client/
-        ├── Pages/
-        ├── Layout/
-        └── wwwroot/
+├── src/
+│   ├── ShopPulse.Api/
+│   └── ShopPulse.Client/
+└── tests/
+    └── ShopPulse.Api.Tests/
 ```
 
-The current solution contains the API and Blazor client projects. Domain entities and EF Core persistence currently live inside the API project; separate Domain, Application and Infrastructure projects have not yet been introduced.
+Domain entities and EF Core persistence currently live inside the API project; separate Domain, Application and Infrastructure projects have not yet been introduced.
 
 ## Current implemented scope
 
@@ -49,8 +44,9 @@ The current solution contains the API and Blazor client projects. Domain entitie
 - Authenticated Owner and Operator staff can retrieve active products through the Staff policy.
 - The Blazor home page provides sign-in and a responsive product catalogue.
 - Product prices are displayed in South African Rand.
-- Tenant query filters are defined for the tenant-owned entities listed in the implementation record.
+- Tenant query filters are defined for tenant-owned entities.
 - Production startup requires a configured JWT signing key and explicit CORS origins.
+- A dedicated API test project includes authorization and cross-business isolation tests.
 
 The frontend currently keeps the access token in memory. A browser refresh loses that token; automatic refresh and session restoration in the Blazor client still need to be implemented and tested.
 
@@ -65,12 +61,12 @@ The following are planned work, not claims of implemented functionality:
 - Financial and operational reports.
 - Staff administration and complete endpoint-level permission enforcement.
 - Separate Domain, Application and Infrastructure layers.
-- EF Core migrations replacing `EnsureCreatedAsync()`.
-- Automated unit and integration tests, including RBAC and cross-business isolation.
+- An initial EF Core migration for PostgreSQL. Production startup now requires migrations and runs `Database.MigrateAsync()`; no initial migration is currently present.
+- PostgreSQL integration tests, including migration verification against a disposable PostgreSQL database.
 - Durable PostgreSQL deployment, backup/restore verification and operational monitoring.
 - Complete refresh-cookie/session behaviour across the deployed frontend and API origins.
 
-See [the PR #1 implementation and verification record](docs/PR1_IMPLEMENTATION_AND_VERIFICATION.md) for the inspected routes, current security controls and known gaps.
+See [the PR #1 implementation and verification record](docs/PR1_IMPLEMENTATION_AND_VERIFICATION.md) and the [Railway + Neon deployment guide](docs/DEPLOY_LIVE_URL.md) for inspected routes, current security controls and deployment prerequisites.
 
 ## Local development
 
@@ -84,7 +80,7 @@ dotnet restore
 dotnet run
 ```
 
-The local/demo configuration defaults to SQLite. The API health route is `/health`.
+The local/demo configuration defaults to SQLite. In Development, the API uses `EnsureCreatedAsync()` and synthetic seed data. The API health route is `/health`.
 
 ### Blazor client
 
@@ -113,24 +109,24 @@ Keep secrets in the hosting provider's secret/environment-variable manager. Neve
 
 **Do not deploy the current SQLite configuration to an ephemeral container for real shop data.** Use PostgreSQL with durable managed storage, backups and a tested restore procedure. Do not enable wildcard CORS origins when credentials/cookies are used.
 
-The API currently calls EF Core `EnsureCreatedAsync()`; a migration-based schema lifecycle is still required before production data is stored. Do not treat the existing deployment guide as a production approval.
+In Development, the API uses EF Core `EnsureCreatedAsync()` for the local SQLite demo. In Production, startup requires at least one EF Core migration and applies migrations with `Database.MigrateAsync()`; it deliberately fails closed if no migration is present. The initial migration has not yet been generated and tested, so production deployment is still blocked.
 
 ### Hosting direction
 
-The current deployment target is a containerised .NET 10 API on Railway Free with Neon PostgreSQL, followed by a separately hosted static Blazor WebAssembly frontend. Railway Free sleeps when idle and has a limited monthly usage credit, so it is suitable for a prototype/demo rather than an always-on commercial POS. See [Railway + Neon deployment guide](docs/DEPLOY_LIVE_URL.md). Configure the exact frontend origin in API CORS and validate refresh-cookie behaviour across the deployed origins before launch.
+The current deployment target is a containerised .NET 10 API on Railway Free with Neon PostgreSQL, followed by a separately hosted static Blazor WebAssembly frontend. Railway Free is suitable for a prototype/demo rather than an always-on commercial POS. See [Railway + Neon deployment guide](docs/DEPLOY_LIVE_URL.md).
+
+For the Railway API service, set **Root Directory** to exactly `src/ShopPulse.Api`. The Dockerfile is in that directory and expects the API project folder to be the Docker build context. This is a Railway service setting; a GitHub merge does not set it automatically. Configure the exact frontend origin in API CORS and validate refresh-cookie behaviour across the deployed origins before launch.
 
 ## Build and test status
 
 The GitHub Actions workflow is configured to restore, build, test and publish the API and client using .NET 10. A workflow definition is not evidence that a run passed.
 
-At the time of this README update:
-
-- No successful GitHub Actions result has been independently verified for the latest `main` merge commit.
-- The solution has no dedicated automated test project identified in the inspected repository.
-- Therefore, a successful `dotnet test` command alone would not establish meaningful application-behaviour coverage.
+- The API test project contains authorization tests, including role/permission and cross-business isolation coverage.
+- PostgreSQL-specific migration/integration testing is still required; SQLite tests do not prove PostgreSQL compatibility.
+- The latest Railway deployment attempt failed at build configuration because the service root directory was not set to `src/ShopPulse.Api`. This is a Railway configuration failure, not a verified GitHub Actions result.
 - No production deployment or end-to-end acceptance test is being claimed.
 
-Check [GitHub Actions](https://github.com/Thando21610/ShopPulse/actions) for the actual workflow run and inspect Restore, Build, Test and both Publish steps.
+Check [GitHub Actions](https://github.com/Thando21610/ShopPulse/actions) and the Railway service deployment logs for the latest results.
 
 ## Product and security principles
 
@@ -147,4 +143,4 @@ Check [GitHub Actions](https://github.com/Thando21610/ShopPulse/actions) for the
 - [GitHub repository](https://github.com/Thando21610/ShopPulse)
 - [GitHub Actions](https://github.com/Thando21610/ShopPulse/actions)
 - [Implementation and verification record](docs/PR1_IMPLEMENTATION_AND_VERIFICATION.md)
-- [Deployment notes](docs/DEPLOY_LIVE_URL.md)
+- [Deployment guide](docs/DEPLOY_LIVE_URL.md)
