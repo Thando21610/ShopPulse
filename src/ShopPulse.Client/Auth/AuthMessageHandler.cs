@@ -83,13 +83,24 @@ public sealed class AuthMessageHandler : DelegatingHandler
                     return response;
                 }
 
-                using var payload = await refreshResponse.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
-                var nextToken = payload?.RootElement.TryGetProperty("accessToken", out var value) == true
-                    ? value.GetString() : null;
+                string? nextToken;
+                try
+                {
+                    using var payload = await refreshResponse.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+                    nextToken = payload?.RootElement.TryGetProperty("accessToken", out var value) == true
+                        ? value.GetString() : null;
+                }
+                catch (JsonException)
+                {
+                    _tokens.Clear();
+                    _navigation.NavigateTo("/", forceLoad: true);
+                    return response;
+                }
+
                 if (string.IsNullOrWhiteSpace(nextToken))
                 {
                     _tokens.Clear();
-                    _navigation.NavigateTo("/");
+                    _navigation.NavigateTo("/", forceLoad: true);
                     return response;
                 }
 
