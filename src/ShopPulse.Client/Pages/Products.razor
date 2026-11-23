@@ -17,7 +17,7 @@
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
         <section class="panel form-panel">
             <div class="panel-heading"><h2>@(_editingId.HasValue ? "Edit product" : "Add a product")</h2>@if (_editingId.HasValue) { <button class="button button-quiet" @onclick="ResetForm">Cancel edit</button> }</div>
-            <EditForm Model="_form" OnValidSubmit="Save">
+            <EditForm EditContext="_editContext" OnValidSubmit="Save">
                 <DataAnnotationsValidator />
                 <div class="form-grid">
                     <div class="field-group"><label for="sku">SKU</label><InputText id="sku" class="form-control" @bind-Value="_form.Sku" maxlength="64" /><ValidationMessage For="@(() => _form.Sku)" /></div>
@@ -58,7 +58,14 @@
 @code {
     private List<ProductRow> _products = [];
     private ProductForm _form = new();
+    private EditContext _editContext;
     private Guid? _editingId;
+
+    public Products()
+    {
+        _editContext = new EditContext(_form);
+        _editContext.OnFieldChanged += (_, _) => ApiErrorFormatter.ClearServerValidationErrors(_editContext);
+    }
     private bool _loading = true, _busy, _forbidden;
     private string? _error;
 
@@ -81,13 +88,20 @@
     {
         _editingId = item.Id;
         _form = new ProductForm { Sku = item.Sku, Name = item.Name, Category = item.Category, UnitPrice = item.UnitPrice, MinimumStockLevel = item.MinimumStockLevel, HasExpiry = item.HasExpiry };
+        ResetEditContext();
         _error = null;
     }
 
-    private void ResetForm() { _editingId = null; _form = new(); _error = null; }
+    private void ResetForm() { _editingId = null; _form = new(); ResetEditContext(); _error = null; }
+    private void ResetEditContext()
+    {
+        _editContext = new EditContext(_form);
+        _editContext.OnFieldChanged += (_, _) => ApiErrorFormatter.ClearServerValidationErrors(_editContext);
+    }
 
     private async Task Save()
     {
+        ApiErrorFormatter.ClearServerValidationErrors(_editContext);
         _busy = true; _error = null;
         try
         {
@@ -97,6 +111,9 @@
                 : await Http.PostAsJsonAsync("api/products", payload);
             if (!response.IsSuccessStatusCode)
             {
+                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                    && await ApiErrorFormatter.ApplyValidationErrorsAsync(response, _editContext))
+                    return;
                 var message = await ApiErrorFormatter.FormatAsync(response, response.StatusCode == System.Net.HttpStatusCode.Conflict ? "That SKU is already in use." : "The product could not be saved.");
                 if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
                 return;
