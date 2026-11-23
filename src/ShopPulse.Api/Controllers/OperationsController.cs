@@ -242,9 +242,16 @@ public sealed class OperationsController : ControllerBase
             return NotFound(new { code = "SALE_NOT_FOUND", message = "The original sale could not be found." });
         if (sale.Status != "Completed" || sale.RefundAmount > 0)
             return Conflict(new { code = "SALE_ALREADY_REFUNDED", message = "This sale has already been refunded or is no longer refundable." });
-        if (sale.PaymentMethod == "Cash" && !await _db.CashShifts.AnyAsync(
-                x => x.OperatorUserId == _current.UserId && x.Status == "Open", ct))
-            return Conflict(new { code = "CASH_SHIFT_REQUIRED", message = "Open your cash shift before paying a cash refund." });
+        if (sale.PaymentMethod == "Cash")
+        {
+            var refundShift = await _db.CashShifts.FirstOrDefaultAsync(
+                x => x.OperatorUserId == _current.UserId && x.Status == "Open", ct);
+            if (refundShift is null)
+                return Conflict(new { code = "CASH_SHIFT_REQUIRED", message = "Open your cash shift before paying a cash refund." });
+            // A cash refund changes the drawer expectation. Versioning the shift
+            // prevents a concurrent close from omitting this refund.
+            refundShift.Version++;
+        }
 
         var now = DateTimeOffset.UtcNow;
         if (request.RestockItems)
