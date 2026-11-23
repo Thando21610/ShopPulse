@@ -57,7 +57,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = ShopPulsePolicies.OwnerOnly)]
+    [Authorize(Policy = ShopPulsePolicies.CanManageProducts)]
     public async Task<IActionResult> Create([FromBody] SaveProductRequest request, CancellationToken ct)
     {
         var validation = Validate(request);
@@ -81,7 +81,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = ShopPulsePolicies.OwnerOnly)]
+    [Authorize(Policy = ShopPulsePolicies.CanManageProducts)]
     public async Task<IActionResult> Update(Guid id, [FromBody] SaveProductRequest request, CancellationToken ct)
     {
         var validation = Validate(request);
@@ -105,7 +105,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/deactivate")]
-    [Authorize(Policy = ShopPulsePolicies.OwnerOnly)]
+    [Authorize(Policy = ShopPulsePolicies.CanManageProducts)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
     {
         var product = await _db.Products.FirstOrDefaultAsync(x => x.Id == id, ct);
