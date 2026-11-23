@@ -292,7 +292,7 @@ public sealed class OperationsController : ControllerBase
                     ExpiringUnits = expiringUnits, UnitsSoldLast7Days = unitsSold,
                     AverageDailySales = decimal.Round(averageDailySales, 2),
                     EarliestExpiry = earliestExpiry, DaysUntilExpiry = daysRemaining,
-                    AtRiskUnits = atRisk, Recommendation
+                    AtRiskUnits = atRisk, Recommendation = recommendation
                 };
             })
             .OrderByDescending(x => x.AtRiskUnits ?? x.ExpiringUnits)
