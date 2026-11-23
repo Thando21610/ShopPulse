@@ -672,6 +672,7 @@ public sealed class OperationsController : ControllerBase
     public async Task<IActionResult> ReportSummary([FromQuery] DateOnly? date, CancellationToken ct)
     {
         var selected = date ?? DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
+        var shopToday = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
         // South Africa uses SAST (UTC+02:00) year-round; report dates follow the shop calendar.
         var start = new DateTimeOffset(selected.ToDateTime(TimeOnly.MinValue), TimeSpan.FromHours(2));
         var end = start.AddDays(1);
