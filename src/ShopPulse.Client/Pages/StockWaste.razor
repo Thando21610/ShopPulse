@@ -47,6 +47,11 @@
         {
             using var response = await Http.PostAsJsonAsync("api/stock/waste", new { productId = batch.ProductId, stockBatchId = batch.Id, quantity = _form.Quantity, reason = _form.Reason, notes = _form.Notes });
             if (response.IsSuccessStatusCode) { _success = true; _form = new(); Toast.ShowSuccess("Waste recorded and stock updated."); _batches = await Http.GetFromJsonAsync<List<BatchOption>>("api/stock/batches") ?? []; return; }
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                _error = "Your account does not have permission to record stock waste. Ask the store owner to grant this permission.";
+                return;
+            }
             var p = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
             _error = p?.RootElement.TryGetProperty("message", out var m) == true ? m.GetString() : p?.RootElement.TryGetProperty("detail", out var d) == true ? d.GetString() : "Waste could not be recorded.";
         }
