@@ -17,7 +17,7 @@
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
         <section class="panel form-panel">
             <div class="panel-heading"><h2>Add an operator</h2></div>
-            <EditForm Model="_newStaff" OnValidSubmit="Create">
+            <EditForm EditContext="_newStaffContext" OnValidSubmit="Create">
                 <DataAnnotationsValidator />
                 <div class="form-grid">
                     <div class="field-group"><label for="staff-name">Full name</label><InputText id="staff-name" class="form-control" @bind-Value="_newStaff.DisplayName" maxlength="120" /><ValidationMessage For="@(() => _newStaff.DisplayName)" /></div>
@@ -38,7 +38,7 @@
         {
             <section class="panel form-panel">
                 <div class="panel-heading"><h2>Edit @_editing.DisplayName</h2><button class="button button-quiet" @onclick="CancelEdit">Cancel</button></div>
-                <EditForm Model="_editing" OnValidSubmit="Update">
+                <EditForm EditContext="_editingContext!" OnValidSubmit="Update">
                     <DataAnnotationsValidator />
                     <div class="form-grid">
                         <div class="field-group full"><label for="edit-name">Display name</label><InputText id="edit-name" class="form-control" @bind-Value="_editing.DisplayName" maxlength="120" /><ValidationMessage For="@(() => _editing.DisplayName)" /></div>
@@ -83,7 +83,21 @@
 @code {
     private List<StaffRow> _staff = [];
     private NewStaffForm _newStaff = new();
+    private EditContext _newStaffContext;
     private EditStaffForm? _editing;
+    private EditContext? _editingContext;
+
+    public Staff()
+    {
+        _newStaffContext = CreateContext(_newStaff);
+    }
+
+    private EditContext CreateContext(object model)
+    {
+        var context = new EditContext(model);
+        context.OnFieldChanged += (_, _) => ApiErrorFormatter.ClearServerValidationErrors(context);
+        return context;
+    }
     private bool _loading = true, _busy, _forbidden;
     private string? _error;
 
