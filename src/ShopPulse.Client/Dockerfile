@@ -5,6 +5,7 @@ COPY ShopPulse.Client.csproj ./
 RUN dotnet restore ShopPulse.Client.csproj
 
 COPY . .
+RUN dotnet restore ShopPulse.Client.csproj
 RUN dotnet publish ShopPulse.Client.csproj \
     --configuration Release \
     --no-restore \
