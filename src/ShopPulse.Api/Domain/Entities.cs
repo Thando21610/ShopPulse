@@ -171,6 +171,7 @@ public class CashShift
     public DateTimeOffset OpenedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? ClosedAtUtc { get; set; }
     public string Status { get; set; } = "Open"; // Open | Closed
+    public int Version { get; set; } = 1;
 }
 
 // ─── Cash drawer movements ───────────────────────────────────────────────────
