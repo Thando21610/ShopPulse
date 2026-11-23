@@ -27,9 +27,9 @@
     }
     else
     {
-        <div class="sales-grid">
+        <div class="sales-grid @(_rushMode ? "rush-mode" : "")">
             <section class="panel">
-                <div class="panel-heading"><h2>Products</h2><div class="panel-actions"><span class="count-pill">@_products.Count available</span><button class="button button-quiet" @onclick="LoadProducts" disabled="@_loading">Refresh stock</button></div></div>
+                <div class="panel-heading"><h2>Products</h2><div class="panel-actions"><span class="count-pill">@_products.Count available</span><button class="button button-quiet" @onclick="ToggleRushMode" aria-pressed="@_rushMode">@(_rushMode ? "Exit Rush mode" : "Rush mode")</button><button class="button button-quiet" @onclick="LoadProducts" disabled="@_loading">Refresh stock</button></div></div>
                 <input class="form-control" placeholder="Search product or SKU" @bind="_search" @bind:event="oninput" aria-label="Search products" />
                 @if (_loading) { <p class="muted">Loading products…</p> }
                 else if (_products.Count == 0) { <p class="muted">No active products are available.</p> }
@@ -86,7 +86,7 @@
     private List<CartLine> _cart = [];
     private string _search = "", _paymentMethod = "Cash";
     private decimal _tendered;
-    private bool _loading = true, _busy, _cashShiftRequired, _checkingCashShift = true;
+    private bool _loading = true, _busy, _cashShiftRequired, _checkingCashShift = true, _rushMode;
     private string? _error;
     private SaleResult? _receipt;
     // Retain the same key when a network response is lost so a retry cannot create a duplicate sale.
@@ -167,6 +167,7 @@
         catch (HttpRequestException) { _error = "The service could not be reached. Check your connection before retrying."; }
         finally { _busy = false; }
     }
+    private void ToggleRushMode() => _rushMode = !_rushMode;
     private void ResetIdempotencyKey() => _idempotencyKey = null;
     private void OnPaymentMethodChanged() { ResetIdempotencyKey(); _cardPaymentConfirmed = false; }
     private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _cardPaymentConfirmed = false; ResetIdempotencyKey(); _ = LoadProducts(); }
