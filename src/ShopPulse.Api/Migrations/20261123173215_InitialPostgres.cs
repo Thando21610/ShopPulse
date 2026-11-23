@@ -58,7 +58,8 @@ namespace ShopPulse.Api.Migrations
                     VarianceReason = table.Column<string>(type: "text", nullable: true),
                     OpenedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     ClosedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: false)
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -120,6 +121,13 @@ namespace ShopPulse.Api.Migrations
                     AmountTendered = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     ChangeAmount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
+                    RefundAmount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    RefundedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    RefundedByUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    RefundReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    RefundPaymentMethod = table.Column<string>(type: "text", nullable: true),
+                    RefundRestocked = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false),
                     IdempotencyKey = table.Column<string>(type: "text", nullable: true),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
@@ -206,6 +214,9 @@ namespace ShopPulse.Api.Migrations
                     Role = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CanAdjustStock = table.Column<bool>(type: "boolean", nullable: false),
+                    CanRefundSales = table.Column<bool>(type: "boolean", nullable: false),
+                    CanManageProducts = table.Column<bool>(type: "boolean", nullable: false),
+                    CanReceiveStock = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     FailedLoginCount = table.Column<int>(type: "integer", nullable: false),
                     LockoutEndUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
@@ -219,6 +230,37 @@ namespace ShopPulse.Api.Migrations
                         principalTable: "Businesses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CashMovements",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CashShiftId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OperatorUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Direction = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Reason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ActorUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CashMovements", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CashMovements_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CashMovements_CashShifts_CashShiftId",
+                        column: x => x.CashShiftId,
+                        principalTable: "CashShifts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -277,6 +319,23 @@ namespace ShopPulse.Api.Migrations
                 name: "IX_AuditEvents_BusinessId_CreatedAtUtc",
                 table: "AuditEvents",
                 columns: new[] { "BusinessId", "CreatedAtUtc" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CashMovements_BusinessId_CashShiftId_CreatedAtUtc",
+                table: "CashMovements",
+                columns: new[] { "BusinessId", "CashShiftId", "CreatedAtUtc" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CashMovements_CashShiftId",
+                table: "CashMovements",
+                column: "CashShiftId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CashShifts_BusinessId_OperatorUserId",
+                table: "CashShifts",
+                columns: new[] { "BusinessId", "OperatorUserId" },
+                unique: true,
+                filter: "\"Status\" = 'Open'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_IdempotencyRecords_BusinessId_Key",
@@ -342,7 +401,7 @@ namespace ShopPulse.Api.Migrations
                 name: "AuditEvents");
 
             migrationBuilder.DropTable(
-                name: "CashShifts");
+                name: "CashMovements");
 
             migrationBuilder.DropTable(
                 name: "IdempotencyRecords");
@@ -364,6 +423,9 @@ namespace ShopPulse.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "WasteRecords");
+
+            migrationBuilder.DropTable(
+                name: "CashShifts");
 
             migrationBuilder.DropTable(
                 name: "Sales");

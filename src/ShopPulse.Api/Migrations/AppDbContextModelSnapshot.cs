@@ -34,13 +34,13 @@ namespace ShopPulse.Api.Migrations
                     b.Property<bool>("CanAdjustStock")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("CanRefundSales")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("CanManageProducts")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("CanReceiveStock")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanRefundSales")
                         .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
@@ -150,12 +150,12 @@ namespace ShopPulse.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
-
-                    b.Property<Guid>("ActorUserId")
-                        .HasColumnType("uuid");
 
                     b.Property<Guid>("BusinessId")
                         .HasColumnType("uuid");
@@ -181,9 +181,9 @@ namespace ShopPulse.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BusinessId", "CashShiftId", "CreatedAtUtc");
-
                     b.HasIndex("CashShiftId");
+
+                    b.HasIndex("BusinessId", "CashShiftId", "CreatedAtUtc");
 
                     b.ToTable("CashMovements");
                 });
@@ -414,6 +414,15 @@ namespace ShopPulse.Api.Migrations
                     b.Property<Guid>("OperatorUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReceiptNumber")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<decimal>("RefundAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -428,32 +437,23 @@ namespace ShopPulse.Api.Migrations
                     b.Property<bool>("RefundRestocked")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid?>("RefundedByUserId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset?>("RefundedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ReceiptNumber")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                    b.Property<Guid?>("RefundedByUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer");
-
                     b.Property<decimal>("Subtotal")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -629,6 +629,17 @@ namespace ShopPulse.Api.Migrations
                     b.ToTable("WasteRecords");
                 });
 
+            modelBuilder.Entity("ShopPulse.Api.Domain.AppUser", b =>
+                {
+                    b.HasOne("ShopPulse.Api.Domain.Business", "Business")
+                        .WithMany("Users")
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Business");
+                });
+
             modelBuilder.Entity("ShopPulse.Api.Domain.CashMovement", b =>
                 {
                     b.HasOne("ShopPulse.Api.Domain.Business", null)
@@ -642,17 +653,6 @@ namespace ShopPulse.Api.Migrations
                         .HasForeignKey("CashShiftId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ShopPulse.Api.Domain.AppUser", b =>
-                {
-                    b.HasOne("ShopPulse.Api.Domain.Business", "Business")
-                        .WithMany("Users")
-                        .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Business");
                 });
 
             modelBuilder.Entity("ShopPulse.Api.Domain.Product", b =>
