@@ -16,13 +16,7 @@ public sealed partial class AddSaleRefundSupport : Migration
             name: "CanRefundSales", table: "Users", type: "boolean",
             nullable: false, defaultValue: false);
 
-        migrationBuilder.AddColumn<bool>(
-            name: "CanManageProducts", table: "Users", type: "boolean",
-            nullable: false, defaultValue: false);
 
-        migrationBuilder.AddColumn<bool>(
-            name: "CanReceiveStock", table: "Users", type: "boolean",
-            nullable: false, defaultValue: false);
 
         migrationBuilder.AddColumn<decimal>(
             name: "RefundAmount", table: "Sales", type: "numeric(18,2)",
@@ -48,22 +42,16 @@ public sealed partial class AddSaleRefundSupport : Migration
             name: "RefundRestocked", table: "Sales", type: "boolean",
             nullable: false, defaultValue: false);
 
-        migrationBuilder.AddColumn<int>(
-            name: "Version", table: "Sales", type: "integer",
-            nullable: false, defaultValue: 1);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.DropColumn(name: "CanRefundSales", table: "Users");
-        migrationBuilder.DropColumn(name: "CanManageProducts", table: "Users");
-        migrationBuilder.DropColumn(name: "CanReceiveStock", table: "Users");
         migrationBuilder.DropColumn(name: "RefundAmount", table: "Sales");
         migrationBuilder.DropColumn(name: "RefundedAtUtc", table: "Sales");
         migrationBuilder.DropColumn(name: "RefundedByUserId", table: "Sales");
         migrationBuilder.DropColumn(name: "RefundReason", table: "Sales");
         migrationBuilder.DropColumn(name: "RefundPaymentMethod", table: "Sales");
         migrationBuilder.DropColumn(name: "RefundRestocked", table: "Sales");
-        migrationBuilder.DropColumn(name: "Version", table: "Sales");
     }
 }
