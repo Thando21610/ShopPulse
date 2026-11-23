@@ -103,9 +103,19 @@ public sealed class CanAdjustStockAuthorizationTests
         await using (var db = new AppDbContext(options, currentBusiness))
         {
             await db.Database.EnsureCreatedAsync();
-            db.Businesses.AddRange(
-                new Business { Id = currentBusinessId, Name = "Current test business" },
-                new Business { Id = userBusinessId, Name = "User test business" });
+            db.Businesses.Add(new Business
+            {
+                Id = currentBusinessId,
+                Name = "Current test business"
+            });
+            if (userBusinessId != currentBusinessId)
+            {
+                db.Businesses.Add(new Business
+                {
+                    Id = userBusinessId,
+                    Name = "User test business"
+                });
+            }
             db.Users.Add(new AppUser
             {
                 Id = userId,
