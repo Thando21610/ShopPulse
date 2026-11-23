@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
     public DbSet<WasteRecord> WasteRecords => Set<WasteRecord>();
     public DbSet<CashShift> CashShifts => Set<CashShift>();
+    public DbSet<CashMovement> CashMovements => Set<CashMovement>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
@@ -39,6 +40,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Sale>().HasQueryFilter(s => s.BusinessId == CurrentBusinessId);
         modelBuilder.Entity<WasteRecord>().HasQueryFilter(w => w.BusinessId == CurrentBusinessId);
         modelBuilder.Entity<CashShift>().HasQueryFilter(c => c.BusinessId == CurrentBusinessId);
+        modelBuilder.Entity<CashMovement>().HasQueryFilter(c => c.BusinessId == CurrentBusinessId);
         modelBuilder.Entity<AuditEvent>().HasQueryFilter(a => a.BusinessId == CurrentBusinessId);
         modelBuilder.Entity<IdempotencyRecord>().HasQueryFilter(i => i.BusinessId == CurrentBusinessId);
 
@@ -131,6 +133,15 @@ public class AppDbContext : DbContext
             e.Property(x => x.ActualCash).HasPrecision(18, 2);
             e.Property(x => x.ExpectedCash).HasPrecision(18, 2);
             e.Property(x => x.Variance).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<CashMovement>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.Direction).HasMaxLength(8).IsRequired();
+            e.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+            e.HasIndex(x => new { x.BusinessId, x.CashShiftId, x.CreatedAtUtc });
         });
     }
 }
