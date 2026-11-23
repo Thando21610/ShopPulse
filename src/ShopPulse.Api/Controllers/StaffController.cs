@@ -21,13 +21,13 @@ public sealed class StaffController : ControllerBase
     public StaffController(AppDbContext db) => _db = db;
 
     public sealed record CreateStaffRequest(string DisplayName, string Email, string Password, bool CanAdjustStock, bool CanRefundSales, bool CanManageProducts, bool CanReceiveStock);
-    public sealed record UpdateStaffRequest(string DisplayName, bool IsActive, bool CanAdjustStock, bool CanRefundSales);
+    public sealed record UpdateStaffRequest(string DisplayName, bool IsActive, bool CanAdjustStock, bool CanRefundSales, bool CanManageProducts, bool CanReceiveStock);
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct)
     {
         var users = await _db.Users.AsNoTracking().OrderBy(x => x.Role).ThenBy(x => x.DisplayName)
-            .Select(x => new { x.Id, x.DisplayName, x.Email, x.Role, x.IsActive, x.CanAdjustStock, x.CanRefundSales, x.CreatedAtUtc })
+            .Select(x => new { x.Id, x.DisplayName, x.Email, x.Role, x.IsActive, x.CanAdjustStock, x.CanRefundSales, x.CanManageProducts, x.CanReceiveStock, x.CreatedAtUtc })
             .ToListAsync(ct);
         return Ok(users);
     }
@@ -73,6 +73,8 @@ public sealed class StaffController : ControllerBase
         user.IsActive = request.IsActive;
         user.CanAdjustStock = request.CanAdjustStock;
         user.CanRefundSales = request.CanRefundSales;
+        user.CanManageProducts = request.CanManageProducts;
+        user.CanReceiveStock = request.CanReceiveStock;
         if (wasActive && !user.IsActive)
         {
             var activeTokens = await _db.RefreshTokens
@@ -84,7 +86,7 @@ public sealed class StaffController : ControllerBase
                 token.RevokedReason = "ADMIN";
             }
         }
-        AddAudit("StaffUpdated", user.Id, new { Before = before, user.DisplayName, user.IsActive, user.CanAdjustStock, user.CanRefundSales });
+        AddAudit("StaffUpdated", user.Id, new { Before = before, user.DisplayName, user.IsActive, user.CanAdjustStock, user.CanRefundSales, user.CanManageProducts, user.CanReceiveStock });
         await _db.SaveChangesAsync(ct);
         return Ok(ToDto(user));
     }
