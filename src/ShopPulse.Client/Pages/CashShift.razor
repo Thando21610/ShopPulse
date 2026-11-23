@@ -1,0 +1,66 @@
+@page "/cash-shift"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Cash shift | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Cash control</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">DAILY OPERATIONS · CASH</p><h1>Cash shift</h1><p class="muted">Record the opening float and reconcile the drawer at close.</p></section>
+    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+    @if (_result is not null)
+    {
+        <section class="panel form-panel"><p class="eyebrow">SHIFT CLOSED</p><h2>Cash reconciliation</h2><div class="summary-line"><span>Opening float</span><strong>@Money(_result.OpeningFloat)</strong></div><div class="summary-line"><span>Expected cash</span><strong>@Money(_result.ExpectedCash)</strong></div><div class="summary-line"><span>Actual cash counted</span><strong>@Money(_result.ActualCash)</strong></div><div class="summary-line"><span>Variance</span><strong class="@(_result.Variance < 0 ? "text-danger" : "")">@Money(_result.Variance)</strong></div><p class="muted">The shift has been closed and the variance recorded.</p></section>
+    }
+    else if (_shift is null)
+    {
+        <section class="panel form-panel"><h2>Open a cash shift</h2><label for="opening">Opening float (ZAR)</label><input id="opening" class="form-control" type="number" min="0" step="0.01" @bind="_openingFloat" /><button class="button button-primary" @onclick="Open" disabled="@_busy">@(_busy ? "Opening…" : "Open shift")</button></section>
+    }
+    else
+    {
+        <section class="panel form-panel"><span class="badge-live">SHIFT OPEN</span><h2>Cash drawer in progress</h2><div class="summary-line"><span>Opening float</span><strong>@Money(_shift.OpeningFloat)</strong></div><div class="summary-line"><span>Opened</span><strong>@_shift.OpenedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</strong></div>
+            @if (Session.User?.Role == "Owner")
+            {
+                <hr/><h3>Close and reconcile</h3><label for="actual">Actual cash counted (ZAR)</label><input id="actual" class="form-control" type="number" min="0" step="0.01" @bind="_actualCash" /><label for="variance">Variance explanation (required if different)</label><textarea id="variance" class="form-control" @bind="_varianceReason" maxlength="500"></textarea><button class="button button-primary" @onclick="Close" disabled="@_busy">@(_busy ? "Closing…" : "Close shift")</button>
+            }
+            else { <p class="muted">Ask the store owner to complete the end-of-day cash reconciliation.</p> }
+        </section>
+    }
+</main>
+@code {
+    private ShiftInfo? _shift;
+    private CloseResult? _result;
+    private decimal _openingFloat, _actualCash;
+    private string? _varianceReason, _error;
+    private bool _busy;
+    protected override async Task OnInitializedAsync() { if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; } await Load(); }
+    private async Task Load()
+    {
+        try { _shift = await Http.GetFromJsonAsync<ShiftInfo>("api/cash-shifts/current"); }
+        catch (HttpRequestException) { _error = "Could not load the current shift."; }
+    }
+    private async Task Open()
+    {
+        _busy = true; _error = null;
+        try { using var r = await Http.PostAsJsonAsync("api/cash-shifts/open", new { openingFloat = _openingFloat }); if (!r.IsSuccessStatusCode) { _error = "The cash shift could not be opened. Check that no shift is already open."; return; } await Load(); }
+        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        finally { _busy = false; }
+    }
+    private async Task Close()
+    {
+        _busy = true; _error = null;
+        try
+        {
+            using var r = await Http.PostAsJsonAsync("api/cash-shifts/close", new { actualCash = _actualCash, varianceReason = _varianceReason });
+            if (!r.IsSuccessStatusCode) { _error = "The cash shift could not be closed. Verify the counted cash and permissions."; return; }
+            _result = await r.Content.ReadFromJsonAsync<CloseResult>(); _shift = null;
+        }
+        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        finally { _busy = false; }
+    }
+    private static string Money(decimal v) => v.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
+    private sealed class ShiftInfo { public Guid Id { get; set; } public decimal OpeningFloat { get; set; } public DateTimeOffset OpenedAtUtc { get; set; } }
+    private sealed class CloseResult { public decimal OpeningFloat { get; set; } public decimal ExpectedCash { get; set; } public decimal ActualCash { get; set; } public decimal Variance { get; set; } }
+}
