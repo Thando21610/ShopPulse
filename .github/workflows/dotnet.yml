@@ -42,6 +42,7 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: Development
           UseSqlite: "false"
+          ConnectionStrings__Default: ${{ env.SHOPPULSE_TEST_POSTGRES_CONNECTION }}
         run: |
           dotnet ef migrations add AlignCurrentModel --project src/ShopPulse.Api/ShopPulse.Api.csproj --startup-project src/ShopPulse.Api/ShopPulse.Api.csproj --output-dir Migrations
           echo "===== GENERATED MIGRATION ====="
