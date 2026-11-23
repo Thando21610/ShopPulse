@@ -282,7 +282,7 @@ public sealed class OperationsController : ControllerBase
         });
     }
 
-    public sealed record RefundSaleRequest(string Reason, string RefundPaymentMethod, bool CardRefundConfirmed, bool RestockItems);
+    public sealed record RefundSaleRequest(string Reason, string RefundPaymentMethod, bool CashRefundConfirmed, bool CardRefundConfirmed, bool RestockItems);
 
     [HttpGet("sales/refundable")]
     [Authorize(Policy = ShopPulsePolicies.CanRefundSales)]
@@ -317,6 +317,8 @@ public sealed class OperationsController : ControllerBase
             return Failure(400, "VALIDATION_FAILED", "Enter a refund reason of 1 to 500 characters.");
         if (method is not ("Cash" or "Card"))
             return Failure(400, "VALIDATION_FAILED", "Choose Cash or Card as the refund method.");
+        if (method == "Cash" && !request.CashRefundConfirmed)
+            return Failure(400, "VALIDATION_FAILED", "Confirm that the cash refund has been paid to the customer.");
         if (method == "Card" && !request.CardRefundConfirmed)
             return Failure(400, "VALIDATION_FAILED", "Confirm that the refund was processed on the external card terminal.");
 
@@ -327,6 +329,8 @@ public sealed class OperationsController : ControllerBase
         if (sale is null) return NotFound(new { code = "SALE_NOT_FOUND", message = "The sale could not be found." });
         if (sale.Status != "Completed")
             return Conflict(new { code = "SALE_ALREADY_REFUNDED", message = "This sale has already been refunded." });
+        if (method != sale.PaymentMethod)
+            return Failure(400, "VALIDATION_FAILED", "Refunds must use the original sale payment method.");
 
         if (method == "Cash" && !await _db.CashShifts.AnyAsync(
                 x => x.OperatorUserId == _current.UserId && x.Status == "Open", ct))
@@ -348,15 +352,14 @@ public sealed class OperationsController : ControllerBase
 
         if (request.RestockItems)
         {
-            var today = DateOnly.FromDateTime(now.ToOffset(TimeSpan.FromHours(2)).Date);
             foreach (var line in sale.Items)
             {
                 if (!line.StockBatchId.HasValue)
                     return Conflict(new { code = "RESTOCK_BATCH_UNAVAILABLE", message = "This sale line has no original stock batch. Refund without restocking instead." });
                 var batch = await _db.StockBatches.FirstOrDefaultAsync(
                     x => x.Id == line.StockBatchId.Value && x.ProductId == line.ProductId, ct);
-                if (batch is null || (batch.ExpiryDate.HasValue && batch.ExpiryDate.Value < today))
-                    return Conflict(new { code = "RESTOCK_BATCH_UNAVAILABLE", message = "An original batch is missing or expired. Refund without restocking or review stock manually." });
+                if (batch is null)
+                    return Conflict(new { code = "RESTOCK_BATCH_UNAVAILABLE", message = "An original stock batch is missing. Refund without restocking or review stock manually." });
                 batch.RemainingQuantity += line.Quantity;
                 batch.Version++;
                 _db.StockMovements.Add(new StockMovement
@@ -652,7 +655,7 @@ public sealed class OperationsController : ControllerBase
                 && x.PaymentMethod == "Cash" && x.CreatedAtUtc >= shift.OpenedAtUtc
                 && x.Status != "Voided")
             .SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
-        var cashRefunds = await _db.Sales.Where(x => x.OperatorUserId == shift.OperatorUserId
+        var cashRefunds = await _db.Sales.Where(x => x.RefundedByUserId == shift.OperatorUserId
                 && x.RefundPaymentMethod == "Cash" && x.RefundedAtUtc >= shift.OpenedAtUtc
                 && x.RefundedAtUtc < DateTimeOffset.UtcNow)
             .SumAsync(x => (decimal?)x.RefundAmount, ct) ?? 0m;
