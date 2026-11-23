@@ -20,7 +20,7 @@ public sealed class StaffController : ControllerBase
 
     public StaffController(AppDbContext db) => _db = db;
 
-    public sealed record CreateStaffRequest(string DisplayName, string Email, string Password, bool CanAdjustStock, bool CanRefundSales);
+    public sealed record CreateStaffRequest(string DisplayName, string Email, string Password, bool CanAdjustStock, bool CanRefundSales, bool CanManageProducts, bool CanReceiveStock);
     public sealed record UpdateStaffRequest(string DisplayName, bool IsActive, bool CanAdjustStock, bool CanRefundSales);
 
     [HttpGet]
@@ -49,10 +49,10 @@ public sealed class StaffController : ControllerBase
         {
             Id = Guid.NewGuid(), BusinessId = BusinessId, DisplayName = request.DisplayName.Trim(),
             Email = email, PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = "Operator", IsActive = true, CanAdjustStock = request.CanAdjustStock, CanRefundSales = request.CanRefundSales
+            Role = "Operator", IsActive = true, CanAdjustStock = request.CanAdjustStock, CanRefundSales = request.CanRefundSales, CanManageProducts = request.CanManageProducts, CanReceiveStock = request.CanReceiveStock
         };
         _db.Users.Add(user);
-        AddAudit("StaffCreated", user.Id, new { user.DisplayName, user.Email, user.Role, user.CanAdjustStock, user.CanRefundSales });
+        AddAudit("StaffCreated", user.Id, new { user.DisplayName, user.Email, user.Role, user.CanAdjustStock, user.CanRefundSales, user.CanManageProducts, user.CanReceiveStock });
         await _db.SaveChangesAsync(ct);
         return Created($"/api/staff/{user.Id}", ToDto(user));
     }
@@ -67,7 +67,7 @@ public sealed class StaffController : ControllerBase
         if (user.Role == "Owner")
             return BadRequest(new { code = "OWNER_PROTECTED", message = "Owner accounts cannot be changed from staff management." });
 
-        var before = new { user.DisplayName, user.IsActive, user.CanAdjustStock, user.CanRefundSales };
+        var before = new { user.DisplayName, user.IsActive, user.CanAdjustStock, user.CanRefundSales, user.CanManageProducts, user.CanReceiveStock };
         var wasActive = user.IsActive;
         user.DisplayName = request.DisplayName.Trim();
         user.IsActive = request.IsActive;
@@ -91,7 +91,7 @@ public sealed class StaffController : ControllerBase
 
     private static object ToDto(AppUser user) => new
     {
-        user.Id, user.DisplayName, user.Email, user.Role, user.IsActive, user.CanAdjustStock, user.CanRefundSales, user.CreatedAtUtc
+        user.Id, user.DisplayName, user.Email, user.Role, user.IsActive, user.CanAdjustStock, user.CanRefundSales, user.CanManageProducts, user.CanReceiveStock, user.CreatedAtUtc
     };
 
     private void AddAudit(string action, Guid userId, object details)
