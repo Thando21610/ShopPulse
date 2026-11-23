@@ -19,10 +19,10 @@
             <EditForm Model="_form" OnValidSubmit="Submit">
                 <DataAnnotationsValidator />
                 <div class="form-grid">
-                    <div class="field-group full"><label for="product">Product</label><InputSelect id="product" class="form-control" @bind-Value="_form.ProductId"><option value="">Choose a product</option>@foreach(var p in _products){<option value="@p.Id">@p.Name (@p.Sku)</option>}</InputSelect><ValidationMessage For="@(() => _form.ProductId)" /></div>
+                    <div class="field-group full"><label for="product">Product</label><InputSelect id="product" class="form-control" @bind-Value="_form.ProductId"><option value="">Choose a product</option>@foreach(var p in _products){<option value="@p.Id">@p.Name (@p.Sku)@(p.HasExpiry ? " · expiry tracked" : "")</option>}</InputSelect><ValidationMessage For="@(() => _form.ProductId)" /></div>
                     <div class="field-group"><label for="quantity">Quantity received</label><InputNumber id="quantity" class="form-control" @bind-Value="_form.Quantity" min="1" /><ValidationMessage For="@(() => _form.Quantity)" /></div>
                     <div class="field-group"><label for="cost">Unit cost (ZAR)</label><InputNumber id="cost" class="form-control" @bind-Value="_form.UnitCost" min="0" step="0.01" /><ValidationMessage For="@(() => _form.UnitCost)" /></div>
-                    <div class="field-group"><label for="expiry">Expiry date (optional)</label><InputDate id="expiry" class="form-control" @bind-Value="_form.ExpiryDate" /></div>
+                    <div class="field-group"><label for="expiry">Expiry date @(_products.FirstOrDefault(x => x.Id == _form.ProductId)?.HasExpiry == true ? "(required)" : "(optional)")</label><InputDate id="expiry" class="form-control" @bind-Value="_form.ExpiryDate" /></div>
                     <div class="field-group"><label for="supplier">Supplier (optional)</label><InputText id="supplier" class="form-control" @bind-Value="_form.Supplier" maxlength="160" /></div>
                     <div class="field-group full"><label for="batch">Batch reference (optional)</label><InputText id="batch" class="form-control" @bind-Value="_form.BatchReference" maxlength="80" /></div>
                 </div>
@@ -51,6 +51,9 @@
         _busy = true; _error = null; _success = false;
         try
         {
+            var selectedProduct = _products.FirstOrDefault(x => x.Id == _form.ProductId);
+            if (selectedProduct is null) { _error = "Choose a valid product."; return; }
+            if (selectedProduct.HasExpiry && !_form.ExpiryDate.HasValue) { _error = "An expiry date is required for this product."; return; }
             if (_form.ExpiryDate.HasValue && _form.ExpiryDate.Value.Date < DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date) { _error = "Expiry date cannot be in the past."; return; }
             var payload = new { productId = _form.ProductId ?? Guid.Empty, quantity = _form.Quantity, unitCost = _form.UnitCost, expiryDate = _form.ExpiryDate?.ToString("yyyy-MM-dd"), supplier = _form.Supplier, batchReference = _form.BatchReference };
             using var response = await Http.PostAsJsonAsync("api/stock/receipts", payload);
@@ -73,5 +76,5 @@
         [StringLength(160)] public string? Supplier { get; set; }
         [StringLength(80)] public string? BatchReference { get; set; }
     }
-    private sealed class ProductOption { public Guid Id { get; set; } public string Name { get; set; } = ""; public string Sku { get; set; } = ""; }
+    private sealed class ProductOption { public Guid Id { get; set; } public string Name { get; set; } = ""; public string Sku { get; set; } = ""; public bool HasExpiry { get; set; } }
 }
