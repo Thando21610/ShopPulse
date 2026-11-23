@@ -20,8 +20,8 @@ public sealed class StaffController : ControllerBase
 
     public StaffController(AppDbContext db) => _db = db;
 
-    public sealed record CreateStaffRequest(string DisplayName, string Email, string Password, bool CanAdjustStock);
-    public sealed record UpdateStaffRequest(string DisplayName, bool IsActive, bool CanAdjustStock);
+    public sealed record CreateStaffRequest(string DisplayName, string Email, string Password, bool CanAdjustStock, bool CanRefundSales);
+    public sealed record UpdateStaffRequest(string DisplayName, bool IsActive, bool CanAdjustStock, bool CanRefundSales);
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct)
@@ -49,7 +49,7 @@ public sealed class StaffController : ControllerBase
         {
             Id = Guid.NewGuid(), BusinessId = BusinessId, DisplayName = request.DisplayName.Trim(),
             Email = email, PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = "Operator", IsActive = true, CanAdjustStock = request.CanAdjustStock
+            Role = "Operator", IsActive = true, CanAdjustStock = request.CanAdjustStock, CanRefundSales = request.CanRefundSales
         };
         _db.Users.Add(user);
         AddAudit("StaffCreated", user.Id, new { user.DisplayName, user.Email, user.Role, user.CanAdjustStock });
@@ -67,11 +67,12 @@ public sealed class StaffController : ControllerBase
         if (user.Role == "Owner")
             return BadRequest(new { code = "OWNER_PROTECTED", message = "Owner accounts cannot be changed from staff management." });
 
-        var before = new { user.DisplayName, user.IsActive, user.CanAdjustStock };
+        var before = new { user.DisplayName, user.IsActive, user.CanAdjustStock, user.CanRefundSales };
         var wasActive = user.IsActive;
         user.DisplayName = request.DisplayName.Trim();
         user.IsActive = request.IsActive;
         user.CanAdjustStock = request.CanAdjustStock;
+        user.CanRefundSales = request.CanRefundSales;
         if (wasActive && !user.IsActive)
         {
             var activeTokens = await _db.RefreshTokens
@@ -83,14 +84,14 @@ public sealed class StaffController : ControllerBase
                 token.RevokedReason = "ADMIN";
             }
         }
-        AddAudit("StaffUpdated", user.Id, new { Before = before, user.DisplayName, user.IsActive, user.CanAdjustStock });
+        AddAudit("StaffUpdated", user.Id, new { Before = before, user.DisplayName, user.IsActive, user.CanAdjustStock, user.CanRefundSales });
         await _db.SaveChangesAsync(ct);
         return Ok(ToDto(user));
     }
 
     private static object ToDto(AppUser user) => new
     {
-        user.Id, user.DisplayName, user.Email, user.Role, user.IsActive, user.CanAdjustStock, user.CreatedAtUtc
+        user.Id, user.DisplayName, user.Email, user.Role, user.IsActive, user.CanAdjustStock, user.CanRefundSales, user.CreatedAtUtc
     };
 
     private void AddAudit(string action, Guid userId, object details)
