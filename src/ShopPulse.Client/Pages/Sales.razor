@@ -56,11 +56,11 @@
                 }
                 <div class="cart-total"><span>Total due</span><strong>@Money(Total)</strong></div>
                 <label for="payment-method">Payment method</label>
-                <select id="payment-method" class="form-control" @bind="_paymentMethod"><option value="Cash">Cash</option><option value="Card">Card</option></select>
+                <select id="payment-method" class="form-control" @bind="_paymentMethod" @bind:after="ResetIdempotencyKey"><option value="Cash">Cash</option><option value="Card">Card</option></select>
                 @if (_paymentMethod == "Cash")
                 {
                     <label for="tendered">Cash received (ZAR)</label>
-                    <input id="tendered" class="form-control" type="number" min="0" step="0.01" @bind="_tendered" />
+                    <input id="tendered" class="form-control" type="number" min="0" step="0.01" @bind="_tendered" @bind:after="ResetIdempotencyKey" />
                     <div class="change-preview"><span>Change</span><strong class="@(ChangeDue < 0 ? "text-danger" : "")">@Money(Math.Max(0, ChangeDue))</strong></div>
                     @if (ChangeDue < 0 && _cart.Count > 0) { <p class="field-error">Cash received is less than the total due.</p> }
                 }
@@ -79,6 +79,8 @@
     private bool _loading = true, _busy;
     private string? _error;
     private SaleResult? _receipt;
+    // Retain the same key when a network response is lost so a retry cannot create a duplicate sale.
+    private string? _idempotencyKey;
     private decimal Total => _cart.Sum(x => x.Product.UnitPrice * x.Quantity);
     private decimal ChangeDue => _tendered - Total;
     private IEnumerable<ProductOption> FilteredProducts => _products.Where(p => string.IsNullOrWhiteSpace(_search) || p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || p.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase));
@@ -101,11 +103,13 @@
         var line = _cart.FirstOrDefault(x => x.Product.Id == product.Id);
         if (line is null) _cart.Add(new CartLine(product)); else if (line.Quantity < product.Available) line.Quantity++;
         _error = null;
+        ResetIdempotencyKey();
     }
     private void Change(CartLine line, int amount)
     {
         line.Quantity = Math.Max(0, Math.Min(line.Product.Available, line.Quantity + amount));
         if (line.Quantity == 0) _cart.Remove(line);
+        ResetIdempotencyKey();
     }
     private async Task CompleteSale()
     {
@@ -118,7 +122,8 @@
             {
                 Content = JsonContent.Create(new { items = _cart.Select(x => new { productId = x.Product.Id, quantity = x.Quantity }), paymentMethod = _paymentMethod, amountTendered = _paymentMethod == "Cash" ? _tendered : Total })
             };
-            request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("N"));
+            _idempotencyKey ??= Guid.NewGuid().ToString("N");
+            request.Headers.Add("Idempotency-Key", _idempotencyKey);
             using var response = await Http.SendAsync(request);
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
@@ -134,11 +139,13 @@
             }
             if (!response.IsSuccessStatusCode) { _error = "The sale could not be completed. Please try again."; return; }
             _receipt = await response.Content.ReadFromJsonAsync<SaleResult>();
+            _idempotencyKey = null;
         }
         catch (HttpRequestException) { _error = "The service could not be reached. Check your connection before retrying."; }
         finally { _busy = false; }
     }
-    private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; _ = LoadProducts(); }
+    private void ResetIdempotencyKey() => _idempotencyKey = null;
+    private void StartNextSale() { _receipt = null; _cart.Clear(); _tendered = 0; _search = ""; _error = null; ResetIdempotencyKey(); _ = LoadProducts(); }
     private async Task PrintReceipt() => await JS.InvokeVoidAsync("window.print");
     private static string Money(decimal amount) => amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
     private static string Initial(string name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
