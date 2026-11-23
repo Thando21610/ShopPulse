@@ -17,7 +17,8 @@
         @if (_report is not null)
         {
             <section class="metrics-grid">
-                <article class="panel metric-card"><span>Sales total</span><strong>@Money(_report.SalesTotal)</strong><small>@_report.SalesCount completed sales</small></article>
+                <article class="panel metric-card"><span>Net sales total</span><strong>@Money(_report.SalesTotal)</strong><small>@_report.SalesCount sales recorded</small></article>
+                <article class="panel metric-card"><span>Refunds issued</span><strong>@Money(_report.RefundTotal)</strong><small>@Money(_report.CashRefundTotal) cash · @Money(_report.CardRefundTotal) card</small></article>
                 <article class="panel metric-card"><span>Cash received</span><strong>@Money(_report.CashTotal)</strong><small>Cash transactions</small></article>
                 <article class="panel metric-card"><span>Card payments</span><strong>@Money(_report.CardTotal)</strong><small>Card transactions</small></article>
                 <article class="panel metric-card"><span>Recorded waste</span><strong>@Money(_report.WasteCost)</strong><small>Estimated stock cost</small></article>
@@ -32,7 +33,7 @@
                 <article class="panel metric-card"><span>Shifts closed</span><strong>@_report.ClosedShifts</strong><small>Cash shifts reconciled</small></article>
                 <article class="panel metric-card"><span>Cash variance</span><strong class="@(_report.CashVariance < 0 ? "text-danger" : "")">@Money(_report.CashVariance)</strong><small>Net variance across closed shifts</small></article>
             </section>
-            <p class="muted small-note">Sales, stock movements, waste and shift closures follow the selected SAST date. Inventory figures show current stock at report time; staff actions count recorded audit events. Refund totals are not included because the refund workflow is not yet implemented. All monetary amounts are ZAR.</p>
+            <p class="muted small-note">Sales and refunds are grouped by their respective transaction/refund dates; stock movements, waste and shift closures follow the selected SAST date. Inventory figures show current stock at report time; staff actions count recorded audit events. Refund totals are not included because the refund workflow is not yet implemented. All monetary amounts are ZAR.</p>
         }
     }
 </main>
@@ -54,5 +55,5 @@
         catch (HttpRequestException) { _error = "The report could not be loaded."; }
     }
     private static string Money(decimal v) => v.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
-    private sealed class ReportSummary { public int SalesCount { get; set; } public decimal SalesTotal { get; set; } public decimal AverageTransactionValue { get; set; } public decimal CashTotal { get; set; } public decimal CardTotal { get; set; } public decimal WasteCost { get; set; } public int ActiveProducts { get; set; } public int InventoryUnits { get; set; } public int LowStockProducts { get; set; } public int StaffActions { get; set; } public int UnitsReceived { get; set; } public int UnitsSold { get; set; } public int StockAdjustments { get; set; } public int ClosedShifts { get; set; } public decimal CashVariance { get; set; } public string Currency { get; set; } = "ZAR"; }
+    private sealed class ReportSummary { public int SalesCount { get; set; } public decimal SalesTotal { get; set; } public decimal RefundTotal { get; set; } public decimal CashRefundTotal { get; set; } public decimal CardRefundTotal { get; set; } public decimal AverageTransactionValue { get; set; } public decimal CashTotal { get; set; } public decimal CardTotal { get; set; } public decimal WasteCost { get; set; } public int ActiveProducts { get; set; } public int InventoryUnits { get; set; } public int LowStockProducts { get; set; } public int StaffActions { get; set; } public int UnitsReceived { get; set; } public int UnitsSold { get; set; } public int StockAdjustments { get; set; } public int ClosedShifts { get; set; } public decimal CashVariance { get; set; } public string Currency { get; set; } = "ZAR"; }
 }
