@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -36,11 +37,22 @@ var jwtAudience = jwtSection["Audience"] ?? "shoppulse-app";
 
 // ─── Database ────────────────────────────────────────────────────────────────
 // Prefer Neon / PostgreSQL connection string; fall back to SQLite for local demo
-var conn = builder.Configuration.GetConnectionString("Default")
-    ?? "Host=localhost;Database=shoppulse;Username=postgres;Password=postgres";
+var conn = builder.Configuration.GetConnectionString("Default");
+if (string.IsNullOrWhiteSpace(conn))
+{
+    if (!builder.Environment.IsDevelopment())
+        throw new InvalidOperationException("ConnectionStrings:Default must be configured for PostgreSQL outside Development.");
+    conn = "Host=localhost;Database=shoppulse;Username=postgres;Password=postgres";
+}
 
-var useSqlite = builder.Configuration.GetValue("UseSqlite", true)
-    || conn.Contains("Data Source=", StringComparison.OrdinalIgnoreCase);
+var useSqlite = builder.Configuration.GetValue<bool?>("UseSqlite")
+    ?? builder.Environment.IsDevelopment();
+
+if (!builder.Environment.IsDevelopment() && useSqlite)
+    throw new InvalidOperationException("SQLite is disabled outside Development. Configure UseSqlite=false and a PostgreSQL connection string.");
+
+if (!useSqlite && conn.Contains("Data Source=", StringComparison.OrdinalIgnoreCase))
+    throw new InvalidOperationException("A SQLite connection string cannot be used when PostgreSQL is selected.");
 
 if (useSqlite)
 {
@@ -87,6 +99,43 @@ builder.Services
         };
         options.Events = new JwtBearerEvents
         {
+            OnTokenValidated = async ctx =>
+            {
+                // Re-check account and tenant status against the database for every
+                // authenticated request so disabled users/businesses cannot continue
+                // using an already-issued access token until it expires.
+                var subject = ctx.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                var businessClaim = ctx.Principal?.FindFirst("business_id")?.Value;
+
+                if (!Guid.TryParse(subject, out var userId)
+                    || !Guid.TryParse(businessClaim, out var businessId))
+                {
+                    ctx.Fail("The access token is missing required identity claims.");
+                    return;
+                }
+
+                try
+                {
+                    var db = ctx.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                    var active = await db.Users
+                        .IgnoreQueryFilters()
+                        .AsNoTracking()
+                        .AnyAsync(user =>
+                            user.Id == userId
+                            && user.BusinessId == businessId
+                            && user.IsActive
+                            && user.Business.IsActive,
+                            ctx.HttpContext.RequestAborted);
+
+                    if (!active)
+                        ctx.Fail("The user account or business is inactive.");
+                }
+                catch
+                {
+                    // Fail closed if account status cannot be verified.
+                    ctx.Fail("Account status could not be verified.");
+                }
+            },
             OnChallenge = async ctx =>
             {
                 ctx.HandleResponse();
@@ -158,6 +207,16 @@ var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>
     ?? (builder.Environment.IsDevelopment() ? new[] { "http://localhost:5000", "https://localhost:5001" } : Array.Empty<string>());
 if (corsOrigins.Length == 0)
     throw new InvalidOperationException("Configure Cors:Origins with the exact deployed frontend origin.");
+
+if (!builder.Environment.IsDevelopment()
+    && corsOrigins.Any(origin =>
+        !Uri.TryCreate(origin, UriKind.Absolute, out var parsed)
+        || parsed.Scheme != Uri.UriSchemeHttps
+        || parsed.IsLoopback))
+{
+    throw new InvalidOperationException(
+        "Production Cors:Origins must contain only absolute HTTPS origins and must not include localhost.");
+}
 builder.Services.AddCors(o => o.AddPolicy("frontend", policy =>
 {
     policy.WithOrigins(corsOrigins)
@@ -194,8 +253,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Expose the built-in OpenAPI document in all environments for deployment verification.
-app.MapOpenApi();
+// Keep the OpenAPI document available for local development only.
+if (app.Environment.IsDevelopment())
+    app.MapOpenApi();
 
 app.UseForwardedHeaders();
 app.UseRateLimiter();
@@ -204,6 +264,19 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "ShopPulse API" }));
+app.MapGet("/ready", async (AppDbContext db, CancellationToken ct) =>
+{
+    try
+    {
+        return await db.Database.CanConnectAsync(ct)
+            ? Results.Ok(new { status = "ready", database = "reachable" })
+            : Results.Json(new { status = "not_ready", database = "unreachable" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch
+    {
+        return Results.Json(new { status = "not_ready", database = "unreachable" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
 
 app.Run();
 

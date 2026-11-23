@@ -38,6 +38,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<StockBatch>().HasQueryFilter(b => b.BusinessId == CurrentBusinessId);
         modelBuilder.Entity<StockMovement>().HasQueryFilter(m => m.BusinessId == CurrentBusinessId);
         modelBuilder.Entity<Sale>().HasQueryFilter(s => s.BusinessId == CurrentBusinessId);
+        // SaleItem has no independent tenant key; scope it through its required Sale parent.
+        modelBuilder.Entity<SaleItem>().HasQueryFilter(item => item.Sale.BusinessId == CurrentBusinessId);
         modelBuilder.Entity<WasteRecord>().HasQueryFilter(w => w.BusinessId == CurrentBusinessId);
         modelBuilder.Entity<CashShift>().HasQueryFilter(c => c.BusinessId == CurrentBusinessId);
         modelBuilder.Entity<CashMovement>().HasQueryFilter(c => c.BusinessId == CurrentBusinessId);

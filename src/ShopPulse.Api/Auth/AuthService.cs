@@ -125,19 +125,40 @@ public class AuthService
             .Include(u => u.Business)
             .FirstOrDefaultAsync(u => u.Id == token.UserId, ct);
 
-        if (user is null || !user.IsActive)
+        if (user is null || !user.IsActive || !user.Business.IsActive)
             return (false, "AUTH_ACCOUNT_DISABLED", null);
 
-        // Rotate
+        // Claim the one-time token atomically. A read-then-save update is unsafe:
+        // two concurrent requests can both read the active token and both rotate it.
+        var now = DateTimeOffset.UtcNow;
         var (newRaw, next) = CreateRefreshToken(
-            user.Id, token.FamilyId, DateTimeOffset.UtcNow,
-            token.FamilyAbsoluteExpiryUtc ?? DateTimeOffset.UtcNow.AddDays(_rtOpt.AbsoluteDays));
+            user.Id, token.FamilyId, now,
+            token.FamilyAbsoluteExpiryUtc ?? now.AddDays(_rtOpt.AbsoluteDays));
 
-        token.RevokedAtUtc = DateTimeOffset.UtcNow;
-        token.RevokedReason = "ROTATED";
-        token.ReplacedByTokenId = next.Id;
+        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
+        var claimed = await _db.RefreshTokens
+            .IgnoreQueryFilters()
+            .Where(t => t.Id == token.Id
+                && t.RevokedAtUtc == null
+                && t.ExpiresAtUtc > now)
+            .ExecuteUpdateAsync(update => update
+                .SetProperty(t => t.RevokedAtUtc, now)
+                .SetProperty(t => t.RevokedReason, "ROTATED")
+                .SetProperty(t => t.ReplacedByTokenId, next.Id), ct);
+
+        if (claimed != 1)
+        {
+            await transaction.RollbackAsync(ct);
+
+            // A token that lost the atomic claim is a replay. Preserve strict
+            // reuse detection by revoking every still-active token in its family.
+            await RevokeFamilyAsync(token.FamilyId, "REUSE_DETECTED", ct);
+            return (false, "AUTH_REFRESH_REUSED", null);
+        }
+
         _db.RefreshTokens.Add(next);
         await _db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
 
         var access = IssueAccessToken(user);
         return (true, null, new RefreshResponse

@@ -12,6 +12,22 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: shoppulse_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d shoppulse_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      SHOPPULSE_TEST_POSTGRES_CONNECTION: Host=localhost;Port=5432;Database=shoppulse_test;Username=postgres;Password=postgres;Pooling=false
     steps:
       - uses: actions/checkout@v4
       - name: Install .NET 10 SDK
@@ -28,5 +44,7 @@ jobs:
         run: dotnet publish src/ShopPulse.Api/ShopPulse.Api.csproj --configuration Release --no-restore --output artifacts/api
       - name: Publish Blazor client
         run: dotnet publish src/ShopPulse.Client/ShopPulse.Client.csproj --configuration Release --no-restore --output artifacts/client
+      - name: Build API container
+        run: docker build --tag shoppulse-api:ci src/ShopPulse.Api
       - name: Build frontend container
         run: docker build --tag shoppulse-client:ci src/ShopPulse.Client
