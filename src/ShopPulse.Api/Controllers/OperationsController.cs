@@ -422,6 +422,9 @@ public sealed class OperationsController : ControllerBase
             .Where(x => x.Id == request.ShiftId && x.Status == "Open")
             .FirstOrDefaultAsync(ct);
         if (shift is null) return NotFound(new { code = "NO_OPEN_SHIFT", message = "That cash shift is no longer open. Refresh and try again." });
+        if (!string.Equals(_current.Role, "Owner", StringComparison.OrdinalIgnoreCase)
+            && shift.OperatorUserId != _current.UserId)
+            return Forbid();
 
         var cashSales = await _db.Sales.Where(x => x.OperatorUserId == shift.OperatorUserId
                 && x.PaymentMethod == "Cash" && x.Status == "Completed" && x.CreatedAtUtc >= shift.OpenedAtUtc)
