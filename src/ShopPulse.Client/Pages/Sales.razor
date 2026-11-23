@@ -165,6 +165,7 @@
                 var problem = await response.Content.ReadFromJsonAsync<JsonDocument>();
                 var code = problem?.RootElement.TryGetProperty("code", out var codeValue) == true ? codeValue.GetString() : null;
                 _cashShiftRequired = code == "CASH_SHIFT_REQUIRED";
+                if (_cashShiftRequired) await LoadCashShift();
                 _error = problem?.RootElement.TryGetProperty("message", out var m) == true ? m.GetString() : "Stock changed while you were checking out. Review the basket.";
                 if (code == "PRICE_CHANGED")
                 {
