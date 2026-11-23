@@ -382,7 +382,19 @@ public sealed class OperationsController : ControllerBase
         var card = await sales.Where(x => x.PaymentMethod == "Card").SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
         var waste = await _db.WasteRecords.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end)
             .SumAsync(x => (decimal?)x.EstimatedCostValue, ct) ?? 0m;
-        return Ok(new { date = selected, salesCount = count, salesTotal = total, cashTotal = cash, cardTotal = card, wasteCost = waste, currency = "ZAR" });
+        var inventory = await _db.Products.AsNoTracking().Where(x => x.IsActive)
+            .Select(x => new { x.MinimumStockLevel, Available = x.Batches.Sum(batch => batch.RemainingQuantity) })
+            .ToListAsync(ct);
+        var staffActions = await _db.AuditEvents.CountAsync(x =>
+            x.CreatedAtUtc >= start && x.CreatedAtUtc < end && x.ActorUserId != null, ct);
+        return Ok(new
+        {
+            date = selected, salesCount = count, salesTotal = total, cashTotal = cash,
+            cardTotal = card, wasteCost = waste, activeProducts = inventory.Count,
+            inventoryUnits = inventory.Sum(x => x.Available),
+            lowStockProducts = inventory.Count(x => x.Available <= x.MinimumStockLevel),
+            staffActions, currency = "ZAR"
+        });
     }
 
     private void AddAudit(string action, string entityType, Guid entityId, object details)
