@@ -588,8 +588,14 @@ public sealed class OperationsController : ControllerBase
         var card = cardGross - cardRefundTotal;
         var waste = await _db.WasteRecords.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end)
             .SumAsync(x => (decimal?)x.EstimatedCostValue, ct) ?? 0m;
+        var shopToday = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
         var inventory = await _db.Products.AsNoTracking().Where(x => x.IsActive)
-            .Select(x => new { x.MinimumStockLevel, Available = x.Batches.Sum(batch => batch.RemainingQuantity) })
+            .Select(x => new
+            {
+                x.MinimumStockLevel,
+                Available = x.Batches.Where(batch => batch.ExpiryDate == null || batch.ExpiryDate >= shopToday)
+                    .Sum(batch => batch.RemainingQuantity)
+            })
             .ToListAsync(ct);
         var staffActions = await _db.AuditEvents.CountAsync(x =>
             x.CreatedAtUtc >= start && x.CreatedAtUtc < end && x.ActorUserId != null, ct);
@@ -606,7 +612,7 @@ public sealed class OperationsController : ControllerBase
         {
             date = selected, salesCount = count, grossSalesTotal = grossSales, salesTotal = total,
             refundTotal, cashRefundTotal, cardRefundTotal,
-            averageTransactionValue = count == 0 ? 0m : decimal.Round(total / count, 2),
+            averageTransactionValue = count == 0 ? 0m : decimal.Round(grossSales / count, 2),
             cashTotal = cash, cardTotal = card, wasteCost = waste, activeProducts = inventory.Count,
             inventoryUnits = inventory.Sum(x => x.Available),
             lowStockProducts = inventory.Count(x => x.Available <= x.MinimumStockLevel),
