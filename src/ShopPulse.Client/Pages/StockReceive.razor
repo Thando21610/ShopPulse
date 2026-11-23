@@ -1,0 +1,63 @@
+@page "/stock/receive"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Receive stock | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Inventory</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">INVENTORY · INBOUND</p><h1>Receive stock</h1><p class="muted">Record a delivery and create a traceable stock batch.</p></section>
+    @if (_forbidden) { <div class="inline-alert" role="alert">Only a store owner can receive stock. Ask the owner to complete this action.</div> }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        <section class="panel form-panel">
+            <EditForm Model="_form" OnValidSubmit="Submit">
+                <DataAnnotationsValidator />
+                <div class="form-grid">
+                    <div class="field-group full"><label for="product">Product</label><InputSelect id="product" class="form-control" @bind-Value="_form.ProductId"><option value="">Choose a product</option>@foreach(var p in _products){<option value="@p.Id">@p.Name (@p.Sku)</option>}</InputSelect></div>
+                    <div class="field-group"><label for="quantity">Quantity received</label><InputNumber id="quantity" class="form-control" @bind-Value="_form.Quantity" min="1" /></div>
+                    <div class="field-group"><label for="cost">Unit cost (ZAR)</label><InputNumber id="cost" class="form-control" @bind-Value="_form.UnitCost" min="0" step="0.01" /></div>
+                    <div class="field-group"><label for="expiry">Expiry date (optional)</label><InputDate id="expiry" class="form-control" @bind-Value="_form.ExpiryDate" /></div>
+                    <div class="field-group"><label for="supplier">Supplier (optional)</label><InputText id="supplier" class="form-control" @bind-Value="_form.Supplier" maxlength="160" /></div>
+                    <div class="field-group full"><label for="batch">Batch reference (optional)</label><InputText id="batch" class="form-control" @bind-Value="_form.BatchReference" maxlength="80" /></div>
+                </div>
+                <p class="muted small-note">Server validation is authoritative. Stock is added only after the receipt is saved.</p>
+                <button class="button button-primary" type="submit" disabled="@_busy">@(_busy ? "Saving receipt…" : "Receive stock")</button>
+            </EditForm>
+        </section>
+    }
+    @if (_success) { <div class="toast-inline" role="status">Stock received successfully.</div> }
+</main>
+
+@code {
+    private List<ProductOption> _products = [];
+    private ReceiveForm _form = new();
+    private bool _busy, _forbidden, _success;
+    private string? _error;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
+        if (Session.User?.Role != "Owner") { _forbidden = true; return; }
+        try { _products = await Http.GetFromJsonAsync<List<ProductOption>>("api/products") ?? []; }
+        catch (HttpRequestException) { _error = "Could not load products. Try again."; }
+    }
+    private async Task Submit()
+    {
+        _busy = true; _error = null; _success = false;
+        try
+        {
+            var payload = new { productId = _form.ProductId, quantity = _form.Quantity, unitCost = _form.UnitCost, expiryDate = _form.ExpiryDate?.ToString("yyyy-MM-dd"), supplier = _form.Supplier, batchReference = _form.BatchReference };
+            using var response = await Http.PostAsJsonAsync("api/stock/receipts", payload);
+            if (response.IsSuccessStatusCode) { _form = new(); _success = true; return; }
+            var p = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
+            _error = p?.RootElement.TryGetProperty("detail", out var d) == true ? d.GetString() : "The stock receipt could not be saved.";
+        }
+        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        finally { _busy = false; }
+    }
+    private sealed class ReceiveForm { public Guid ProductId { get; set; } public int Quantity { get; set; } = 1; public decimal UnitCost { get; set; } public DateTime? ExpiryDate { get; set; } public string? Supplier { get; set; } public string? BatchReference { get; set; } }
+    private sealed class ProductOption { public Guid Id { get; set; } public string Name { get; set; } = ""; public string Sku { get; set; } = ""; }
+}
