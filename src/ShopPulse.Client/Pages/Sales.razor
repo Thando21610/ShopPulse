@@ -57,7 +57,7 @@
                 <div class="product-picker">
                     @foreach (var product in FilteredProducts)
                     {
-                        <button class="product-pick" @onclick="() => Add(product)" disabled="@(product.Available <= 0)">
+                        <button class="product-pick" @onclick="() => Add(product)" disabled="@(product.Available <= 0 || _checkoutOutcomeUnknown)">
                             <span class="product-initial" style="@InitialStyle(product.Category)">@Initial(product.Name)</span>
                             <span class="product-pick-copy"><strong>@product.Name</strong><small>@product.Sku</small></span>
                             <span class="product-pick-price">@Money(product.UnitPrice)</span>
@@ -75,7 +75,7 @@
                 {
                     @foreach (var line in _cart)
                     {
-                        <div class="cart-line"><div><strong>@line.Product.Name</strong><small>@Money(line.Product.UnitPrice) each</small></div><div class="quantity-control"><button aria-label="Decrease @line.Product.Name" @onclick="() => Change(line, -1)">−</button><strong>@line.Quantity</strong><button aria-label="Increase @line.Product.Name" @onclick="() => Change(line, 1)">+</button></div><strong>@Money(line.Product.UnitPrice * line.Quantity)</strong></div>
+                        <div class="cart-line"><div><strong>@line.Product.Name</strong><small>@Money(line.Product.UnitPrice) each</small></div><div class="quantity-control"><button aria-label="Decrease @line.Product.Name" disabled="@_checkoutOutcomeUnknown" @onclick="() => Change(line, -1)">−</button><strong>@line.Quantity</strong><button aria-label="Increase @line.Product.Name" disabled="@_checkoutOutcomeUnknown" @onclick="() => Change(line, 1)">+</button></div><strong>@Money(line.Product.UnitPrice * line.Quantity)</strong></div>
                     }
                 }
                 <div class="cart-total" aria-live="polite" aria-atomic="true"><span>Total due</span><strong>@Money(Total)</strong></div>
@@ -90,7 +90,7 @@
             <section class="payment-modal" @ref="_paymentDialog" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title" aria-describedby="payment-modal-help" @onkeydown="HandlePaymentModalKeyDown" @onkeydown:stopPropagation="true">
                 <div class="panel-heading">
                     <div><p class="eyebrow">CHECKOUT · PAYMENT</p><h2 id="payment-modal-title">Take payment</h2></div>
-                    <button class="button button-quiet" type="button" @onclick="ClosePaymentModal" disabled="@_busy">Close</button>
+                    <button class="button button-quiet" type="button" @onclick="ClosePaymentModal" disabled="@(_busy || _checkoutOutcomeUnknown)">Close</button>
                 </div>
                 <div class="summary-line"><span>Total due</span><strong>@Money(Total)</strong></div>
                 <p id="payment-modal-help" class="muted small-note">Choose how the customer is paying. Cash payments require your open cash shift. Card payments must first be approved on your external terminal.</p>
@@ -171,7 +171,7 @@
     private async Task LoadCashShift()
     {
         _checkingCashShift = true;
-        try { _cashShift = await Http.GetFromJsonAsync<CashShiftInfo>("api/cash-shifts/current"); _cashShiftLoadFailed = false; if (_cashShift is not null) _cashShiftRequired = false; }
+        try { _cashShift = await Http.GetFromJsonAsync<CashShiftInfo>("api/cash-shifts/current"); _cashShiftLoadFailed = false; if (_cashShift is not null) _cashShiftRequired = false; if (_error == "Could not verify your cash shift. Refresh the status before accepting cash.") _error = null; }
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _cashShift = null; _cashShiftLoadFailed = true; _error = "Could not verify your cash shift. Refresh the status before accepting cash."; }
         finally { _checkingCashShift = false; }
     }
@@ -193,6 +193,7 @@
             }
             _products = refreshed;
             _catalogueLoadFailed = false;
+            if (_error == "The catalogue could not be reached. Try again.") _error = null;
             if (changed) _basketNotice = "Product prices or available quantities changed. Review the updated basket before payment.";
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _products = []; _catalogueLoadFailed = true; _error = "The catalogue could not be reached. Try again."; }
