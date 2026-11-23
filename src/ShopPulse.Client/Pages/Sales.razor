@@ -161,6 +161,7 @@
                     }
                     ResetIdempotencyKey();
                 }
+                Toast.ShowError(_error ?? "The checkout could not be completed.");
                 return;
             }
             if (response.StatusCode == HttpStatusCode.BadRequest)
