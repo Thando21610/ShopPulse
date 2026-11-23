@@ -41,6 +41,18 @@ public sealed partial class AddDelegatedPermissionsAndCashMovements : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_CashMovements", x => x.Id);
+                table.ForeignKey(
+                    name: "FK_CashMovements_Businesses_BusinessId",
+                    column: x => x.BusinessId,
+                    principalTable: "Businesses",
+                    principalColumn: "Id",
+                    onDelete: ReferentialAction.Cascade);
+                table.ForeignKey(
+                    name: "FK_CashMovements_CashShifts_CashShiftId",
+                    column: x => x.CashShiftId,
+                    principalTable: "CashShifts",
+                    principalColumn: "Id",
+                    onDelete: ReferentialAction.Restrict);
             });
 
         migrationBuilder.CreateIndex(
