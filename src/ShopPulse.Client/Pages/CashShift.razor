@@ -69,6 +69,23 @@
             <div class="summary-line"><span>Opening float</span><strong>@Money(_shift.OpeningFloat)</strong></div>
             <div class="summary-line"><span>Opened</span><strong>@_shift.OpenedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</strong></div>
             <hr />
+            <h3>Cash in / cash out</h3>
+            <div class="form-grid">
+                <div class="field-group"><label for="movement-direction">Movement</label><select id="movement-direction" class="form-control" @bind="_movement.Direction"><option value="In">Cash in</option><option value="Out">Cash out</option></select></div>
+                <div class="field-group"><label for="movement-amount">Amount (ZAR)</label><input id="movement-amount" class="form-control" type="number" min="0.01" step="0.01" @bind="_movement.Amount" /></div>
+                <div class="field-group full"><label for="movement-reason">Reason</label><input id="movement-reason" class="form-control" maxlength="500" @bind="_movement.Reason" /></div>
+            </div>
+            <button class="button button-quiet" @onclick="RecordMovement" disabled="@_busy">Record cash @_movement.Direction.ToLowerInvariant()</button>
+            <h3>Cash movement history</h3>
+            @if (_movements.Count == 0) { <p class="muted small-note">No cash-in or cash-out movements recorded.</p> }
+            else
+            {
+                @foreach (var movement in _movements)
+                {
+                    <div class="summary-line"><span>@movement.CreatedAtUtc.ToLocalTime().ToString("dd MMM HH:mm") · @movement.Direction · @movement.Reason</span><strong>@(movement.Direction == "In" ? "+" : "−")@Money(movement.Amount)</strong></div>
+                }
+            }
+            <hr />
             <h3>Close and reconcile</h3>
             <label for="actual">Actual cash counted (ZAR)</label>
             <input id="actual" class="form-control" type="number" min="0" step="0.01" @bind="_actualCash" />
