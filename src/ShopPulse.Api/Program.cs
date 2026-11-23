@@ -253,8 +253,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Expose the built-in OpenAPI document in all environments for deployment verification.
-app.MapOpenApi();
+// Keep the OpenAPI document available for local development only.
+if (app.Environment.IsDevelopment())
+    app.MapOpenApi();
 
 app.UseForwardedHeaders();
 app.UseRateLimiter();
