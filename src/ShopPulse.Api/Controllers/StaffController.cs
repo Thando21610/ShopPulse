@@ -68,9 +68,21 @@ public sealed class StaffController : ControllerBase
             return BadRequest(new { code = "OWNER_PROTECTED", message = "Owner accounts cannot be changed from staff management." });
 
         var before = new { user.DisplayName, user.IsActive, user.CanAdjustStock };
+        var wasActive = user.IsActive;
         user.DisplayName = request.DisplayName.Trim();
         user.IsActive = request.IsActive;
         user.CanAdjustStock = request.CanAdjustStock;
+        if (wasActive && !user.IsActive)
+        {
+            var activeTokens = await _db.RefreshTokens
+                .Where(token => token.UserId == user.Id && token.RevokedAtUtc == null)
+                .ToListAsync(ct);
+            foreach (var token in activeTokens)
+            {
+                token.RevokedAtUtc = DateTimeOffset.UtcNow;
+                token.RevokedReason = "ADMIN";
+            }
+        }
         AddAudit("StaffUpdated", user.Id, new { Before = before, user.DisplayName, user.IsActive, user.CanAdjustStock });
         await _db.SaveChangesAsync(ct);
         return Ok(ToDto(user));
