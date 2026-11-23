@@ -46,7 +46,7 @@ The API is the security boundary. Hiding navigation controls is only a usability
 1. Staff enters email and password on the sign-in screen.
 2. Client sends POST /api/auth/login; API returns a short-lived access token and sets an HttpOnly refresh cookie.
 3. Client keeps the access token in memory and loads GET /api/auth/me.
-4. On browser reload, the home page and protected pages call POST /api/auth/refresh and restore the user profile.
+4. On browser reload, App.razor calls POST /api/auth/refresh before the router renders, then restores the user profile through GET /api/auth/me.
 5. AuthMessageHandler serializes refresh attempts. When another request has already refreshed the token, the waiting request retries with that token instead of sending another refresh.
 6. If refresh fails, the token store is cleared and the user is returned to the sign-in route.
 
@@ -63,7 +63,7 @@ The browser includes credentials on API calls. The deployed frontend origin must
 
 ### Inventory view
 
-- GET /api/products returns active products and total available quantities.
+- GET /api/products returns active products and sellable quantities; expired batches are excluded from checkout availability.
 - GET /api/stock/batches returns remaining batches with supplier, cost and expiry.
 - GET /api/stock/movements returns the latest stock ledger events.
 - Low-stock status compares current available quantity with the configured minimum-stock threshold.
@@ -73,7 +73,7 @@ The browser includes credentials on API calls. The deployed frontend origin must
 1. Staff opens New sale and searches by product name or SKU.
 2. Staff adds products and adjusts quantities in the basket.
 3. The client previews subtotal, cash tendered and change.
-4. Cash sales require an open cash shift; the page checks shift status before enabling checkout.
+4. Cash sales require the operator's own open cash shift; the page checks shift status before enabling checkout.
 5. For card, the operator confirms that a separate external terminal approved the payment. ShopPulse records the method but does not process card details or integrate with a bank terminal.
 6. Client sends POST /api/sales with an Idempotency-Key.
 7. API validates products/payment, allocates stock FEFO, records sale lines, stock movements, audit event and idempotency response in a database transaction.
@@ -85,7 +85,7 @@ A stock conflict returns HTTP 409 and keeps the basket available for review. The
 
 1. Owner or operator with CanReceiveStock opens Receive stock.
 2. Client loads active products with GET /api/products.
-3. Owner enters product, quantity, unit cost (ZAR), optional expiry date, supplier and batch reference.
+3. Owner or operator with CanReceiveStock enters product, quantity, unit cost (ZAR), expiry date where required, supplier and batch reference.
 4. Client-side field validation runs first; API validates again using the South African calendar date.
 5. Client sends POST /api/stock/receipts.
 6. API creates the stock batch, positive stock movement and audit event in a transaction.
