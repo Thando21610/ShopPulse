@@ -98,6 +98,43 @@ builder.Services
         };
         options.Events = new JwtBearerEvents
         {
+            OnTokenValidated = async ctx =>
+            {
+                // Re-check account and tenant status against the database for every
+                // authenticated request so disabled users/businesses cannot continue
+                // using an already-issued access token until it expires.
+                var subject = ctx.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                var businessClaim = ctx.Principal?.FindFirst("business_id")?.Value;
+
+                if (!Guid.TryParse(subject, out var userId)
+                    || !Guid.TryParse(businessClaim, out var businessId))
+                {
+                    ctx.Fail("The access token is missing required identity claims.");
+                    return;
+                }
+
+                try
+                {
+                    var db = ctx.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                    var active = await db.Users
+                        .IgnoreQueryFilters()
+                        .AsNoTracking()
+                        .AnyAsync(user =>
+                            user.Id == userId
+                            && user.BusinessId == businessId
+                            && user.IsActive
+                            && user.Business.IsActive,
+                            ctx.HttpContext.RequestAborted);
+
+                    if (!active)
+                        ctx.Fail("The user account or business is inactive.");
+                }
+                catch
+                {
+                    // Fail closed if account status cannot be verified.
+                    ctx.Fail("Account status could not be verified.");
+                }
+            },
             OnChallenge = async ctx =>
             {
                 ctx.HandleResponse();
