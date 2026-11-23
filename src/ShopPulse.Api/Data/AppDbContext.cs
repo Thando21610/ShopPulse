@@ -133,6 +133,9 @@ public class AppDbContext : DbContext
             e.Property(x => x.ActualCash).HasPrecision(18, 2);
             e.Property(x => x.ExpectedCash).HasPrecision(18, 2);
             e.Property(x => x.Variance).HasPrecision(18, 2);
+            e.Property(x => x.Version).IsConcurrencyToken();
+            e.HasIndex(x => new { x.BusinessId, x.OperatorUserId }).IsUnique()
+                .HasFilter("\"Status\" = 'Open'");
         });
 
         modelBuilder.Entity<CashMovement>(e =>
