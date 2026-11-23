@@ -690,7 +690,6 @@ public sealed class OperationsController : ControllerBase
         var card = cardGross - cardRefundTotal;
         var waste = await _db.WasteRecords.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end)
             .SumAsync(x => (decimal?)x.EstimatedCostValue, ct) ?? 0m;
-        var shopToday = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
         var inventory = await _db.Products.AsNoTracking().Where(x => x.IsActive)
             .Select(x => new
             {
