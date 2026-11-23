@@ -12,8 +12,8 @@ using ShopPulse.Api.Data;
 namespace ShopPulse.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261123084856_FixPendingModelChanges")]
-    partial class FixPendingModelChanges
+    [Migration("20261123102908_InitialPostgres")]
+    partial class InitialPostgres
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

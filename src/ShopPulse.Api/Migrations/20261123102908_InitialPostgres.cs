@@ -15,14 +15,14 @@ namespace ShopPulse.Api.Migrations
                 name: "AuditEvents",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ActorUserId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    Action = table.Column<string>(type: "TEXT", nullable: false),
-                    EntityType = table.Column<string>(type: "TEXT", nullable: false),
-                    EntityId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    DetailsJson = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ActorUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Action = table.Column<string>(type: "text", nullable: false),
+                    EntityType = table.Column<string>(type: "text", nullable: false),
+                    EntityId = table.Column<Guid>(type: "uuid", nullable: true),
+                    DetailsJson = table.Column<string>(type: "text", nullable: true),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -33,11 +33,11 @@ namespace ShopPulse.Api.Migrations
                 name: "Businesses",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Address = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -48,17 +48,17 @@ namespace ShopPulse.Api.Migrations
                 name: "CashShifts",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    OperatorUserId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OperatorUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     OpeningFloat = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     ActualCash = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
                     ExpectedCash = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
                     Variance = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
-                    VarianceReason = table.Column<string>(type: "TEXT", nullable: true),
-                    OpenedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    ClosedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
-                    Status = table.Column<string>(type: "TEXT", nullable: false)
+                    VarianceReason = table.Column<string>(type: "text", nullable: true),
+                    OpenedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ClosedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Status = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -69,14 +69,14 @@ namespace ShopPulse.Api.Migrations
                 name: "IdempotencyRecords",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Key = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
-                    RequestHash = table.Column<string>(type: "TEXT", nullable: false),
-                    StatusCode = table.Column<int>(type: "INTEGER", nullable: false),
-                    ResponseJson = table.Column<string>(type: "TEXT", nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    ExpiresAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Key = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    RequestHash = table.Column<string>(type: "text", nullable: false),
+                    StatusCode = table.Column<int>(type: "integer", nullable: false),
+                    ResponseJson = table.Column<string>(type: "text", nullable: false),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -87,18 +87,18 @@ namespace ShopPulse.Api.Migrations
                 name: "RefreshTokens",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    UserId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    FamilyId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    TokenHash = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    ExpiresAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    FamilyAbsoluteExpiryUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
-                    RevokedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
-                    RevokedReason = table.Column<string>(type: "TEXT", nullable: true),
-                    ReplacedByTokenId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    CreatedByIp = table.Column<string>(type: "TEXT", nullable: true),
-                    UserAgent = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FamilyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TokenHash = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    FamilyAbsoluteExpiryUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    RevokedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    RevokedReason = table.Column<string>(type: "text", nullable: true),
+                    ReplacedByTokenId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedByIp = table.Column<string>(type: "text", nullable: true),
+                    UserAgent = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -109,19 +109,19 @@ namespace ShopPulse.Api.Migrations
                 name: "Sales",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ReceiptNumber = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false),
-                    OperatorUserId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReceiptNumber = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    OperatorUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Subtotal = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Discount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     GrandTotal = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    PaymentMethod = table.Column<string>(type: "TEXT", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "text", nullable: false),
                     AmountTendered = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     ChangeAmount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    Status = table.Column<string>(type: "TEXT", nullable: false),
-                    IdempotencyKey = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    IdempotencyKey = table.Column<string>(type: "text", nullable: true),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -132,16 +132,16 @@ namespace ShopPulse.Api.Migrations
                 name: "StockMovements",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ProductId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    StockBatchId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    MovementType = table.Column<string>(type: "TEXT", nullable: false),
-                    QuantityChange = table.Column<int>(type: "INTEGER", nullable: false),
-                    ReferenceId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    Reason = table.Column<string>(type: "TEXT", nullable: true),
-                    ActorUserId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StockBatchId = table.Column<Guid>(type: "uuid", nullable: true),
+                    MovementType = table.Column<string>(type: "text", nullable: false),
+                    QuantityChange = table.Column<int>(type: "integer", nullable: false),
+                    ReferenceId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Reason = table.Column<string>(type: "text", nullable: true),
+                    ActorUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -152,16 +152,16 @@ namespace ShopPulse.Api.Migrations
                 name: "WasteRecords",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ProductId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    StockBatchId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    Reason = table.Column<string>(type: "TEXT", nullable: false),
-                    Notes = table.Column<string>(type: "TEXT", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StockBatchId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    Reason = table.Column<string>(type: "text", nullable: false),
+                    Notes = table.Column<string>(type: "text", nullable: true),
                     EstimatedCostValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    ActorUserId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    ActorUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -172,16 +172,16 @@ namespace ShopPulse.Api.Migrations
                 name: "Products",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Sku = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Category = table.Column<string>(type: "TEXT", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Sku = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Category = table.Column<string>(type: "text", nullable: true),
                     UnitPrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    MinimumStockLevel = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    HasExpiry = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    MinimumStockLevel = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    HasExpiry = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -198,17 +198,17 @@ namespace ShopPulse.Api.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
-                    PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
-                    DisplayName = table.Column<string>(type: "TEXT", nullable: false),
-                    Role = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CanAdjustStock = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    FailedLoginCount = table.Column<int>(type: "INTEGER", nullable: false),
-                    LockoutEndUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: false),
+                    DisplayName = table.Column<string>(type: "text", nullable: false),
+                    Role = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CanAdjustStock = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    FailedLoginCount = table.Column<int>(type: "integer", nullable: false),
+                    LockoutEndUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -225,15 +225,15 @@ namespace ShopPulse.Api.Migrations
                 name: "SaleItems",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    SaleId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ProductId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ProductNameSnapshot = table.Column<string>(type: "TEXT", nullable: false),
-                    SkuSnapshot = table.Column<string>(type: "TEXT", nullable: false),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SaleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductNameSnapshot = table.Column<string>(type: "text", nullable: false),
+                    SkuSnapshot = table.Column<string>(type: "text", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
                     UnitPriceSnapshot = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     LineTotal = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    StockBatchId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    StockBatchId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -250,17 +250,17 @@ namespace ShopPulse.Api.Migrations
                 name: "StockBatches",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ProductId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BatchReference = table.Column<string>(type: "TEXT", nullable: true),
-                    Supplier = table.Column<string>(type: "TEXT", nullable: true),
-                    ReceivedQuantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    RemainingQuantity = table.Column<int>(type: "INTEGER", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    BatchReference = table.Column<string>(type: "text", nullable: true),
+                    Supplier = table.Column<string>(type: "text", nullable: true),
+                    ReceivedQuantity = table.Column<int>(type: "integer", nullable: false),
+                    RemainingQuantity = table.Column<int>(type: "integer", nullable: false),
                     UnitCost = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    ExpiryDate = table.Column<DateOnly>(type: "TEXT", nullable: true),
-                    ReceivedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    Version = table.Column<int>(type: "INTEGER", nullable: false)
+                    ExpiryDate = table.Column<DateOnly>(type: "date", nullable: true),
+                    ReceivedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
