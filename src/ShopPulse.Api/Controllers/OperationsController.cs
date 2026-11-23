@@ -206,6 +206,20 @@ public sealed class OperationsController : ControllerBase
         return Created($"/api/stock/batches/{batch.Id}", new { batch.Id, productId = product.Id, productName = product.Name, batch.ReceivedQuantity, batch.RemainingQuantity, batch.UnitCost, batch.ExpiryDate, batch.BatchReference });
     }
 
+    [HttpGet("stock/batches")]
+    public async Task<IActionResult> StockBatches([FromQuery] Guid? productId, CancellationToken ct)
+    {
+        var query = _db.StockBatches.AsNoTracking().Where(x => x.RemainingQuantity > 0);
+        if (productId.HasValue) query = query.Where(x => x.ProductId == productId.Value);
+        var batches = await query.OrderBy(x => x.Product.Name).ThenBy(x => x.ExpiryDate ?? DateOnly.MaxValue)
+            .Select(x => new
+            {
+                x.Id, x.ProductId, ProductName = x.Product.Name, x.Product.Sku,
+                x.BatchReference, x.RemainingQuantity, x.UnitCost, x.ExpiryDate
+            }).ToListAsync(ct);
+        return Ok(batches);
+    }
+
     [HttpGet("stock/expiry")]
     public async Task<IActionResult> Expiry([FromQuery] int days = 7, CancellationToken ct = default)
     {
