@@ -42,11 +42,19 @@ The Docker image intentionally does not force SQLite. The API's checked-in appse
 |---|---|
 | ASPNETCORE_ENVIRONMENT | Production |
 | UseSqlite | false |
-| ConnectionStrings__Default | New Neon pooled connection string, rotated after exposure |
+| ConnectionStrings__Default | Npgsql key/value connection string using the new Neon pooled host and rotated password |
 | Jwt__SigningKey | New random secret, at least 32 UTF-8 bytes |
 | Cors__Origins__0 | Exact deployed Blazor client origin, including https:// |
 
 Do not set Cors__Origins__0 to *. If the frontend has more than one trusted origin, add indexed entries such as Cors__Origins__1.
+
+### Format the Neon connection for Npgsql
+
+The Neon dashboard may copy a URI beginning with postgresql://. The API uses Npgsql's .NET connection-string format, so do not assume the URI can be pasted unchanged. Use the same pooled hostname, database and role shown in Neon, with the newly reset password:
+
+    Host=YOUR_NEON_POOLER_HOST;Database=neondb;Username=neondb_owner;Password=YOUR_NEW_PASSWORD;SSL Mode=Require;Channel Binding=Require
+
+Replace the placeholders locally in Railway Variables. Do not put the real password in this documentation or in GitHub. If Neon offers an ADO.NET/Npgsql connection format, prefer that provider-specific format.
 
 7. In **Settings → Networking**, generate a Railway domain.
 8. In **Settings → Deploy**, set the healthcheck path to /health.
