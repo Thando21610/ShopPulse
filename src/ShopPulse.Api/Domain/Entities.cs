@@ -29,6 +29,7 @@ public class AppUser
     public string Role { get; set; } = "Operator"; // Owner | Operator
     public bool IsActive { get; set; } = true;
     public bool CanAdjustStock { get; set; }
+    public bool CanRefundSales { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public int FailedLoginCount { get; set; }
     public DateTimeOffset? LockoutEndUtc { get; set; }
@@ -103,7 +104,14 @@ public class Sale
     public decimal AmountTendered { get; set; }
     [Column(TypeName = "numeric(18,2)")]
     public decimal ChangeAmount { get; set; }
-    public string Status { get; set; } = "Completed"; // Completed | Refunded | PartiallyRefunded
+    public string Status { get; set; } = "Completed"; // Completed | Refunded
+    [Column(TypeName = "numeric(18,2)")]
+    public decimal RefundAmount { get; set; }
+    public DateTimeOffset? RefundedAtUtc { get; set; }
+    public Guid? RefundedByUserId { get; set; }
+    public string? RefundReason { get; set; }
+    public string? RefundPaymentMethod { get; set; }
+    public bool RefundRestocked { get; set; }
     public string? IdempotencyKey { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 
