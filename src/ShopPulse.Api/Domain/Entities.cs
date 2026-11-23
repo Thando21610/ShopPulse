@@ -112,6 +112,7 @@ public class Sale
     public string? RefundReason { get; set; }
     public string? RefundPaymentMethod { get; set; }
     public bool RefundRestocked { get; set; }
+    public int Version { get; set; } = 1;
     public string? IdempotencyKey { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 
