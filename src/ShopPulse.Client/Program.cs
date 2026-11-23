@@ -30,5 +30,6 @@ builder.Services.AddScoped(sp =>
     return new HttpClient(handler) { BaseAddress = new Uri(apiBase) };
 });
 builder.Services.AddScoped<AuthSessionService>();
+builder.Services.AddScoped<ToastService>();
 
 await builder.Build().RunAsync();
