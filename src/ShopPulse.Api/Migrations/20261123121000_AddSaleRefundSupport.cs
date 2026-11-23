@@ -39,6 +39,10 @@ public sealed class AddSaleRefundSupport : Migration
         migrationBuilder.AddColumn<bool>(
             name: "RefundRestocked", table: "Sales", type: "boolean",
             nullable: false, defaultValue: false);
+
+        migrationBuilder.AddColumn<int>(
+            name: "Version", table: "Sales", type: "integer",
+            nullable: false, defaultValue: 1);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
@@ -50,5 +54,6 @@ public sealed class AddSaleRefundSupport : Migration
         migrationBuilder.DropColumn(name: "RefundReason", table: "Sales");
         migrationBuilder.DropColumn(name: "RefundPaymentMethod", table: "Sales");
         migrationBuilder.DropColumn(name: "RefundRestocked", table: "Sales");
+        migrationBuilder.DropColumn(name: "Version", table: "Sales");
     }
 }
