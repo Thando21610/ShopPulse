@@ -60,7 +60,7 @@
         try
         {
             using var response = await Http.PostAsJsonAsync("api/stock/waste", new { productId = batch.ProductId, stockBatchId = batch.Id, quantity = _form.Quantity, reason = _form.Reason, notes = _form.Notes });
-            if (response.IsSuccessStatusCode) { _success = true; _form = new(); _editContext = new EditContext(_form); Toast.ShowSuccess("Waste recorded and stock updated."); _batches = await Http.GetFromJsonAsync<List<BatchOption>>("api/stock/batches") ?? []; return; }
+            if (response.IsSuccessStatusCode) { _success = true; _form = new(); _editContext = new EditContext(_form); _editContext.OnFieldChanged += (_, _) => ApiErrorFormatter.ClearServerValidationErrors(_editContext); Toast.ShowSuccess("Waste recorded and stock updated."); _batches = await Http.GetFromJsonAsync<List<BatchOption>>("api/stock/batches") ?? []; return; }
             if (response.StatusCode == System.Net.HttpStatusCode.BadRequest
                 && await ApiErrorFormatter.ApplyValidationErrorsAsync(response, _editContext))
                 return;
