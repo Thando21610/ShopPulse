@@ -563,7 +563,7 @@ public sealed class OperationsController : ControllerBase
         var direction = request.Direction?.Trim();
         var reason = request.Reason?.Trim();
         if (request.ShiftId == Guid.Empty || direction is not ("In" or "Out")
-            || request.Amount <= 0 || request.Amount > 10000000m
+            || request.Amount < 0.01m || request.Amount > 10000000m
             || string.IsNullOrWhiteSpace(reason) || reason.Length > 500)
             return Failure(400, "VALIDATION_FAILED", "Select a shift, choose cash in or out, enter a positive amount and provide a reason.");
 
