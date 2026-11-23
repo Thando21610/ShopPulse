@@ -1,0 +1,24 @@
+@implements IDisposable
+@inject ShopPulse.Client.ToastService Toast
+
+@if (!string.IsNullOrWhiteSpace(Toast.Message))
+{
+    <div class="toast-host" role="@(Toast.Type == "error" ? "alert" : "status")" aria-live="@(Toast.Type == "error" ? "assertive" : "polite")">
+        <div class="toast-card @(Toast.Type == "error" ? "toast-error" : "toast-success")">
+            <span class="toast-symbol" aria-hidden="true">@(Toast.Type == "error" ? "!" : "✓")</span>
+            <div>
+                <strong>@(Toast.Type == "error" ? "Something needs attention" : "All done")</strong>
+                <p>@Toast.Message</p>
+            </div>
+            <button class="toast-close" type="button" aria-label="Dismiss notification" @onclick="Toast.Clear">×</button>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized() => Toast.OnChange += HandleChange;
+
+    private void HandleChange() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Toast.OnChange -= HandleChange;
+}
