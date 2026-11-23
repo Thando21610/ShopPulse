@@ -25,7 +25,7 @@ public sealed class OperationsController : ControllerBase
     }
 
     public sealed record SaleLineRequest(Guid ProductId, int Quantity);
-    public sealed record CompleteSaleRequest(IReadOnlyList<SaleLineRequest> Items, string PaymentMethod, decimal AmountTendered);
+    public sealed record CompleteSaleRequest(IReadOnlyList<SaleLineRequest> Items, string PaymentMethod, decimal AmountTendered, bool CardPaymentConfirmed = false);
     public sealed record SaleResult(Guid Id, string ReceiptNumber, decimal Subtotal, decimal Discount, decimal GrandTotal, string PaymentMethod, decimal AmountTendered, decimal ChangeAmount, DateTimeOffset CreatedAtUtc, IReadOnlyList<SaleLineResult> Items);
     public sealed record SaleLineResult(string ProductName, string Sku, int Quantity, decimal UnitPrice, decimal LineTotal);
     public sealed record ReceiveStockRequest(Guid ProductId, int Quantity, decimal UnitCost, DateOnly? ExpiryDate, string? Supplier, string? BatchReference);
@@ -50,12 +50,17 @@ public sealed class OperationsController : ControllerBase
         var method = request.PaymentMethod?.Trim();
         if (method is not ("Cash" or "Card"))
             return Failure(400, "VALIDATION_FAILED", "Payment method must be Cash or Card.");
+        if (method == "Card" && !request.CardPaymentConfirmed)
+            return Failure(400, "VALIDATION_FAILED", "Confirm that the payment was approved on the external card terminal.");
+        if (method == "Cash" && !await _db.CashShifts.AnyAsync(
+                x => x.OperatorUserId == _current.UserId && x.Status == "Open", ct))
+            return Conflict(new { code = "CASH_SHIFT_REQUIRED", message = "Open your cash shift before completing a cash sale." });
 
         var normalized = request.Items.GroupBy(x => x.ProductId)
             .Select(g => new SaleLineRequest(g.Key, g.Sum(x => x.Quantity)))
             .OrderBy(x => x.ProductId).ToArray();
         var requestHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-            JsonSerializer.Serialize(new { Items = normalized, PaymentMethod = method, request.AmountTendered }))));
+            JsonSerializer.Serialize(new { Items = normalized, PaymentMethod = method, request.AmountTendered, request.CardPaymentConfirmed }))));
 
         await using var transaction = await _db.Database.BeginTransactionAsync(ct);
         var previous = await _db.IdempotencyRecords.AsNoTracking()
