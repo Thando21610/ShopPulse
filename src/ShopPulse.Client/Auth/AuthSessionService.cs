@@ -21,6 +21,7 @@ public sealed class AuthSessionService
 
     public async Task<bool> RestoreAsync(CancellationToken ct = default)
     {
+        if (IsAuthenticated) return true;
         try
         {
             using var response = await _http.PostAsync("api/auth/refresh", null, ct);
