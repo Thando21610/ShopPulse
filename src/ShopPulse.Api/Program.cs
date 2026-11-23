@@ -142,6 +142,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardedForHeaderName = "X-Real-IP";
     options.ForwardLimit = 1;
     if (!builder.Environment.IsDevelopment())
     {
