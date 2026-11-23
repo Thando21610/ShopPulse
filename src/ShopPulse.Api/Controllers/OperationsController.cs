@@ -160,8 +160,16 @@ public sealed class OperationsController : ControllerBase
             CreatedAtUtc = DateTimeOffset.UtcNow, ExpiresAtUtc = DateTimeOffset.UtcNow.AddDays(2)
         });
         AddAudit("SaleCompleted", "Sale", sale.Id, new { sale.ReceiptNumber, sale.GrandTotal, sale.PaymentMethod });
-        await _db.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await transaction.RollbackAsync(ct);
+            return Conflict(new { code = "CONCURRENCY_CONFLICT", message = "Stock changed while you were checking out. Refresh stock and review the basket before retrying." });
+        }
         return Created($"/api/sales/{sale.Id}", result);
     }
 
@@ -352,8 +360,16 @@ public sealed class OperationsController : ControllerBase
             ReferenceId = waste.Id, Reason = request.Reason, ActorUserId = _current.UserId
         });
         AddAudit("WasteRecorded", "WasteRecord", waste.Id, new { request.Reason, request.Quantity, batch.Product.Name });
-        await _db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await tx.RollbackAsync(ct);
+            return Conflict(new { code = "CONCURRENCY_CONFLICT", message = "This batch changed while you were recording waste. Refresh the batch list and try again." });
+        }
         return Ok(new { waste.Id, productName = batch.Product.Name, request.Quantity, request.Reason, waste.EstimatedCostValue, batch.RemainingQuantity });
     }
 
