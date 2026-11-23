@@ -16,7 +16,7 @@
     {
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
         <section class="panel form-panel">
-            <EditForm Model="_form" OnValidSubmit="Submit">
+            <EditForm EditContext="_editContext" OnValidSubmit="Submit">
                 <DataAnnotationsValidator />
                 <div class="form-grid">
                     <div class="field-group full"><label for="product">Product</label><InputSelect id="product" class="form-control" @bind-Value="_form.ProductId"><option value="">Choose a product</option>@foreach(var p in _products){<option value="@p.Id">@p.Name (@p.Sku)@(p.HasExpiry ? " · expiry tracked" : "")</option>}</InputSelect><ValidationMessage For="@(() => _form.ProductId)" /></div>
@@ -37,10 +37,12 @@
 @code {
     private List<ProductOption> _products = [];
     private ReceiveForm _form = new();
+    private EditContext _editContext = default!;
     private bool _busy, _forbidden, _success;
     private string? _error;
     protected override async Task OnInitializedAsync()
     {
+        _editContext = new EditContext(_form);
         if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
         if (Session.User?.Role != "Owner" && Session.User?.CanReceiveStock != true) { _forbidden = true; return; }
         try { _products = await Http.GetFromJsonAsync<List<ProductOption>>("api/products") ?? []; }
@@ -57,7 +59,10 @@
             if (_form.ExpiryDate.HasValue && _form.ExpiryDate.Value.Date < DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date) { _error = "Expiry date cannot be in the past."; return; }
             var payload = new { productId = _form.ProductId ?? Guid.Empty, quantity = _form.Quantity, unitCost = _form.UnitCost, expiryDate = _form.ExpiryDate?.ToString("yyyy-MM-dd"), supplier = _form.Supplier, batchReference = _form.BatchReference };
             using var response = await Http.PostAsJsonAsync("api/stock/receipts", payload);
-            if (response.IsSuccessStatusCode) { _form = new(); _success = true; Toast.ShowSuccess("Stock received successfully."); return; }
+            if (response.IsSuccessStatusCode) { _form = new(); _editContext = new EditContext(_form); _success = true; Toast.ShowSuccess("Stock received successfully."); return; }
+            if (response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                && await ApiErrorFormatter.ApplyValidationErrorsAsync(response, _editContext))
+                return;
             var message = await ApiErrorFormatter.FormatAsync(response, "The stock receipt could not be saved.");
             if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
         }
