@@ -570,6 +570,15 @@ namespace ShopPulse.Api.Migrations
                     b.ToTable("WasteRecords");
                 });
 
+            modelBuilder.Entity("ShopPulse.Api.Domain.Product", b =>
+                {
+                    b.HasOne("ShopPulse.Api.Domain.Business", null)
+                        .WithMany("Products")
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ShopPulse.Api.Domain.Business", b =>
                 {
                     b.Navigation("Products");
