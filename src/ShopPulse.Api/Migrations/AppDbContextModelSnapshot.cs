@@ -389,6 +389,10 @@ namespace ShopPulse.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("Subtotal")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
