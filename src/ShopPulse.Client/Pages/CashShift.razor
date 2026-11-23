@@ -140,10 +140,7 @@
             using var response = await Http.PostAsJsonAsync("api/cash-shifts/close", new { shiftId = _shift.Id, actualCash = _actualCash, varianceReason = _varianceReason });
             if (!response.IsSuccessStatusCode)
             {
-                using var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonDocument>();
-                _error = problem?.RootElement.TryGetProperty("detail", out var detail) == true ? detail.GetString()
-                    : problem?.RootElement.TryGetProperty("message", out var message) == true ? message.GetString()
-                    : "The cash shift could not be closed. Verify the counted cash and permissions.";
+                _error = await ApiErrorFormatter.FormatAsync(response, "The cash shift could not be closed. Verify the counted cash and permissions.");
                 return;
             }
             _result = await response.Content.ReadFromJsonAsync<CloseResult>();
