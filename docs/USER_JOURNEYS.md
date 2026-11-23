@@ -30,7 +30,7 @@ This is the implementation status for the full ShopPulse solution design. It dis
 | View catalogue and inventory | Yes | Yes |
 | Complete sale | Yes | Yes |
 | Manage products | Yes | No |
-| Receive stock | Yes | No |
+| Receive stock | Yes | With CanReceiveStock permission |
 | Record waste | Yes | Only when granted CanAdjustStock |
 | View expiry and Stock Rescue | Yes | Yes |
 | Open/close own cash shift | Yes | Yes |
@@ -109,7 +109,7 @@ A stock conflict returns HTTP 409 and keeps the basket available for review. The
 - The recommendation shows recent sales, average daily sales, earliest expiry and estimated at-risk units.
 - With no sales history, the UI says the estimate is unavailable. The system never applies a markdown or writes off stock automatically.
 
-## Cash shift and reconciliation (UC-09)
+## Refund a sale (UC-06)\n\n1. Owner or operator with `CanRefundSales` opens Refund a sale.\n2. Client loads up to 100 completed receipts through `GET /api/sales/refundable`.\n3. Staff selects the original receipt, reviews its line items and enters a reason.\n4. Staff confirms that the money was refunded externally through the original payment channel. ShopPulse does not process card or bank payments.\n5. Staff may mark returned goods as safe to restock. If selected, the API restores quantities to the original sale batches, writes positive Refund stock movements and retains expired batches as expired/non-sellable.\n6. API records the full refund against the original sale, updates status, records actor/time/method/reason and writes an audit event in a transaction. A sale can only be refunded once.\n7. Daily reporting subtracts refunds on the date the refund was issued; cash-shift expected balance subtracts cash refunds.\n\nPartial refunds are not implemented; the current workflow is a full-sale refund.\n\n## Cash shift and reconciliation (UC-09)
 
 1. Operator opens a shift and records opening float in ZAR.
 2. Operator can view and close their own shift; owner can review all open shifts and select one to reconcile.
@@ -166,4 +166,4 @@ A stock conflict returns HTTP 409 and keeps the basket available for review. The
 - Verify stock quantities, sale receipts, stock movements, waste records, cash variance and audit events after each write.
 - Test duplicate checkout submission, lost network response, concurrent sales of the same batch and stale stock conflict handling.
 - Verify receipt printing on the intended receipt printer. Browser print is implemented; thermal-printer-specific integration is not.
-- Verify external card-terminal payment out of band. No card gateway is integrated.
+- Verify external card-terminal payment and refunds out of band. No card gateway is integrated.
