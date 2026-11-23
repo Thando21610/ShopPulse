@@ -1,4 +1,5 @@
 @page "/stock/receive"
+@using System.Text.Json
 @using System.Net.Http.Json
 @using System.ComponentModel.DataAnnotations
 @inject HttpClient Http
@@ -80,7 +81,7 @@
         _productLoadFailed = false;
         _error = null;
         try { _products = await Http.GetFromJsonAsync<List<ProductOption>>("api/products") ?? []; }
-        catch (HttpRequestException) { _productLoadFailed = true; _error = "Could not load products. Try again."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _productLoadFailed = true; _error = "Could not load products. Try again."; }
         finally { _loadingProducts = false; }
     }
     private async Task Submit()
@@ -102,7 +103,7 @@
             var message = await ApiErrorFormatter.FormatAsync(response, "The stock receipt could not be saved.");
             if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
         }
-        catch (HttpRequestException) { _error = "The service could not be reached."; }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
     }
     private sealed class ReceiveForm
