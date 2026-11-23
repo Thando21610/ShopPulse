@@ -32,6 +32,7 @@ public sealed class OperationsController : ControllerBase
     public sealed record WasteRequest(Guid ProductId, Guid StockBatchId, int Quantity, string Reason, string? Notes);
     public sealed record OpenCashShiftRequest(decimal OpeningFloat);
     public sealed record CloseCashShiftRequest(Guid ShiftId, decimal ActualCash, string? VarianceReason);
+    public sealed record RefundSaleRequest(string Reason, bool RestockItems, bool RefundIssued);
 
     [HttpPost("sales")]
     [Authorize(Policy = ShopPulsePolicies.CompleteSales)]
@@ -187,6 +188,98 @@ public sealed class OperationsController : ControllerBase
             .Select(x => new { x.Id, x.ReceiptNumber, x.Subtotal, x.Discount, x.GrandTotal, x.PaymentMethod, x.AmountTendered, x.ChangeAmount, x.CreatedAtUtc })
             .ToListAsync(ct);
         return Ok(sales);
+    }
+
+    [HttpGet("sales/refundable")]
+    [Authorize(Policy = ShopPulsePolicies.CanRefundSales)]
+    public async Task<IActionResult> RefundableSales(CancellationToken ct)
+    {
+        var rows = await _db.Sales.AsNoTracking()
+            .Where(x => x.Status == "Completed")
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(100)
+            .Select(x => new
+            {
+                x.Id, x.ReceiptNumber, x.CreatedAtUtc, x.GrandTotal, x.PaymentMethod,
+                Items = x.Items.Select(item => new
+                {
+                    item.ProductNameSnapshot, item.SkuSnapshot, item.Quantity,
+                    item.UnitPriceSnapshot, item.LineTotal
+                })
+            })
+            .ToListAsync(ct);
+        return Ok(rows);
+    }
+
+    [HttpPost("sales/{id:guid}/refunds")]
+    [Authorize(Policy = ShopPulsePolicies.CanRefundSales)]
+    public async Task<IActionResult> RefundSale(Guid id, [FromBody] RefundSaleRequest request, CancellationToken ct)
+    {
+        var reason = request.Reason?.Trim();
+        if (string.IsNullOrWhiteSpace(reason) || reason.Length > 500)
+            return Failure(400, "VALIDATION_FAILED", "Enter a refund reason of up to 500 characters.");
+        if (!request.RefundIssued)
+            return Failure(400, "VALIDATION_FAILED", "Confirm that the refund has been issued through the original payment channel.");
+
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        var sale = await _db.Sales.Include(x => x.Items)
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (sale is null)
+            return NotFound(new { code = "SALE_NOT_FOUND", message = "The original sale could not be found." });
+        if (sale.Status != "Completed" || sale.RefundAmount > 0)
+            return Conflict(new { code = "SALE_ALREADY_REFUNDED", message = "This sale has already been refunded or is no longer refundable." });
+
+        var now = DateTimeOffset.UtcNow;
+        if (request.RestockItems)
+        {
+            foreach (var item in sale.Items)
+            {
+                if (!item.StockBatchId.HasValue)
+                    return Conflict(new { code = "REFUND_BATCH_MISSING", message = "The original stock batch is unavailable, so returned items cannot be restocked safely." });
+                var batch = await _db.StockBatches.FirstOrDefaultAsync(x => x.Id == item.StockBatchId.Value && x.ProductId == item.ProductId, ct);
+                if (batch is null)
+                    return Conflict(new { code = "REFUND_BATCH_MISSING", message = "The original stock batch could not be found. No refund was recorded." });
+                batch.RemainingQuantity += item.Quantity;
+                batch.Version++;
+                _db.StockMovements.Add(new StockMovement
+                {
+                    Id = Guid.NewGuid(), BusinessId = _current.BusinessId, ProductId = item.ProductId,
+                    StockBatchId = batch.Id, MovementType = "Refund", QuantityChange = item.Quantity,
+                    ReferenceId = sale.Id, Reason = "Returned items restocked after sale refund", ActorUserId = _current.UserId,
+                    CreatedAtUtc = now
+                });
+            }
+        }
+
+        sale.Status = "Refunded";
+        sale.RefundAmount = sale.GrandTotal;
+        sale.RefundedAtUtc = now;
+        sale.RefundedByUserId = _current.UserId;
+        sale.RefundReason = reason;
+        sale.RefundPaymentMethod = sale.PaymentMethod;
+        sale.RefundRestocked = request.RestockItems;
+        AddAudit("SaleRefunded", "Sale", sale.Id, new
+        {
+            sale.ReceiptNumber, sale.RefundAmount, sale.RefundPaymentMethod,
+            sale.RefundRestocked, sale.RefundReason
+        });
+
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await tx.RollbackAsync(ct);
+            return Conflict(new { code = "REFUND_CONCURRENCY_CONFLICT", message = "The sale or stock changed while processing this refund. Refresh and try again." });
+        }
+
+        return Ok(new
+        {
+            sale.Id, sale.ReceiptNumber, sale.Status, sale.RefundAmount,
+            sale.RefundPaymentMethod, sale.RefundedAtUtc, sale.RefundRestocked
+        });
     }
 
     [HttpPost("stock/receipts")]
