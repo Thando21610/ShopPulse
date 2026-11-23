@@ -330,6 +330,87 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   }
 }
 
+/* Accessibility and responsive UX hardening */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid rgba(11, 95, 138, .42);
+  outline-offset: 3px;
+}
+:where(button, input, select, textarea) { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+:where(input, select, textarea) { scroll-margin-block: 7rem; }
+:where(.panel, .pulse-card, .metric-card, .payment-modal) { min-width: 0; }
+:where(.muted, .small-note, .table-note, .permission-note) { overflow-wrap: anywhere; }
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.table-wrap table { min-width: 620px; }
+.table-wrap th, .table-wrap td { vertical-align: middle; }
+.table-wrap th { white-space: nowrap; }
+.table-wrap td { overflow-wrap: anywhere; }
+:where(.field-group, .form-grid, .toolbar-row, .dashboard-header, .workspace-toolbar) { min-width: 0; }
+:where(.button, .link-button, .workspace-nav a) { text-underline-offset: 3px; }
+.button:active:not(:disabled) { transform: translateY(1px); }
+.button:disabled { transform: none; }
+:where(.field-group input, .field-group select, .field-group textarea, .form-control):disabled {
+  cursor: not-allowed;
+  background: #f2f5f8;
+  color: #667487;
+}
+:where(.field-group input, .field-group select, .field-group textarea, .form-control)[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+:where(.validation-message, .field-error, .text-danger) { line-height: 1.45; }
+:where(.empty-state, .inline-alert, .toast-inline) { overflow-wrap: anywhere; }
+:where(.toast-host, .toast-card) { max-width: 100%; }
+:where(.count-pill, .role-chip, .stock-status) { max-width: 100%; }
+.workspace-nav a[aria-current="page"],
+.workspace-nav a.active {
+  color: var(--accent);
+  background: #eaf2f7;
+  border-color: #cbdce8;
+}
+@media (max-width: 820px) {
+  .feature-page { width: min(100% - 32px, 720px); }
+  .feature-header, .dashboard-header, .workspace-toolbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .header-right { flex-wrap: wrap; }
+  .cart-panel { z-index: 1; }
+}
+@media (max-width: 600px) {
+  .feature-page { width: calc(100% - 24px); padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+  .feature-heading h1 { overflow-wrap: anywhere; }
+  .panel { padding: 14px; }
+  .panel-heading { align-items: flex-start; flex-wrap: wrap; }
+  .panel-actions, .table-actions, .dashboard-actions { width: 100%; }
+  .panel-actions > .button, .table-actions > .button { flex: 1 1 auto; }
+  .dashboard-actions > .button { flex: 1 1 100%; }
+  .form-grid { gap: 14px; }
+  .cart-line { gap: 8px; }
+  .quantity-control { gap: 5px; }
+  .quantity-control button { width: 40px; height: 40px; }
+  .payment-modal-backdrop { padding-bottom: env(safe-area-inset-bottom); }
+  .toast-host { right: 12px; top: 68px; width: calc(100vw - 24px); }
+  .table-wrap { margin-inline: -2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+@media (forced-colors: active) {
+  .button, .panel, .stock-status, .workspace-nav a { border: 1px solid ButtonText; }
+  :where(a, button, input, select, textarea):focus-visible { outline: 2px solid Highlight; }
+}
+
 
 /* Current-page and keyboard navigation feedback */
 .workspace-nav a.active {
