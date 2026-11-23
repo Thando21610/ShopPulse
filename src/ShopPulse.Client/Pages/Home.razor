@@ -1,7 +1,127 @@
-﻿@page "/"
+@page "/"
+@using System.Net.Http.Headers
+@using System.Net.Http.Json
+@using System.Text.Json
+@inject HttpClient Http
 
-<PageTitle>Home</PageTitle>
+<PageTitle>ShopPulse | Retail operations</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="dashboard-shell">
+    <header class="dashboard-header">
+        <div class="brand-lockup">
+            <div class="brand-mark">S</div>
+            <div><strong>ShopPulse</strong><span>RETAIL OPERATIONS</span></div>
+        </div>
+        <div class="header-right">
+            <span class="status-indicator"></span>
+            <span>API connection</span>
+            @if (_signedIn)
+            {
+                <button class="button button-quiet" @onclick="LogoutAsync">Sign out</button>
+            }
+        </div>
+    </header>
 
-Welcome to your new app.
+    <main class="dashboard-main">
+        <section class="welcome-row">
+            <div>
+                <p class="eyebrow">STORE OVERVIEW</p>
+                <h1>Good business starts with visibility.</h1>
+                <p class="muted">Manage your catalogue and keep track of the products that keep your shop moving.</p>
+            </div>
+            <div class="date-chip">@DateTime.Now.ToString("ddd, dd MMM yyyy")</div>
+        </section>
+
+        @if (!_signedIn)
+        {
+            <section class="panel sign-in-panel">
+                <div>
+                    <p class="eyebrow">SECURE ACCESS</p>
+                    <h2>Sign in to your store</h2>
+                    <p class="muted">Use your ShopPulse staff account to load live product data from the API.</p>
+                </div>
+                <EditForm Model="_login" OnValidSubmit="LoginAsync" class="login-form">
+                    <DataAnnotationsValidator />
+                    <label>Email address</label>
+                    <InputText @bind-Value="_login.Email" type="email" autocomplete="username" placeholder="you@yourshop.co.za" />
+                    <label>Password</label>
+                    <InputText @bind-Value="_login.Password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+                    @if (!string.IsNullOrWhiteSpace(_error)) { <p class="error-message" role="alert">@_error</p> }
+                    <button class="button button-primary" type="submit" disabled="@_busy">@(_busy ? "Signing in…" : "Sign in securely")</button>
+                </EditForm>
+            </section>
+        }
+        else
+        {
+            <section class="metric-grid">
+                <article class="metric-card"><span class="metric-label">ACTIVE PRODUCTS</span><strong>@_products.Count</strong><span class="metric-foot">Loaded from your store</span></article>
+                <article class="metric-card"><span class="metric-label">LOW STOCK ITEMS</span><strong>—</strong><span class="metric-foot">Stock alert endpoint not yet available</span></article>
+                <article class="metric-card"><span class="metric-label">TODAY'S SALES</span><strong>—</strong><span class="metric-foot">Checkout endpoint not yet available</span></article>
+            </section>
+            <section class="panel products-panel">
+                <div class="section-heading"><div><p class="eyebrow">CATALOGUE</p><h2>Your products</h2></div><span class="count-pill">@_products.Count items</span></div>
+                @if (_products.Count == 0)
+                {
+                    <div class="empty-state"><strong>No products found</strong><p class="muted">Your catalogue is empty or the API returned no active products.</p></div>
+                }
+                else
+                {
+                    <div class="table-wrap"><table><thead><tr><th>PRODUCT</th><th>SKU</th><th>AVAILABLE</th><th>UNIT PRICE</th></tr></thead><tbody>
+                    @foreach (var item in _products)
+                    {
+                        <tr><td><strong>@item.Name</strong></td><td>@item.Sku</td><td>@item.Available</td><td>@item.UnitPrice.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"))</td></tr>
+                    }
+                    </tbody></table></div>
+                }
+            </section>
+        }
+        @if (!string.IsNullOrWhiteSpace(_notice)) { <p class="notice-message" role="status">@_notice</p> }
+    </main>
+    <footer class="dashboard-footer"><span>ShopPulse · Smarter operations. Less waste. Better business.</span><span>Prices displayed in South African Rand (ZAR)</span></footer>
+</div>
+
+@code {
+    private readonly LoginModel _login = new();
+    private readonly List<ProductRow> _products = [];
+    private bool _signedIn;
+    private bool _busy;
+    private string? _error;
+    private string? _notice;
+
+    private async Task LoginAsync()
+    {
+        _busy = true; _error = null;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/auth/login", new { email = _login.Email.Trim(), password = _login.Password });
+            if (!response.IsSuccessStatusCode) { _error = "Sign-in failed. Check your details and try again."; return; }
+            using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>();
+            var token = payload?.RootElement.GetProperty("accessToken").GetString();
+            if (string.IsNullOrWhiteSpace(token)) { _error = "The API did not return an access token."; return; }
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            _signedIn = true;
+            await LoadProductsAsync();
+        }
+        catch (HttpRequestException) { _error = "Could not reach the ShopPulse API. Check the API URL and CORS settings."; }
+        catch (Exception) { _error = "Something went wrong while signing in. Please try again."; }
+        finally { _busy = false; }
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        var items = await Http.GetFromJsonAsync<List<ProductRow>>("api/products");
+        _products.Clear();
+        if (items is not null) _products.AddRange(items);
+    }
+
+    private async Task LogoutAsync()
+    {
+        try { await Http.PostAsync("api/auth/logout", null); } catch { }
+        Http.DefaultRequestHeaders.Authorization = null;
+        _products.Clear(); _signedIn = false; _login.Password = "";
+        _notice = "You have signed out.";
+    }
+
+    private sealed class LoginModel { public string Email { get; set; } = ""; public string Password { get; set; } = ""; }
+    private sealed class ProductRow { public string Name { get; set; } = ""; public string Sku { get; set; } = ""; public decimal UnitPrice { get; set; } public int Available { get; set; } }
+}
