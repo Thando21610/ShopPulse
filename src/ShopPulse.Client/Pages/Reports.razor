@@ -25,8 +25,14 @@
                 <article class="panel metric-card"><span>Units in stock</span><strong>@_report.InventoryUnits</strong><small>Current on-hand quantity</small></article>
                 <article class="panel metric-card"><span>Low-stock products</span><strong>@_report.LowStockProducts</strong><small>At or below reorder threshold</small></article>
                 <article class="panel metric-card"><span>Staff actions</span><strong>@_report.StaffActions</strong><small>Audit events on selected date</small></article>
+                <article class="panel metric-card"><span>Average sale</span><strong>@Money(_report.AverageTransactionValue)</strong><small>Per completed transaction</small></article>
+                <article class="panel metric-card"><span>Units received</span><strong>@_report.UnitsReceived</strong><small>Stock receipts on selected date</small></article>
+                <article class="panel metric-card"><span>Units sold</span><strong>@_report.UnitsSold</strong><small>Stock deducted through sales</small></article>
+                <article class="panel metric-card"><span>Stock adjustments</span><strong>@_report.StockAdjustments</strong><small>Waste and adjustment movements</small></article>
+                <article class="panel metric-card"><span>Shifts closed</span><strong>@_report.ClosedShifts</strong><small>Cash shifts reconciled</small></article>
+                <article class="panel metric-card"><span>Cash variance</span><strong class="@(_report.CashVariance < 0 ? "text-danger" : "")">@Money(_report.CashVariance)</strong><small>Net variance across closed shifts</small></article>
             </section>
-            <p class="muted small-note">Sales and waste follow the selected SAST date. Inventory figures show current stock at report time; staff actions count recorded audit events. All monetary amounts are ZAR.</p>
+            <p class="muted small-note">Sales, stock movements, waste and shift closures follow the selected SAST date. Inventory figures show current stock at report time; staff actions count recorded audit events. Refund totals are not included because the refund workflow is not yet implemented. All monetary amounts are ZAR.</p>
         }
     }
 </main>
@@ -48,5 +54,5 @@
         catch (HttpRequestException) { _error = "The report could not be loaded."; }
     }
     private static string Money(decimal v) => v.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
-    private sealed class ReportSummary { public int SalesCount { get; set; } public decimal SalesTotal { get; set; } public decimal CashTotal { get; set; } public decimal CardTotal { get; set; } public decimal WasteCost { get; set; } public int ActiveProducts { get; set; } public int InventoryUnits { get; set; } public int LowStockProducts { get; set; } public int StaffActions { get; set; } public string Currency { get; set; } = "ZAR"; }
+    private sealed class ReportSummary { public int SalesCount { get; set; } public decimal SalesTotal { get; set; } public decimal AverageTransactionValue { get; set; } public decimal CashTotal { get; set; } public decimal CardTotal { get; set; } public decimal WasteCost { get; set; } public int ActiveProducts { get; set; } public int InventoryUnits { get; set; } public int LowStockProducts { get; set; } public int StaffActions { get; set; } public int UnitsReceived { get; set; } public int UnitsSold { get; set; } public int StockAdjustments { get; set; } public int ClosedShifts { get; set; } public decimal CashVariance { get; set; } public string Currency { get; set; } = "ZAR"; }
 }
