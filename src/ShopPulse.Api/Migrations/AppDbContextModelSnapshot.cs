@@ -619,6 +619,21 @@ namespace ShopPulse.Api.Migrations
                     b.ToTable("WasteRecords");
                 });
 
+            modelBuilder.Entity("ShopPulse.Api.Domain.CashMovement", b =>
+                {
+                    b.HasOne("ShopPulse.Api.Domain.Business", null)
+                        .WithMany()
+                        .HasForeignKey("BusinessId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShopPulse.Api.Domain.CashShift", null)
+                        .WithMany()
+                        .HasForeignKey("CashShiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ShopPulse.Api.Domain.AppUser", b =>
                 {
                     b.HasOne("ShopPulse.Api.Domain.Business", "Business")
