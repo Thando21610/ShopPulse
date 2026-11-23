@@ -570,11 +570,18 @@ public sealed class OperationsController : ControllerBase
         // South Africa uses SAST (UTC+02:00) year-round; report dates follow the shop calendar.
         var start = new DateTimeOffset(selected.ToDateTime(TimeOnly.MinValue), TimeSpan.FromHours(2));
         var end = start.AddDays(1);
-        var sales = _db.Sales.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end && x.Status == "Completed");
+        var sales = _db.Sales.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end && x.Status != "Voided");
         var count = await sales.CountAsync(ct);
-        var total = await sales.SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
-        var cash = await sales.Where(x => x.PaymentMethod == "Cash").SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
-        var card = await sales.Where(x => x.PaymentMethod == "Card").SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
+        var grossSales = await sales.SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
+        var cashGross = await sales.Where(x => x.PaymentMethod == "Cash").SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
+        var cardGross = await sales.Where(x => x.PaymentMethod == "Card").SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
+        var refunds = _db.Sales.Where(x => x.RefundedAtUtc >= start && x.RefundedAtUtc < end && x.RefundAmount > 0);
+        var refundTotal = await refunds.SumAsync(x => (decimal?)x.RefundAmount, ct) ?? 0m;
+        var cashRefundTotal = await refunds.Where(x => x.RefundPaymentMethod == "Cash").SumAsync(x => (decimal?)x.RefundAmount, ct) ?? 0m;
+        var cardRefundTotal = await refunds.Where(x => x.RefundPaymentMethod == "Card").SumAsync(x => (decimal?)x.RefundAmount, ct) ?? 0m;
+        var total = grossSales - refundTotal;
+        var cash = cashGross - cashRefundTotal;
+        var card = cardGross - cardRefundTotal;
         var waste = await _db.WasteRecords.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end)
             .SumAsync(x => (decimal?)x.EstimatedCostValue, ct) ?? 0m;
         var inventory = await _db.Products.AsNoTracking().Where(x => x.IsActive)
@@ -593,7 +600,8 @@ public sealed class OperationsController : ControllerBase
         var cashVariance = closedShifts.Sum(x => x.Variance ?? 0m);
         return Ok(new
         {
-            date = selected, salesCount = count, salesTotal = total,
+            date = selected, salesCount = count, grossSalesTotal = grossSales, salesTotal = total,
+            refundTotal, cashRefundTotal, cardRefundTotal,
             averageTransactionValue = count == 0 ? 0m : decimal.Round(total / count, 2),
             cashTotal = cash, cardTotal = card, wasteCost = waste, activeProducts = inventory.Count,
             inventoryUnits = inventory.Sum(x => x.Available),
