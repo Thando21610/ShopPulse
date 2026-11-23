@@ -82,6 +82,20 @@
     private List<SaleRow> _sales = [];
     private SaleRow? _selected;
     private RefundForm _form = new();
+    private EditContext _editContext;
+
+    public Refunds()
+    {
+        _editContext = CreateContext(_form);
+    }
+
+    private EditContext CreateContext(RefundForm model)
+    {
+        var context = new EditContext(model);
+        context.OnFieldChanged += (_, _) => ApiErrorFormatter.ClearServerValidationErrors(context);
+        return context;
+    }
+
     private bool _loading = true, _busy, _forbidden, _cashShiftRequired;
     private string? _error;
 
