@@ -20,6 +20,7 @@
     @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
     <section class="panel form-panel">
         <EditForm Model="_form" OnValidSubmit="Submit">
+            <DataAnnotationsValidator />
             <div class="form-grid">
                 <div class="field-group full"><label for="batch">Stock batch</label><InputSelect id="batch" class="form-control" @bind-Value="_form.BatchId"><option value="">Choose a batch</option>@foreach(var b in _batches){<option value="@b.Id">@b.ProductName · @b.RemainingQuantity available · @b.BatchReference</option>}</InputSelect><ValidationMessage For="@(() => _form.BatchId)" /></div>
                 <div class="field-group"><label for="quantity">Quantity to write off</label><InputNumber id="quantity" class="form-control" @bind-Value="_form.Quantity" min="1" /><ValidationMessage For="@(() => _form.Quantity)" /></div>
