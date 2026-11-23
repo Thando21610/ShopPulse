@@ -25,3 +25,27 @@
  .products-panel{padding:18px}
  th,td{white-space:nowrap}
 }
+
+
+/* Accessible form validation and notification system */
+.field-group{display:grid;grid-template-columns:1fr;gap:7px;min-width:0}
+.field-group label{margin:0!important;line-height:1.4}
+.field-group input,.field-group textarea,.field-group select{width:100%;min-width:0}
+.field-group .validation-message{color:#b42318;font-size:12px;line-height:1.4;margin:0}
+.field-group input.invalid,.field-group input[aria-invalid="true"]{border-color:#d92d20;background:#fffafa}
+.field-group input.invalid:focus,.field-group input[aria-invalid="true"]:focus{border-color:#d92d20;box-shadow:0 0 0 3px rgba(217,45,32,.12)}
+.login-form .validation-message{color:#b42318;font-size:12px}
+.toast-host{position:fixed;right:24px;top:90px;z-index:1200;width:min(420px,calc(100vw - 32px));pointer-events:none}
+.toast-card{display:grid;grid-template-columns:34px minmax(0,1fr) 28px;align-items:start;gap:12px;padding:15px 14px;border:1px solid;border-radius:14px;box-shadow:0 16px 40px rgba(20,35,27,.16);background:#fff;pointer-events:auto;animation:toast-in .18s ease-out}
+.toast-error{border-color:#f2b8b5;border-left:4px solid #d92d20}
+.toast-success{border-color:#a8d9bd;border-left:4px solid #16834a}
+.toast-symbol{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;font-weight:800;font-size:15px}
+.toast-error .toast-symbol{background:#fef0ef;color:#b42318}
+.toast-success .toast-symbol{background:#eaf7ef;color:#167344}
+.toast-card strong{display:block;color:#25382e;font-size:13px;margin:1px 0 4px}
+.toast-card p{margin:0;color:#68766e;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.toast-close{border:0;background:transparent;color:#7a8980;font-size:20px;line-height:1;cursor:pointer;padding:1px}
+.toast-close:focus-visible{outline:2px solid #477d65;outline-offset:2px;border-radius:4px}
+.helper-message{margin:10px 0 0;color:#a33a32}
+@keyframes toast-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.toast-host{right:16px;top:76px;width:calc(100vw - 32px)}.toast-card{padding:13px}}
