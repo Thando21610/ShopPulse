@@ -117,7 +117,7 @@ The API currently calls EF Core `EnsureCreatedAsync()`; a migration-based schema
 
 ### Hosting direction
 
-The intended hosting direction is a containerised API (for example Railway) and a static Blazor WebAssembly frontend (for example Vercel or Cloudflare Pages). Configure the exact frontend origin in API CORS and set the client API base URL to the deployed API origin. Validate refresh-cookie SameSite, Secure, domain and cross-origin behaviour in the actual hosting setup before launch.
+The current deployment target is a containerised .NET 10 API on Railway Free with Neon PostgreSQL, followed by a separately hosted static Blazor WebAssembly frontend. Railway Free sleeps when idle and has a limited monthly usage credit, so it is suitable for a prototype/demo rather than an always-on commercial POS. See [Railway + Neon deployment guide](docs/DEPLOY_LIVE_URL.md). Configure the exact frontend origin in API CORS and validate refresh-cookie behaviour across the deployed origins before launch.
 
 ## Build and test status
 

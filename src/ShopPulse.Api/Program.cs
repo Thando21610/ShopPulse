@@ -149,12 +149,30 @@ builder.Services.AddCors(o => o.AddPolicy("frontend", policy =>
 
 var app = builder.Build();
 
-// ─── Migrate + seed ──────────────────────────────────────────────────────────
+// ─── Database startup ─────────────────────────────────────────────────────────
+// Development uses EnsureCreated + synthetic seed data for local demos only.
+// Production must have reviewed EF Core migrations and never receives demo users/data.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
-    await SeedAsync(db);
+
+    if (app.Environment.IsDevelopment())
+    {
+        await db.Database.EnsureCreatedAsync();
+        await SeedAsync(db);
+    }
+    else
+    {
+        var migrations = db.Database.GetMigrations().ToArray();
+        if (migrations.Length == 0)
+        {
+            throw new InvalidOperationException(
+                "Production startup is blocked: no EF Core migrations are present. " +
+                "Create and review an initial migration, then deploy it before enabling production.");
+        }
+
+        await db.Database.MigrateAsync();
+    }
 }
 
 if (app.Environment.IsDevelopment())
