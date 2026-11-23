@@ -148,14 +148,6 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<CashMovement>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.Property(x => x.Amount).HasPrecision(18, 2);
-            e.Property(x => x.Direction).HasMaxLength(8).IsRequired();
-            e.Property(x => x.Reason).HasMaxLength(500).IsRequired();
-            e.HasIndex(x => new { x.BusinessId, x.CashShiftId, x.CreatedAtUtc });
-        });
     }
 }
 
