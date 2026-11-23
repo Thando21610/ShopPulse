@@ -8,7 +8,7 @@ namespace ShopPulse.Api.Migrations;
 
 [DbContext(typeof(AppDbContext))]
 [Migration("20261123121000_AddSaleRefundSupport")]
-public sealed class AddSaleRefundSupport : Migration
+public sealed partial class AddSaleRefundSupport : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
