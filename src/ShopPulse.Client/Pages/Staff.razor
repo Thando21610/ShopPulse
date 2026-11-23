@@ -10,7 +10,7 @@
 <main class="feature-page">
     <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Staff access</span></header>
     <ShopPulse.Client.Shared.WorkspaceNav />
-    <section class="feature-heading"><p class="eyebrow">TEAM · OWNER</p><h1>Manage staff</h1><p class="muted">Create operator accounts and control stock and refund permissions.</p></section>
+    <section class="feature-heading"><p class="eyebrow">TEAM · OWNER</p><h1>Manage staff</h1><p class="muted">Create operator accounts and assign specific product, receiving, waste and refund permissions.</p></section>
     @if (_forbidden) { <div class="inline-alert" role="alert">Only the store owner can manage staff accounts.</div> }
     else
     {
@@ -25,6 +25,8 @@
                     <div class="field-group"><label for="staff-password">Initial password</label><InputText id="staff-password" class="form-control" type="password" @bind-Value="_newStaff.Password" autocomplete="new-password" /><ValidationMessage For="@(() => _newStaff.Password)" /></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanAdjustStock" /> Allow this operator to record stock waste</label></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanRefundSales" /> Allow this operator to refund sales</label></div>
+                    <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanManageProducts" /> Allow this operator to manage products</label></div>
+                    <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanReceiveStock" /> Allow this operator to receive stock</label></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanManageProducts" /> Allow this operator to manage products and prices</label></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanReceiveStock" /> Allow this operator to receive stock</label></div>
                 </div>
@@ -44,6 +46,8 @@
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.IsActive" /> Account active</label></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanAdjustStock" /> Can record stock waste</label></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanRefundSales" /> Can refund sales</label></div>
+                        <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanManageProducts" /> Can manage products</label></div>
+                        <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanReceiveStock" /> Can receive stock</label></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanManageProducts" /> Can manage products and prices</label></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanReceiveStock" /> Can receive stock</label></div>
                     </div>
@@ -66,7 +70,7 @@
                         <tr>
                             <td><strong>@person.DisplayName</strong><small class="table-subtext">@person.Email</small></td>
                             <td>@person.Role</td>
-                            <td>@(person.Role == "Owner" ? "Full owner access" : person.CanAdjustStock && person.CanRefundSales ? "Stock waste · Refunds" : person.CanAdjustStock ? "Stock waste" : person.CanRefundSales ? "Refunds" : "Sales only")</td>
+                            <td>@AccessSummary(person)</td>
                             <td><span class="stock-status @(person.IsActive ? "ok" : "low")">@(person.IsActive ? "Active" : "Inactive")</span></td>
                             <td>@if (person.Role != "Owner") { <button class="button button-quiet" @onclick="() => Edit(person)">Edit access</button> } else { <span class="muted">Protected</span> }</td>
                         </tr>
@@ -146,6 +150,17 @@
         }
         catch (HttpRequestException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
+    }
+
+    private static string AccessSummary(StaffRow person)
+    {
+        if (person.Role == "Owner") return "Full owner access";
+        var permissions = new List<string>();
+        if (person.CanAdjustStock) permissions.Add("Stock waste");
+        if (person.CanRefundSales) permissions.Add("Refunds");
+        if (person.CanManageProducts) permissions.Add("Product management");
+        if (person.CanReceiveStock) permissions.Add("Stock receiving");
+        return permissions.Count == 0 ? "Sales only" : string.Join(" · ", permissions);
     }
 
     private sealed class NewStaffForm
