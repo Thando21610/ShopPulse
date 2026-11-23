@@ -252,6 +252,7 @@ public sealed class OperationsController : ControllerBase
         }
 
         sale.Status = "Refunded";
+        sale.Version++;
         sale.RefundAmount = sale.GrandTotal;
         sale.RefundedAtUtc = now;
         sale.RefundedByUserId = _current.UserId;
