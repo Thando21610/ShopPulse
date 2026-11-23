@@ -1,0 +1,61 @@
+@page "/stock-rescue"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Stock rescue | ShopPulse</PageTitle>
+<main class="feature-page">
+    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Stock rescue</span></header>
+    <ShopPulse.Client.Shared.WorkspaceNav />
+    <section class="feature-heading"><p class="eyebrow">LESS WASTE · FEFO</p><h1>Stock rescue</h1><p class="muted">Spot batches that may not sell before expiry and act early.</p></section>
+    <div class="toolbar-row"><label for="days">Expiry window</label><select id="days" class="form-control compact-select" @bind="_days" @bind:after="Load"><option value="3">Next 3 days</option><option value="7">Next 7 days</option><option value="14">Next 14 days</option></select><button class="button button-quiet" @onclick="Load">Refresh</button></div>
+    @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+    @if (_loading) { <section class="panel empty-state">Reviewing expiring batches and recent sales…</section> }
+    else if (_suggestions.Count == 0) { <section class="panel empty-state"><strong>No batches need rescue in this window.</strong><p class="muted">No remaining stock has an expiry date within the selected period.</p></section> }
+    else
+    {
+        <section class="rescue-list">
+            @foreach (var item in _suggestions)
+            {
+                <article class="panel rescue-card">
+                    <div class="rescue-card-heading"><div><p class="eyebrow">@item.Sku</p><h2>@item.ProductName</h2></div><span class="stock-status @(item.AtRiskUnits.HasValue && item.AtRiskUnits.Value > 0 ? "low" : "ok")">@(item.AtRiskUnits.HasValue ? item.AtRiskUnits.Value + " at risk" : "Limited sales data")</span></div>
+                    <div class="rescue-stats">
+                        <div><span>Expiring units</span><strong>@item.ExpiringUnits</strong></div>
+                        <div><span>Sold in 7 days</span><strong>@item.UnitsSoldLast7Days</strong></div>
+                        <div><span>Avg. daily sales</span><strong>@item.AverageDailySales.ToString("N2")</strong></div>
+                        <div><span>Earliest expiry</span><strong>@item.EarliestExpiry.ToString("dd MMM yyyy")</strong></div>
+                    </div>
+                    <p class="rescue-recommendation">@item.Recommendation</p>
+                    @if (Session.User?.Role == "Owner" || Session.User?.CanAdjustStock == true) { <a class="button button-quiet" href="/stock/waste">Record waste or adjustment</a> }
+                </article>
+            }
+        </section>
+    }
+    <p class="muted small-note">This is a transparent rules-based estimate using the last 7 days of completed sales and the earliest expiry date. It is not AI forecasting. It does not change prices or stock automatically; the owner/operator decides what action to take.</p>
+</main>
+@code {
+    private List<RescueSuggestion> _suggestions = [];
+    private int _days = 7;
+    private bool _loading;
+    private string? _error;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated && !await Session.RestoreAsync()) { Nav.NavigateTo("/"); return; }
+        await Load();
+    }
+    private async Task Load()
+    {
+        _loading = true; _error = null;
+        try { _suggestions = await Http.GetFromJsonAsync<List<RescueSuggestion>>($"api/stock/rescue?days={_days}") ?? []; }
+        catch (HttpRequestException) { _error = "Stock rescue recommendations could not be loaded."; }
+        finally { _loading = false; }
+    }
+    private sealed class RescueSuggestion
+    {
+        public Guid ProductId { get; set; } public string ProductName { get; set; } = ""; public string Sku { get; set; } = "";
+        public int ExpiringUnits { get; set; } public int UnitsSoldLast7Days { get; set; } public decimal AverageDailySales { get; set; }
+        public DateOnly EarliestExpiry { get; set; } public int DaysUntilExpiry { get; set; } public int? AtRiskUnits { get; set; }
+        public string Recommendation { get; set; } = "";
+    }
+}
