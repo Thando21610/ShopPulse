@@ -120,8 +120,13 @@ public sealed class AuthSessionService
 
             using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: ct);
             var root = payload?.RootElement;
-            var token = root?.TryGetProperty("accessToken", out var value) == true ? value.GetString() : null;
-            if (string.IsNullOrWhiteSpace(token) || root?.TryGetProperty("user", out var userValue) != true)
+            if (root is null
+                || !root.Value.TryGetProperty("accessToken", out var tokenValue)
+                || !root.Value.TryGetProperty("user", out var userValue))
+                return (false, "The server returned an unexpected sign-in response.");
+
+            var token = tokenValue.GetString();
+            if (string.IsNullOrWhiteSpace(token))
                 return (false, "The server returned an unexpected sign-in response.");
 
             var user = userValue.Deserialize<SignedInUser>();
