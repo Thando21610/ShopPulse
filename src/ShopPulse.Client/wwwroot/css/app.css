@@ -547,3 +547,38 @@ body { background: var(--bg-soft); color: var(--ink); }
   .dashboard-main { width: calc(100% - 32px); padding-top: 32px; }
   .dashboard-footer { padding: 18px 16px; }
 }
+
+
+/* Brand mark visibility and creator credit. */
+.dashboard-header .brand-mark {
+  display: block !important;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  object-fit: contain;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: #f3f4ed;
+}
+.boot-screen .boot-mark {
+  display: block !important;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  padding: 0;
+  border-radius: 15px;
+  background: #f3f4ed;
+}
+.brand-lockup { min-width: 0; gap: 12px; }
+.brand-lockup > span { display: block; min-width: 0; }
+.brand-lockup > span strong { display: block; color: #fff; font-size: 19px; line-height: 1.15; }
+.brand-lockup > span small { display: block; color: #d2ddd5; font-size: 9px; letter-spacing: 1.5px; margin-top: 4px; }
+.dashboard-footer { align-items: center; flex-wrap: wrap; }
+.creator-signature { color: #e3e9e3; }
+.creator-signature strong { color: #fff; font-weight: 750; }
+@media (max-width: 680px) {
+  .dashboard-footer { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+  .creator-signature { padding-top: 4px; }
+}
