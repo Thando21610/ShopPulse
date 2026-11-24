@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -9,6 +10,7 @@ public sealed class AuthSessionService
 {
     private readonly HttpClient _http;
     private readonly TokenStore _tokens;
+    private readonly SemaphoreSlim _restoreLock = new(1, 1);
 
     public AuthSessionService(HttpClient http, TokenStore tokens)
     {
@@ -18,49 +20,88 @@ public sealed class AuthSessionService
 
     public SignedInUser? User { get; private set; }
     public bool IsAuthenticated => !string.IsNullOrWhiteSpace(_tokens.AccessToken) && User is not null;
+    public bool RestoreUnavailable { get; private set; }
 
     public async Task<bool> RestoreAsync(CancellationToken ct = default)
     {
         if (IsAuthenticated) return true;
 
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        timeout.CancelAfter(TimeSpan.FromSeconds(8));
-        var tokenCt = timeout.Token;
-
+        await _restoreLock.WaitAsync(ct);
         try
         {
-            using var response = await _http.PostAsync("api/auth/refresh", null, tokenCt);
-            if (!response.IsSuccessStatusCode)
+            if (IsAuthenticated) return true;
+            RestoreUnavailable = false;
+
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(15));
+            var tokenCt = timeout.Token;
+
+            try
             {
-                Clear();
+                using var response = await _http.PostAsync("api/auth/refresh", null, tokenCt);
+                if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                {
+                    Clear();
+                    return false;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    RestoreUnavailable = true;
+                    return false;
+                }
+
+                using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: tokenCt);
+                var token = payload?.RootElement.TryGetProperty("accessToken", out var value) == true ? value.GetString() : null;
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    RestoreUnavailable = true;
+                    return false;
+                }
+
+                _tokens.Set(token);
+                using var meResponse = await _http.GetAsync("api/auth/me", tokenCt);
+                if (meResponse.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                {
+                    Clear();
+                    return false;
+                }
+
+                if (!meResponse.IsSuccessStatusCode)
+                {
+                    RestoreUnavailable = true;
+                    return false;
+                }
+
+                User = await meResponse.Content.ReadFromJsonAsync<SignedInUser>(cancellationToken: tokenCt);
+                if (User is null)
+                {
+                    Clear();
+                    RestoreUnavailable = true;
+                    return false;
+                }
+
+                return true;
+            }
+            catch (HttpRequestException)
+            {
+                RestoreUnavailable = true;
                 return false;
             }
-            using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: tokenCt);
-            var token = payload?.RootElement.TryGetProperty("accessToken", out var value) == true ? value.GetString() : null;
-            if (string.IsNullOrWhiteSpace(token))
+            catch (JsonException)
             {
-                Clear();
+                RestoreUnavailable = true;
                 return false;
             }
-            _tokens.Set(token);
-            User = await _http.GetFromJsonAsync<SignedInUser>("api/auth/me", tokenCt);
-            if (User is null) Clear();
-            return User is not null;
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                RestoreUnavailable = true;
+                return false;
+            }
         }
-        catch (HttpRequestException)
+        finally
         {
-            Clear();
-            return false;
-        }
-        catch (JsonException)
-        {
-            Clear();
-            return false;
-        }
-        catch (OperationCanceledException)
-        {
-            Clear();
-            return false;
+            _restoreLock.Release();
         }
     }
 
@@ -71,23 +112,25 @@ public sealed class AuthSessionService
             using var response = await _http.PostAsJsonAsync("api/auth/login", new { email, password }, ct);
             if (!response.IsSuccessStatusCode)
             {
-                var message = response.StatusCode == System.Net.HttpStatusCode.Unauthorized
+                var message = response.StatusCode == HttpStatusCode.Unauthorized
                     ? "The email or password is incorrect. Check your details and try again."
                     : "We couldn't sign you in right now. Please try again.";
                 return (false, message);
             }
 
             using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: ct);
-            var token = payload?.RootElement.TryGetProperty("accessToken", out var value) == true ? value.GetString() : null;
-            if (string.IsNullOrWhiteSpace(token))
+            var root = payload?.RootElement;
+            var token = root?.TryGetProperty("accessToken", out var value) == true ? value.GetString() : null;
+            if (string.IsNullOrWhiteSpace(token) || root?.TryGetProperty("user", out var userValue) != true)
                 return (false, "The server returned an unexpected sign-in response.");
-            _tokens.Set(token);
-            User = await _http.GetFromJsonAsync<SignedInUser>("api/auth/me", ct);
-            if (User is null)
-            {
-                Clear();
+
+            var user = userValue.Deserialize<SignedInUser>();
+            if (user is null)
                 return (false, "Your account response is incomplete. Please contact your administrator.");
-            }
+
+            _tokens.Set(token);
+            User = user;
+            RestoreUnavailable = false;
             return (true, null);
         }
         catch (HttpRequestException)
@@ -99,6 +142,11 @@ public sealed class AuthSessionService
         {
             Clear();
             return (false, "The server returned an unexpected response. Please try again.");
+        }
+        catch (OperationCanceledException)
+        {
+            Clear();
+            return (false, "Sign-in timed out. Check your connection and try again.");
         }
     }
 
@@ -113,5 +161,6 @@ public sealed class AuthSessionService
     {
         _tokens.Clear();
         User = null;
+        RestoreUnavailable = false;
     }
 }
