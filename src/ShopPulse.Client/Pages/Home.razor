@@ -34,7 +34,17 @@
             <time class="date-chip" datetime="@DateTimeOffset.Now.ToString("yyyy-MM-dd")">@DateTimeOffset.Now.ToString("ddd, dd MMM yyyy")</time>
         </section>
 
-        @if (!_signedIn)
+        @if (_checkingSession)
+        {
+            <section class="panel sign-in-panel" role="status" aria-live="polite">
+                <div class="empty-state">
+                    <span class="loader" aria-hidden="true"></span>
+                    <strong>Restoring your store session…</strong>
+                    <p class="muted">Please wait while we securely check your sign-in.</p>
+                </div>
+            </section>
+        }
+        else if (!_signedIn)
         {
             <section class="login-layout">
 
@@ -89,7 +99,7 @@
                 {
                     <div class="empty-state"><span class="loader" aria-hidden="true"></span><strong>Loading catalogue…</strong><p class="muted">Retrieving the latest product data.</p></div>
                 }
-                else if (!string.IsNullOrWhiteSpace(_productsError))
+                else if (!!string.IsNullOrWhiteSpace(_productsError))
                 {
                     <div class="empty-state"><strong>Could not load products</strong><p class="muted">@_productsError</p><button class="button button-quiet" @onclick="LoadProductsAsync">Try again</button></div>
                 }
@@ -133,26 +143,52 @@
 @code {
     private readonly LoginModel _login = new();
     private readonly List<ProductRow> _products = [];
-    private bool _signedIn, _busy, _loadingProducts, _apiOnline, _toastIsError;
+    private bool _signedIn, _busy, _loadingProducts, _apiOnline, _toastIsError, _checkingSession = true;
     private string _displayName = "there", _role = "";
     private string? _productsError, _toastMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        try { using var response = await Http.GetAsync("health"); _apiOnline = response.IsSuccessStatusCode; }
-        catch (HttpRequestException) { _apiOnline = false; }
-        if (!_apiOnline)
+        try
         {
-            ShowToast("The service is currently unavailable. Check your connection and try again.", true);
-            return;
+            try
+            {
+                using var healthTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                using var response = await Http.GetAsync("health", healthTimeout.Token);
+                _apiOnline = response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException)
+            {
+                _apiOnline = false;
+            }
+            catch (OperationCanceledException)
+            {
+                _apiOnline = false;
+            }
+
+            if (!_apiOnline)
+            {
+                ShowToast("The service is currently unavailable. Check your connection and try again.", true);
+                return;
+            }
+
+            await Session.RestoreAsync();
+
+            if (Session.IsAuthenticated)
+            {
+                _signedIn = true;
+                _displayName = Session.User?.DisplayName ?? "there";
+                _role = Session.User?.Role ?? "Staff";
+            }
+        }
+        finally
+        {
+            _checkingSession = false;
         }
 
-        // Restore the HttpOnly refresh-cookie session before rendering the sign-in state.
-        if (Session.IsAuthenticated)
+        if (_signedIn)
         {
-            _signedIn = true;
-            _displayName = Session.User?.DisplayName ?? "there";
-            _role = Session.User?.Role ?? "Staff";
+            await InvokeAsync(StateHasChanged);
             await LoadProductsAsync();
         }
     }

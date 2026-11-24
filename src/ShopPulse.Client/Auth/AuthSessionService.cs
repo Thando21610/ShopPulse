@@ -22,15 +22,20 @@ public sealed class AuthSessionService
     public async Task<bool> RestoreAsync(CancellationToken ct = default)
     {
         if (IsAuthenticated) return true;
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromSeconds(8));
+        var tokenCt = timeout.Token;
+
         try
         {
-            using var response = await _http.PostAsync("api/auth/refresh", null, ct);
+            using var response = await _http.PostAsync("api/auth/refresh", null, tokenCt);
             if (!response.IsSuccessStatusCode)
             {
                 Clear();
                 return false;
             }
-            using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: ct);
+            using var payload = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: tokenCt);
             var token = payload?.RootElement.TryGetProperty("accessToken", out var value) == true ? value.GetString() : null;
             if (string.IsNullOrWhiteSpace(token))
             {
@@ -38,7 +43,7 @@ public sealed class AuthSessionService
                 return false;
             }
             _tokens.Set(token);
-            User = await _http.GetFromJsonAsync<SignedInUser>("api/auth/me", ct);
+            User = await _http.GetFromJsonAsync<SignedInUser>("api/auth/me", tokenCt);
             if (User is null) Clear();
             return User is not null;
         }
@@ -48,6 +53,11 @@ public sealed class AuthSessionService
             return false;
         }
         catch (JsonException)
+        {
+            Clear();
+            return false;
+        }
+        catch (OperationCanceledException)
         {
             Clear();
             return false;
