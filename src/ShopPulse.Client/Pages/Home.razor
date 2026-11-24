@@ -9,10 +9,7 @@
 
 <div class="dashboard-shell">
     <header class="dashboard-header">
-        <a class="brand-lockup" href="/" aria-label="ShopPulse home">
-            <span class="brand-mark" aria-hidden="true">S</span>
-            <span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span>
-        </a>
+        <ShopPulse.Client.Shared.BrandLockup />
         <div class="header-right">
             <span class="status-indicator @(_apiOnline ? "online" : "offline")"></span>
             <span>@(_apiOnline ? "API connected" : "API unavailable")</span>
