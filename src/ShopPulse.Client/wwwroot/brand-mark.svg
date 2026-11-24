@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ShopPulse S mark">
+  <rect x="1" y="1" width="62" height="62" rx="15" fill="#f3f4ed"/>
+  <text x="32" y="49" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="800" fill="#12382e">S</text>
+  <path d="M18 34H46" fill="none" stroke="#d6a64b" stroke-width="5" stroke-linecap="round"/>
+</svg>

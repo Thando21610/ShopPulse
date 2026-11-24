@@ -10,7 +10,7 @@
 <div class="dashboard-shell">
     <header class="dashboard-header">
         <a class="brand-lockup" href="/" aria-label="ShopPulse home">
-            <span class="brand-mark" aria-hidden="true">S</span>
+            <img class="brand-mark" src="brand-mark.svg" alt="" aria-hidden="true" />
             <span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span>
         </a>
         <div class="header-right">
@@ -99,7 +99,7 @@
                 {
                     <div class="empty-state"><span class="loader" aria-hidden="true"></span><strong>Loading catalogue…</strong><p class="muted">Retrieving the latest product data.</p></div>
                 }
-                else if (!!string.IsNullOrWhiteSpace(_productsError))
+                else if (!string.IsNullOrWhiteSpace(_productsError))
                 {
                     <div class="empty-state"><strong>Could not load products</strong><p class="muted">@_productsError</p><button class="button button-quiet" @onclick="LoadProductsAsync">Try again</button></div>
                 }
@@ -126,7 +126,7 @@
             <p class="permission-note">Signed in as @_displayName · @_role access. Permissions are enforced by the API.</p>
         }
     </main>
-    <footer class="dashboard-footer"><span>ShopPulse · Smarter operations. Less waste. Better business.</span><span>Store data is served securely by the ShopPulse API.</span></footer>
+    <footer class="dashboard-footer"><span>ShopPulse · Smarter operations. Less waste. Better business.</span><span>Store data is served securely by the ShopPulse API.</span><span class="creator-signature">Developed by <strong>Thando Nogemane</strong></span></footer>
 
     @if (!string.IsNullOrWhiteSpace(_toastMessage))
     {
