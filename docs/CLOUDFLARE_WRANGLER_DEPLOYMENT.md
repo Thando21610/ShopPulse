@@ -12,7 +12,7 @@ wrangler pages download config shoppulse
 
 Cloudflare documents that this command generates a Wrangler configuration from the current Pages project settings. Review the downloaded file before deploying. Preserve any existing compatibility settings, bindings, and environment configuration, then merge the ShopPulse values:
 
-- `name = "shoppulse"`
+- `name = "shoppulse-bpd"`
 - `pages_build_output_dir = "./output/wwwroot"`
 - `API_ORIGIN = "https://shoppulse-production-e6673892.up.railway.app"`
 
@@ -28,10 +28,10 @@ sh deploy-pages.sh
 
 The script restores the solution, runs Release tests, publishes the Blazor client to `output`, sets the published app's API base URL to the current Pages origin, and uploads the static assets plus the root `functions/` directory.
 
-By default, it deploys to the non-production branch alias `auth-session-preview`. The expected preview hostname is:
+By default, it deploys to the existing non-production `diagnostics` branch. The default target is the existing diagnostics branch hostname:
 
 ```
-https://auth-session-preview.shoppulse-bpd.pages.dev
+https://diagnostics.shoppulse-bpd.pages.dev
 ```
 
 Before testing login on that preview, add that exact HTTPS origin to the Railway API's `Cors:Origins` configuration. Keep the production origin in the allowlist as well. Do not use a wildcard origin; the API also validates the browser Origin header on login, refresh, and logout.
