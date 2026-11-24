@@ -470,3 +470,5 @@ button { touch-action: manipulation; }
 
 /* Ensure the wordmark layout wins over legacy generic span rules. */
 .brand-lockup .brand-copy { display: flex; flex-direction: column; min-width: 0; gap: 3px; }
+
+.brand-lockup:focus-visible { outline: 3px solid #d58b43; outline-offset: 4px; border-radius: 8px; }
