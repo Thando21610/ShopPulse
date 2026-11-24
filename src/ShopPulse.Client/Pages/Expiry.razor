@@ -7,7 +7,7 @@
 
 <PageTitle>Expiry dashboard | ShopPulse</PageTitle>
 <main class="feature-page">
-    <header class="feature-header"><a href="/" class="brand-lockup"><span class="brand-mark">S</span><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Stock health</span></header>
+    <header class="feature-header"><ShopPulse.Client.Shared.BrandLockup /><span class="role-chip">Stock health</span></header>
     <ShopPulse.Client.Shared.WorkspaceNav />
     <section class="feature-heading"><p class="eyebrow">INVENTORY · FEFO</p><h1>Expiry dashboard</h1><p class="muted">Prioritise stock that expires first and reduce avoidable waste.</p></section>
     <div class="toolbar-row"><label for="days">Look ahead</label><select id="days" class="form-control compact-select" @bind="_days" @bind:after="Load"><option value="7">Next 7 days</option><option value="14">Next 14 days</option><option value="30">Next 30 days</option><option value="90">Next 90 days</option></select><button class="button button-quiet" @onclick="Load">Refresh</button></div>
