@@ -4,6 +4,8 @@ set -eu
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 cd "$ROOT_DIR"
 
+DEPLOY_BRANCH="${1:-auth-session-preview}"
+
 echo "==> Restoring ShopPulse"
 dotnet restore ShopPulse.slnx
 
@@ -20,7 +22,9 @@ dotnet publish src/ShopPulse.Client/ShopPulse.Client.csproj \
 echo "==> Configuring the deployed client to use its same-origin Pages URL"
 printf '{\n  "ApiBaseUrl": ""\n}\n' > output/wwwroot/appsettings.json
 
-echo "==> Deploying Pages assets and Functions with Wrangler"
-wrangler pages deploy output/wwwroot --project-name shoppulse
+echo "==> Deploying Pages assets and Functions to branch: $DEPLOY_BRANCH"
+wrangler pages deploy output/wwwroot \
+    --project-name shoppulse \
+    --branch "$DEPLOY_BRANCH"
 
 echo "==> ShopPulse Pages deployment command completed"
