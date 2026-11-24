@@ -7,7 +7,7 @@ The Blazor WebAssembly client is published as static assets. Cloudflare Pages Fu
 The first time you use Wrangler against the existing Pages project, download its current configuration:
 
 ```sh
-wrangler pages download config shoppulse
+wrangler pages download config shoppulse-bpd
 ```
 
 Cloudflare documents that this command generates a Wrangler configuration from the current Pages project settings. Review the downloaded file before deploying. Preserve any existing compatibility settings, bindings, and environment configuration, then merge the ShopPulse values:
