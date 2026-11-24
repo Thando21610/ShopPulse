@@ -129,7 +129,7 @@ public sealed class AuthSessionService
             if (string.IsNullOrWhiteSpace(token))
                 return (false, "The server returned an unexpected sign-in response.");
 
-            var user = userValue.Deserialize<SignedInUser>();
+            var user = userValue.Deserialize<SignedInUser>(new JsonSerializerOptions(JsonSerializerDefaults.Web));
             if (user is null)
                 return (false, "Your account response is incomplete. Please contact your administrator.");
 
