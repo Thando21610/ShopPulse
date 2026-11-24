@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">ShopPulse mark</title>
+  <rect width="64" height="64" rx="16" fill="#153b2e"/>
+  <path d="M13 43h8V31h-8zM27 43h8V21h-8zM41 43h8V27h-8z" fill="#b8e3c8"/>
+  <path d="M11 49h42" fill="none" stroke="#e8f2eb" stroke-linecap="round" stroke-width="2.5" opacity=".9"/>
+  <path d="M12 17h9l5 7 6-11 6 13 4-6h10" fill="none" stroke="#e6a45c" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+</svg>
