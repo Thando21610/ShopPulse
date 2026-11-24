@@ -457,3 +457,93 @@ button { touch-action: manipulation; }
   .receipt-meta,.receipt-breakdown,.receipt-items { break-inside:avoid; }
   #receipt { padding:0!important; }
 }
+
+
+/* ShopPulse brand refresh — restrained forest, warm neutral and brass palette. */
+:root {
+  --ink: #1b2b25;
+  --accent: #174b3b;
+  --bg-soft: #f1f3ee;
+  --surface: #fbfcf9;
+  --card-border: #dce3dc;
+  --text-muted: #65736a;
+  --success: #26734b;
+  --warning: #936515;
+}
+body { background: var(--bg-soft); color: var(--ink); }
+.dashboard-header {
+  min-height: 76px;
+  height: auto;
+  background: #12382e;
+  border-bottom: 1px solid #244b40;
+  color: #f7f8f3;
+}
+.brand-lockup { gap: 13px; }
+.brand-mark {
+  display: block;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  object-fit: contain;
+  border-radius: 0;
+  background: transparent;
+}
+.brand-lockup strong { color: #fff; letter-spacing: -.35px; }
+.brand-lockup small, .brand-lockup span:not(.brand-mark) { color: #c2d0c7; }
+.header-right { color: #e0e8e2; }
+.status-indicator.online { background: #79c99b; box-shadow: 0 0 0 3px rgba(121,201,155,.16); }
+.status-indicator.offline { background: #e3b56b; box-shadow: 0 0 0 3px rgba(227,181,107,.16); }
+.dashboard-main { width: min(1160px, calc(100% - 48px)); padding-top: clamp(34px,5vw,58px); }
+.welcome-row h1 { color: #17392e; }
+.eyebrow { color: #557364; }
+.date-chip, .count-pill, .role-chip {
+  background: #f8faf6;
+  border-color: #d9e1d9;
+  color: #40564a;
+}
+.panel, .metric-card {
+  background: #fbfcf9;
+  border-color: #dce3dc;
+  box-shadow: 0 8px 24px rgba(25,53,40,.055);
+}
+.sign-in-panel { padding: clamp(24px,4vw,34px); }
+.sign-in-panel h2 { color: #17392e; }
+.login-form label, .field-group label { color: #344b3e; }
+.login-form input, .field-group input, .field-group select, .form-control {
+  border-color: #cbd6cc;
+  background: #fff;
+  color: #1b2b25;
+}
+.login-form input:focus, .field-group input:focus, .field-group select:focus, .form-control:focus {
+  border-color: #39775b;
+  box-shadow: 0 0 0 3px rgba(57,119,91,.13);
+}
+.button-primary { background: #174b3b; color: #fff; }
+.button-primary:hover:not(:disabled) { background: #103b2f; }
+.button-quiet { background: #edf2ec; border-color: #d9e2d9; color: #2d4b3b; }
+.button-quiet:hover:not(:disabled) { background: #e3ebe2; }
+.dashboard-footer {
+  background: #12382e;
+  border-top: 1px solid #244b40;
+  color: #c2d0c7;
+}
+.boot-screen { background: #f1f3ee; color: #52665a; }
+.boot-mark {
+  display: block;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  object-fit: contain;
+  background: transparent;
+  border-radius: 0;
+}
+.workspace-nav a[aria-current="page"], .workspace-nav a.active {
+  color: #174b3b;
+  background: #e8efe8;
+  border-color: #c8d8ca;
+}
+@media (max-width: 680px) {
+  .dashboard-header { padding: 12px 16px; }
+  .dashboard-main { width: calc(100% - 32px); padding-top: 32px; }
+  .dashboard-footer { padding: 18px 16px; }
+}
