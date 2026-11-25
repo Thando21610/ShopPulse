@@ -1,4 +1,4 @@
-name = "shoppulse-bpd"
+name = "shoppulse"
 compatibility_date = "2026-11-24"
 pages_build_output_dir = "./output/wwwroot"
 
