@@ -167,9 +167,25 @@
             {
                 using var healthTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
                 using var response = await Http.GetAsync("health", healthTimeout.Token);
-                _apiOnline = response.IsSuccessStatusCode;
+                if (response.IsSuccessStatusCode
+                    && string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+                {
+                    using var health = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: healthTimeout.Token);
+                    _apiOnline = health?.RootElement.TryGetProperty("status", out var status) == true
+                        && status.GetString() == "ok"
+                        && health.RootElement.TryGetProperty("service", out var service)
+                        && service.GetString() == "ShopPulse API";
+                }
+                else
+                {
+                    _apiOnline = false;
+                }
             }
             catch (HttpRequestException)
+            {
+                _apiOnline = false;
+            }
+            catch (JsonException)
             {
                 _apiOnline = false;
             }
