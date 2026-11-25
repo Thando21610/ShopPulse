@@ -756,3 +756,19 @@ body { background: var(--bg-soft); color: var(--ink); }
   .feature-user-name { display: none; }
   .feature-header .feature-signout { min-height: 34px; padding: 7px 10px; font-size: 12px; }
 }
+
+
+/* Audit payloads remain readable without forcing character-by-character wrapping. */
+.table-wrap td:last-child details {
+  min-width: 190px;
+}
+.audit-json {
+  max-width: min(360px, 42vw);
+  overflow-x: auto;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+@media (max-width: 959px) {
+  .audit-json { max-width: 280px; }
+}
