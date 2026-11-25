@@ -772,3 +772,18 @@ body { background: var(--bg-soft); color: var(--ink); }
 @media (max-width: 959px) {
   .audit-json { max-width: 280px; }
 }
+
+.feature-api-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #e1e9e3;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.feature-api-status .status-indicator {
+  flex: 0 0 8px;
+}
+@media (max-width: 520px) {
+  .feature-api-status { font-size: 11px; }
+}
