@@ -206,9 +206,24 @@
                 _error = await ApiErrorFormatter.FormatAsync(response, "The cash shift could not be opened. Check that no shift is already open.");
                 return;
             }
+            var createdShift = await response.Content.ReadFromJsonAsync<ShiftInfo>();
+            if (createdShift is null)
+            {
+                _error = "The API accepted the cash shift but returned no shift details. Refresh the shift status before continuing.";
+                return;
+            }
+
             _result = null;
-            Toast.ShowSuccess("Cash shift opened.");
+            if (IsOwner) _selectedShiftId = createdShift.Id;
             await Load();
+            if (_shift?.Id != createdShift.Id)
+            {
+                _error = "The cash shift was created, but the refreshed shift list did not return it. Refresh before accepting cash.";
+                Toast.ShowError("Cash shift creation could not be verified.");
+                return;
+            }
+
+            Toast.ShowSuccess("Cash shift opened and verified.");
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
