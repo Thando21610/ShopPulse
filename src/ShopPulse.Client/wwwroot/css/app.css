@@ -787,3 +787,27 @@ body { background: var(--bg-soft); color: var(--ink); }
 @media (max-width: 520px) {
   .feature-api-status { font-size: 11px; }
 }
+
+
+/* Side-by-side management workflows on wide screens; stacked forms on smaller devices. */
+.management-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, .78fr) minmax(0, 1.22fr);
+  gap: 18px;
+  align-items: start;
+  min-width: 0;
+}
+.management-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+.management-grid > .panel,
+.management-form-stack > .panel {
+  min-width: 0;
+  margin: 0;
+}
+@media (max-width: 1100px) {
+  .management-grid { grid-template-columns: minmax(0, 1fr); }
+}
