@@ -1,6 +1,8 @@
+@using System.Text.Json
 @inject ShopPulse.Client.Auth.AuthSessionService Session
 @inject NavigationManager Navigation
 @inject ShopPulse.Client.ToastService Toast
+@inject HttpClient Http
 
 <header class="feature-header">
     <a href="/" class="brand-lockup" aria-label="ShopPulse overview">
@@ -8,6 +10,10 @@
         <span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span>
     </a>
     <div class="feature-header-actions">
+        <span class="feature-api-status" role="status">
+            <span class="status-indicator @(_apiOnline ? "online" : "offline")"></span>
+            @(_apiOnline ? "API connected" : "API unavailable")
+        </span>
         @if (Session.User is { } user)
         {
             <span class="feature-user-name">@user.DisplayName</span>
@@ -20,7 +26,28 @@
 </header>
 
 @code {
-    private bool _signingOut;
+    private bool _signingOut, _apiOnline;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        try
+        {
+            using var response = await Http.GetAsync("health", timeout.Token);
+            if (!response.IsSuccessStatusCode
+                || !string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            using var health = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: timeout.Token);
+            _apiOnline = health?.RootElement.TryGetProperty("status", out var status) == true
+                && status.GetString() == "ok"
+                && health.RootElement.TryGetProperty("service", out var service)
+                && service.GetString() == "ShopPulse API";
+        }
+        catch (HttpRequestException) { _apiOnline = false; }
+        catch (JsonException) { _apiOnline = false; }
+        catch (OperationCanceledException) { _apiOnline = false; }
+    }
 
     private async Task SignOutAsync()
     {
