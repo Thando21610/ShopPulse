@@ -171,8 +171,47 @@
     private async Task LoadCashShift()
     {
         _checkingCashShift = true;
-        try { _cashShift = await Http.GetFromJsonAsync<CashShiftInfo>("api/cash-shifts/current"); _cashShiftLoadFailed = false; if (_cashShift is not null) _cashShiftRequired = false; if (_error == "Could not verify your cash shift. Refresh the status before accepting cash.") _error = null; }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _cashShift = null; _cashShiftLoadFailed = true; _error = "Could not verify your cash shift. Refresh the status before accepting cash."; }
+        try
+        {
+            using var response = await Http.GetAsync("api/cash-shifts/current");
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _cashShift = null;
+                _cashShiftRequired = true;
+                _cashShiftLoadFailed = false;
+                if (_error == "Could not verify your cash shift. Refresh the status before accepting cash.")
+                    _error = null;
+                return;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _cashShift = null;
+                _cashShiftLoadFailed = true;
+                _error = await ApiErrorFormatter.FormatAsync(
+                    response,
+                    $"Cash-shift status check failed (HTTP {(int)response.StatusCode}).");
+                return;
+            }
+
+            _cashShift = await response.Content.ReadFromJsonAsync<CashShiftInfo>();
+            _cashShiftLoadFailed = false;
+            _cashShiftRequired = _cashShift is null;
+            if (_error == "Could not verify your cash shift. Refresh the status before accepting cash.")
+                _error = null;
+        }
+        catch (HttpRequestException)
+        {
+            _cashShift = null;
+            _cashShiftLoadFailed = true;
+            _error = "The cash-shift service could not be reached. Retry the status check before accepting cash.";
+        }
+        catch (JsonException)
+        {
+            _cashShift = null;
+            _cashShiftLoadFailed = true;
+            _error = "The cash-shift service returned an invalid response. Retry before accepting cash.";
+        }
         finally { _checkingCashShift = false; }
     }
     private async Task LoadProducts()
