@@ -582,3 +582,19 @@ body { background: var(--bg-soft); color: var(--ink); }
   .dashboard-footer { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
   .creator-signature { padding-top: 4px; }
 }
+
+
+/* Keep transient notifications clear of headers, navigation and form controls. */
+.toast-host {
+  top: auto;
+  right: 20px;
+  bottom: 20px;
+}
+@media (max-width: 600px) {
+  .toast-host {
+    top: auto;
+    right: 16px;
+    bottom: 16px;
+    width: calc(100vw - 32px);
+  }
+}
