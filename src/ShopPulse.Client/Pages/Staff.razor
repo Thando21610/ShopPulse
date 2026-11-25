@@ -140,12 +140,21 @@
                 return;
             }
 
+            var createdOperator = await response.Content.ReadFromJsonAsync<StaffRow>();
             _createdOperatorName = _newStaff.DisplayName.Trim();
             _createdOperatorEmail = _newStaff.Email.Trim();
             _newStaff = new();
             _newStaffContext = CreateContext(_newStaff);
-            Toast.ShowSuccess("Operator account created. The operator can sign in with the email and initial password.");
             await Load();
+
+            if (createdOperator is null || !_staff.Any(person => person.Id == createdOperator.Id))
+            {
+                _error = "The API accepted the operator account, but the refreshed team list did not return it. Verify the business account before asking the operator to sign in.";
+                Toast.ShowError("Operator account creation could not be verified in the team list.");
+                return;
+            }
+
+            Toast.ShowSuccess("Operator account created and verified. The operator can now sign in with the email and initial password.");
         }
         catch (HttpRequestException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
