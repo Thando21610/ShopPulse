@@ -6,9 +6,9 @@ cd "$ROOT_DIR"
 
 DEPLOY_BRANCH="${1:-diagnostics}"
 
-# Refuse accidental production deployment from this helper.
-if [ "$DEPLOY_BRANCH" = "main" ] || [ "$DEPLOY_BRANCH" = "production" ]; then
-    echo "ERROR: This helper is for diagnostic previews only. Production deployment requires a separate reviewed process."
+# This helper is intentionally restricted to the diagnostic preview branch.
+if [ "$DEPLOY_BRANCH" != "diagnostics" ]; then
+    echo "ERROR: This helper can deploy only to the diagnostics branch."
     exit 1
 fi
 
