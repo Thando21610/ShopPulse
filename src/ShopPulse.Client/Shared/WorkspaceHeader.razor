@@ -1,0 +1,40 @@
+@inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Navigation
+@inject ShopPulse.Client.ToastService Toast
+
+<header class="feature-header">
+    <a href="/" class="brand-lockup" aria-label="ShopPulse overview">
+        <img class="brand-mark" src="/brand-mark.svg" alt="" aria-hidden="true" />
+        <span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span>
+    </a>
+    <div class="feature-header-actions">
+        @if (Session.User is { } user)
+        {
+            <span class="feature-user-name">@user.DisplayName</span>
+            <span class="role-chip">@user.Role</span>
+            <button class="button button-quiet feature-signout" type="button" @onclick="SignOutAsync" disabled="@_signingOut">
+                @(_signingOut ? "Signing out…" : "Sign out")
+            </button>
+        }
+    </div>
+</header>
+
+@code {
+    private bool _signingOut;
+
+    private async Task SignOutAsync()
+    {
+        if (_signingOut) return;
+        _signingOut = true;
+        try
+        {
+            await Session.SignOutAsync();
+            Toast.Clear();
+            Navigation.NavigateTo("/", replace: true);
+        }
+        finally
+        {
+            _signingOut = false;
+        }
+    }
+}
