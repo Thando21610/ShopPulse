@@ -16,6 +16,7 @@
     else
     {
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        <div class="management-grid">
         <section class="panel form-panel">
             <div class="panel-heading"><h2>@(_editingId.HasValue ? "Edit product" : "Add a product")</h2>@if (_editingId.HasValue) { <button class="button button-quiet" @onclick="ResetForm">Cancel edit</button> }</div>
             <EditForm EditContext="_editContext" OnValidSubmit="Save">
@@ -53,6 +54,7 @@
                 </table></div>
             }
         </section>
+        </div>
     }
 </main>
 
