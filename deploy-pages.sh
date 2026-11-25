@@ -6,7 +6,7 @@ cd "$ROOT_DIR"
 
 DEPLOY_BRANCH="${1:-diagnostics}"
 
-echo "==> Restoring ShopPulse"
+ echo "==> Restoring ShopPulse"
 dotnet restore ShopPulse.slnx
 
 echo "==> Running release tests"
@@ -24,7 +24,7 @@ printf '{\n  "ApiBaseUrl": ""\n}\n' > output/wwwroot/appsettings.json
 
 echo "==> Deploying Pages assets and Functions to branch: $DEPLOY_BRANCH"
 wrangler pages deploy output/wwwroot \
-    --project-name shoppulse-bpd \
+    --project-name shoppulse \
     --branch "$DEPLOY_BRANCH"
 
 echo "==> ShopPulse Pages deployment command completed"
