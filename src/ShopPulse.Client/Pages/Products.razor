@@ -119,9 +119,23 @@
                 if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
                 return;
             }
-            Toast.ShowSuccess(_editingId.HasValue ? "Product updated." : "Product added.");
+            var savedProduct = await response.Content.ReadFromJsonAsync<ProductRow>();
+            if (savedProduct is null)
+            {
+                _error = "The API accepted the product save but returned no product identity. Refresh the product list before continuing.";
+                return;
+            }
+
             ResetForm();
             await Load();
+            if (!_products.Any(item => item.Id == savedProduct.Id))
+            {
+                _error = "The API accepted the save, but the product was not returned by this business catalogue. Refresh and verify the store before receiving stock or making sales.";
+                Toast.ShowError("Product save could not be verified in the catalogue.");
+                return;
+            }
+
+            Toast.ShowSuccess(_editingId.HasValue ? "Product updated and verified in the catalogue." : "Product added and verified in the catalogue.");
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
