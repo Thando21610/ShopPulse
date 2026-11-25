@@ -717,3 +717,42 @@ body { background: var(--bg-soft); color: var(--ink); }
   border-color: rgba(255,255,255,.22);
   color: #f7f8f3;
 }
+
+
+/* Shared authenticated header actions stay aligned with the ShopPulse brand. */
+.feature-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.feature-user-name {
+  max-width: 190px;
+  overflow: hidden;
+  color: #e1e9e3;
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.feature-header .feature-signout {
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255,255,255,.3);
+  background: transparent;
+  color: #fff;
+  white-space: nowrap;
+}
+.feature-header .feature-signout:hover:not(:disabled) {
+  border-color: rgba(255,255,255,.55);
+  background: rgba(255,255,255,.1);
+  color: #fff;
+}
+@media (max-width: 520px) {
+  .feature-header-actions { gap: 6px; }
+  .feature-user-name { display: none; }
+  .feature-header .feature-signout { min-height: 34px; padding: 7px 10px; font-size: 12px; }
+}
