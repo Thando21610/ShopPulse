@@ -6,7 +6,7 @@ cd "$ROOT_DIR"
 
 DEPLOY_BRANCH="${1:-diagnostics}"
 
- echo "==> Restoring ShopPulse"
+echo "==> Restoring ShopPulse"
 dotnet restore ShopPulse.slnx
 
 echo "==> Running release tests"
