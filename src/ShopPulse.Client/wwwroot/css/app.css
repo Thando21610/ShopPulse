@@ -851,3 +851,9 @@ body { background: var(--bg-soft); color: var(--ink); }
   }
   .dashboard-main:has(> .workspace-nav) .workspace-nav-group { display: contents; }
 }
+
+@media (max-width: 520px) {
+  .feature-api-status { font-size: 0; gap: 0; }
+  .feature-header .role-chip { padding: 6px 8px; font-size: 10px; }
+  .feature-header .feature-signout { padding: 6px 8px; font-size: 11px; }
+}
