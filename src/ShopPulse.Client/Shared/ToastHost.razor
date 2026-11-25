@@ -1,5 +1,6 @@
 @implements IDisposable
 @inject ShopPulse.Client.ToastService Toast
+@inject NavigationManager Navigation
 
 @if (!string.IsNullOrWhiteSpace(Toast.Message))
 {
@@ -16,9 +17,20 @@
 }
 
 @code {
-    protected override void OnInitialized() => Toast.OnChange += HandleChange;
+    protected override void OnInitialized()
+    {
+        Toast.OnChange += HandleChange;
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
 
     private void HandleChange() => _ = InvokeAsync(StateHasChanged);
 
-    public void Dispose() => Toast.OnChange -= HandleChange;
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args)
+        => Toast.Clear();
+
+    public void Dispose()
+    {
+        Toast.OnChange -= HandleChange;
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
 }
