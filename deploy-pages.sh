@@ -6,6 +6,12 @@ cd "$ROOT_DIR"
 
 DEPLOY_BRANCH="${1:-diagnostics}"
 
+# Refuse accidental production deployment from this helper.
+if [ "$DEPLOY_BRANCH" = "main" ] || [ "$DEPLOY_BRANCH" = "production" ]; then
+    echo "ERROR: This helper is for diagnostic previews only. Production deployment requires a separate reviewed process."
+    exit 1
+fi
+
 echo "==> Restoring ShopPulse"
 dotnet restore ShopPulse.slnx
 
@@ -23,8 +29,8 @@ echo "==> Configuring the deployed client to use its same-origin Pages URL"
 printf '{\n  "ApiBaseUrl": ""\n}\n' > output/wwwroot/appsettings.json
 
 echo "==> Deploying Pages assets and Functions to branch: $DEPLOY_BRANCH"
-wrangler pages deploy output/wwwroot \
+npx --yes wrangler pages deploy output/wwwroot \
     --project-name shoppulse \
     --branch "$DEPLOY_BRANCH"
 
-echo "==> ShopPulse Pages deployment command completed"
+echo "==> ShopPulse diagnostic Pages deployment command completed"
