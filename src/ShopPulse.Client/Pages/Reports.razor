@@ -13,7 +13,7 @@
     @if (_forbidden) { <div class="inline-alert" role="alert">Financial reports are available to the store owner only.</div> }
     else
     {
-        <div class="toolbar-row"><label for="report-date">Report date</label><input id="report-date" class="form-control compact-select" type="date" @bind="_date" @bind:after="Load" /><button class="button button-quiet" @onclick="Load">Refresh</button></div>
+        <div class="toolbar-row"><label for="report-date">Report date (SAST)</label><input id="report-date" class="form-control compact-select" type="date" @bind="_date" @bind:after="Load" /><span class="date-chip">@_date.ToString("dd MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"))</span><button class="button button-quiet" @onclick="Load">Refresh</button></div>
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
         @if (_loading)
         {
@@ -57,8 +57,32 @@
     private async Task Load()
     {
         _loading = true; _error = null;
-        try { _report = await Http.GetFromJsonAsync<ReportSummary>($"api/reports/summary?date={_date:yyyy-MM-dd}"); }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _report = null; _error = "The report could not be loaded. Check your connection and retry."; }
+        try
+        {
+            using var response = await Http.GetAsync($"api/reports/summary?date={_date:yyyy-MM-dd}");
+            if (!response.IsSuccessStatusCode)
+            {
+                _report = null;
+                _error = await ApiErrorFormatter.FormatAsync(
+                    response,
+                    $"The report request failed (HTTP {(int)response.StatusCode}).");
+                return;
+            }
+
+            _report = await response.Content.ReadFromJsonAsync<ReportSummary>();
+            if (_report is null)
+                _error = "The API returned an empty report response.";
+        }
+        catch (HttpRequestException)
+        {
+            _report = null;
+            _error = "The report service could not be reached. Check your connection and retry.";
+        }
+        catch (JsonException)
+        {
+            _report = null;
+            _error = "The report response was not valid JSON. Please retry.";
+        }
         finally { _loading = false; }
     }
     private static string Money(decimal v) => v.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"));
