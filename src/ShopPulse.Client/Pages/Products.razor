@@ -104,6 +104,7 @@
     {
         ApiErrorFormatter.ClearServerValidationErrors(_editContext);
         _busy = true; _error = null;
+        var wasEditing = _editingId.HasValue;
         try
         {
             var payload = new { sku = _form.Sku.Trim(), name = _form.Name.Trim(), category = _form.Category, unitPrice = _form.UnitPrice, minimumStockLevel = _form.MinimumStockLevel, hasExpiry = _form.HasExpiry };
@@ -135,7 +136,7 @@
                 return;
             }
 
-            Toast.ShowSuccess(_editingId.HasValue ? "Product updated and verified in the catalogue." : "Product added and verified in the catalogue.");
+            Toast.ShowSuccess(wasEditing ? "Product updated and verified in the catalogue." : "Product added and verified in the catalogue.");
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
