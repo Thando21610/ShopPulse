@@ -117,6 +117,19 @@ public class ProductsController : ControllerBase
         return Ok(new { product.Id, product.IsActive });
     }
 
+    [HttpPost("{id:guid}/activate")]
+    [Authorize(Policy = ShopPulsePolicies.CanManageProducts)]
+    public async Task<IActionResult> Activate(Guid id, CancellationToken ct)
+    {
+        var product = await _db.Products.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (product is null) return NotFound(new { code = "PRODUCT_NOT_FOUND", message = "Product not found." });
+        if (product.IsActive) return Ok(new { product.Id, product.IsActive });
+        product.IsActive = true;
+        AddAudit("ProductActivated", product.Id, new { product.Sku, product.Name });
+        await _db.SaveChangesAsync(ct);
+        return Ok(new { product.Id, product.IsActive });
+    }
+
     private static string? Validate(SaveProductRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Sku) || request.Sku.Trim().Length > 64)
