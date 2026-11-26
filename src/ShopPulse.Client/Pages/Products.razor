@@ -82,8 +82,19 @@
     private async Task Load()
     {
         _loading = true; _error = null;
-        try { _products = await Http.GetFromJsonAsync<List<ProductRow>>("api/products/manage") ?? []; }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The product list could not be loaded."; }
+        try
+        {
+            using var response = await Http.GetAsync("api/products/manage");
+            if (!response.IsSuccessStatusCode)
+            {
+                _products = [];
+                _error = await ApiErrorFormatter.FormatAsync(response, "The product catalogue could not be loaded.");
+                return;
+            }
+            _products = await response.Content.ReadFromJsonAsync<List<ProductRow>>() ?? [];
+        }
+        catch (HttpRequestException) { _error = "The product service could not be reached. Check your connection and retry."; }
+        catch (JsonException) { _error = "The product catalogue returned an invalid response. Refresh and try again."; }
         finally { _loading = false; }
     }
 
