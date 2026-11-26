@@ -1,9 +1,11 @@
 @page "/"
+@page "/dashboard"
 @using System.ComponentModel.DataAnnotations
 @using System.Net.Http.Json
 @using System.Text.Json
 @inject HttpClient Http
 @inject ShopPulse.Client.Auth.AuthSessionService Session
+@inject NavigationManager Nav
 
 <PageTitle>ShopPulse | Store workspace</PageTitle>
 
@@ -41,6 +43,16 @@
                     <span class="loader" aria-hidden="true"></span>
                     <strong>Restoring your store session…</strong>
                     <p class="muted">Please wait while we securely check your sign-in.</p>
+                </div>
+            </section>
+        }
+        else if (_sessionUnavailable)
+        {
+            <section class="panel sign-in-panel" role="alert">
+                <div class="empty-state">
+                    <strong>We couldn't verify your store session.</strong>
+                    <p class="muted">Your sign-in has not been cleared. Check your connection and try restoring your session again.</p>
+                    <button class="button button-primary" @onclick="RetryRestoreAsync" disabled="@_busy">Retry session restoration</button>
                 </div>
             </section>
         }
@@ -143,7 +155,7 @@
 @code {
     private readonly LoginModel _login = new();
     private readonly List<ProductRow> _products = [];
-    private bool _signedIn, _busy, _loadingProducts, _apiOnline, _toastIsError, _checkingSession = true;
+    private bool _signedIn, _busy, _loadingProducts, _apiOnline, _toastIsError, _checkingSession = true, _sessionUnavailable;
     private string _displayName = "there", _role = "";
     private string? _productsError, _toastMessage;
 
@@ -155,9 +167,25 @@
             {
                 using var healthTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
                 using var response = await Http.GetAsync("health", healthTimeout.Token);
-                _apiOnline = response.IsSuccessStatusCode;
+                if (response.IsSuccessStatusCode
+                    && string.Equals(response.Content.Headers.ContentType?.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+                {
+                    using var health = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: healthTimeout.Token);
+                    _apiOnline = health?.RootElement.TryGetProperty("status", out var status) == true
+                        && status.GetString() == "ok"
+                        && health.RootElement.TryGetProperty("service", out var service)
+                        && service.GetString() == "ShopPulse API";
+                }
+                else
+                {
+                    _apiOnline = false;
+                }
             }
             catch (HttpRequestException)
+            {
+                _apiOnline = false;
+            }
+            catch (JsonException)
             {
                 _apiOnline = false;
             }
@@ -166,19 +194,22 @@
                 _apiOnline = false;
             }
 
-            if (!_apiOnline)
-            {
-                ShowToast("The service is currently unavailable. Check your connection and try again.", true);
-                return;
-            }
-
-            await Session.RestoreAsync();
-
-            if (Session.IsAuthenticated)
+            var restored = await Session.RestoreAsync();
+            if (restored && Session.IsAuthenticated)
             {
                 _signedIn = true;
                 _displayName = Session.User?.DisplayName ?? "there";
                 _role = Session.User?.Role ?? "Staff";
+                if (new Uri(Nav.Uri).AbsolutePath == "/")
+                    Nav.NavigateTo("/dashboard", replace: true);
+            }
+            else
+            {
+                _sessionUnavailable = Session.RestoreUnavailable;
+                if (!_sessionUnavailable && new Uri(Nav.Uri).AbsolutePath == "/dashboard")
+                    Nav.NavigateTo("/", replace: true);
+                if (!_apiOnline && !_sessionUnavailable)
+                    ShowToast("The service is currently unavailable. Check your connection and try again.", true);
             }
         }
         finally
@@ -208,10 +239,41 @@
             _displayName = Session.User?.DisplayName ?? "there";
             _role = Session.User?.Role ?? "Staff";
             _signedIn = true;
+            _sessionUnavailable = false;
+            Nav.NavigateTo("/dashboard", replace: true);
             ShowToast("You're signed in. Welcome to your store workspace.");
             await LoadProductsAsync();
         }
         finally { _busy = false; }
+    }
+
+    private async Task RetryRestoreAsync()
+    {
+        _busy = true;
+        _checkingSession = true;
+        _sessionUnavailable = false;
+        try
+        {
+            if (await Session.RestoreAsync() && Session.IsAuthenticated)
+            {
+                _signedIn = true;
+                _displayName = Session.User?.DisplayName ?? "there";
+                _role = Session.User?.Role ?? "Staff";
+                Nav.NavigateTo("/dashboard", replace: true);
+                await LoadProductsAsync();
+            }
+            else
+            {
+                _sessionUnavailable = Session.RestoreUnavailable;
+                if (!_sessionUnavailable && new Uri(Nav.Uri).AbsolutePath == "/dashboard")
+                    Nav.NavigateTo("/", replace: true);
+            }
+        }
+        finally
+        {
+            _checkingSession = false;
+            _busy = false;
+        }
     }
 
     private async Task LoadProductsAsync()

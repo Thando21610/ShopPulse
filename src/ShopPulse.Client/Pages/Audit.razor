@@ -7,7 +7,7 @@
 
 <PageTitle>Audit history | ShopPulse</PageTitle>
 <main class="feature-page">
-    <header class="feature-header"><a href="/" class="brand-lockup"><img class="brand-mark" src="/brand-mark.svg" alt="" aria-hidden="true" /><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Audit history</span></header>
+    <ShopPulse.Client.Shared.WorkspaceHeader />
     <ShopPulse.Client.Shared.WorkspaceNav />
     <section class="feature-heading"><p class="eyebrow">GOVERNANCE · OWNER</p><h1>Audit history</h1><p class="muted">Review important actions recorded by the application. Events are read-only in this screen.</p></section>
     @if (_forbidden) { <div class="inline-alert" role="alert">Audit history is available to the store owner only.</div> }
@@ -16,7 +16,7 @@
         <div class="toolbar-row"><label for="filter">Filter actions</label><input id="filter" class="form-control compact-select" @bind="_filter" @bind:event="oninput" placeholder="e.g. Sale, Stock, Staff" /><button class="button button-quiet" @onclick="Load">Apply</button></div>
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
         <section class="panel products-panel">
-            <div class="panel-heading"><h2>Recent events</h2><span class="count-pill">@_events.Count events</span></div>
+            <div class="panel-heading"><h2>Recent events</h2><span class="count-pill">@_events.Count @(_events.Count == 1 ? "event" : "events")</span></div>
             @if (_loading) { <p class="muted">Loading audit history…</p> }
             else if (_events.Count == 0) { <p class="muted">No matching audit events were found.</p> }
             else
@@ -31,7 +31,7 @@
                             <td>@(item.ActorName ?? "System")</td>
                             <td><strong>@item.Action</strong></td>
                             <td>@item.EntityType <small class="table-subtext">@item.EntityId</small></td>
-                            <td><details><summary>View</summary><pre class="audit-json">@item.DetailsJson</pre></details></td>
+                            <td><details><summary>View</summary><pre class="audit-json">@FormatDetails(item.DetailsJson)</pre></details></td>
                         </tr>
                     }
                     </tbody>
@@ -62,6 +62,26 @@
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "Audit history could not be loaded."; }
         finally { _loading = false; }
     }
+    private static string FormatDetails(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return "No additional details.";
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+            if (root.ValueKind == JsonValueKind.Object
+                && root.TryGetProperty("OpeningFloat", out var openingFloat)
+                && openingFloat.TryGetDecimal(out var amount))
+                return $"Opening float: {amount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA"))}";
+
+            return JsonSerializer.Serialize(root, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (JsonException)
+        {
+            return json;
+        }
+    }
+
     private sealed class AuditRow
     {
         public Guid Id { get; set; } public string Action { get; set; } = ""; public string EntityType { get; set; } = "";

@@ -9,28 +9,36 @@
 
 <PageTitle>Manage staff | ShopPulse</PageTitle>
 <main class="feature-page">
-    <header class="feature-header"><a href="/" class="brand-lockup"><img class="brand-mark" src="/brand-mark.svg" alt="" aria-hidden="true" /><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Staff access</span></header>
+    <ShopPulse.Client.Shared.WorkspaceHeader />
     <ShopPulse.Client.Shared.WorkspaceNav />
     <section class="feature-heading"><p class="eyebrow">TEAM · OWNER</p><h1>Manage staff</h1><p class="muted">Create operator accounts and assign specific product, receiving, waste and refund permissions.</p></section>
     @if (_forbidden) { <div class="inline-alert" role="alert">Only the store owner can manage staff accounts.</div> }
     else
     {
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        @if (!string.IsNullOrWhiteSpace(_createdOperatorEmail))
+        {
+            <div class="toast-inline" role="status">
+                <strong>Operator account created.</strong>
+                @_createdOperatorName can now sign in with <strong>@_createdOperatorEmail</strong> and the initial password you set. Share that password securely; no invitation email is sent.
+            </div>
+        }
+        <div class="management-grid">
+        <div class="management-form-stack">
         <section class="panel form-panel">
             <div class="panel-heading"><h2>Add an operator</h2></div>
             <EditForm EditContext="_newStaffContext" OnValidSubmit="Create">
                 <DataAnnotationsValidator />
                 <div class="form-grid">
-                    <div class="field-group"><label for="staff-name">Full name</label><InputText id="staff-name" class="form-control" @bind-Value="_newStaff.DisplayName" maxlength="120" /><ValidationMessage For="@(() => _newStaff.DisplayName)" /></div>
-                    <div class="field-group"><label for="staff-email">Email address</label><InputText id="staff-email" class="form-control" type="email" @bind-Value="_newStaff.Email" autocomplete="off" /><ValidationMessage For="@(() => _newStaff.Email)" /></div>
+                    <div class="field-group"><label for="staff-name">Full name</label><InputText id="staff-name" class="form-control" @bind-Value="_newStaff.DisplayName" maxlength="120" autocomplete="name" /><ValidationMessage For="@(() => _newStaff.DisplayName)" /></div>
+                    <div class="field-group"><label for="staff-email">Email address (sign-in username)</label><InputText id="staff-email" class="form-control" type="email" @bind-Value="_newStaff.Email" autocomplete="email" placeholder="operator@yourshop.co.za" /><ValidationMessage For="@(() => _newStaff.Email)" /></div>
                     <div class="field-group"><label for="staff-password">Initial password</label><InputText id="staff-password" class="form-control" type="password" @bind-Value="_newStaff.Password" autocomplete="new-password" /><ValidationMessage For="@(() => _newStaff.Password)" /></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanAdjustStock" /> Allow this operator to record stock waste</label></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanRefundSales" /> Allow this operator to refund sales</label></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanManageProducts" /> Allow this operator to manage products</label></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_newStaff.CanReceiveStock" /> Allow this operator to receive stock</label></div>
-
                 </div>
-                <p class="muted small-note">Give the initial password to the operator securely. Password reset and invitation email are not yet integrated.</p>
+                <p class="muted small-note">Use a password of at least 12 characters. The account is active immediately after creation. Give the operator the email address and password securely so they can sign in on this ShopPulse login page. Email invitations and password resets are not yet integrated.</p>
                 <button class="button button-primary" type="submit" disabled="@_busy">@(_busy ? "Creating…" : "Create operator")</button>
             </EditForm>
         </section>
@@ -48,12 +56,12 @@
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanRefundSales" /> Can refund sales</label></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanManageProducts" /> Can manage products</label></div>
                         <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_editing.CanReceiveStock" /> Can receive stock</label></div>
- 
                     </div>
                     <button class="button button-primary" type="submit" disabled="@_busy">Save staff access</button>
                 </EditForm>
             </section>
         }
+        </div>
 
         <section class="panel products-panel">
             <div class="panel-heading"><h2>Store team</h2><button class="button button-quiet" @onclick="Load" disabled="@_busy">Refresh</button></div>
@@ -78,6 +86,7 @@
                 </table></div>
             }
         </section>
+        </div>
     }
 </main>
 
@@ -87,6 +96,7 @@
     private EditContext _newStaffContext;
     private EditStaffForm? _editing;
     private EditContext? _editingContext;
+    private string? _createdOperatorEmail, _createdOperatorName;
 
     public Staff()
     {
@@ -112,8 +122,19 @@
     private async Task Load()
     {
         _loading = true; _error = null;
-        try { _staff = await Http.GetFromJsonAsync<List<StaffRow>>("api/staff") ?? []; }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The staff list could not be loaded."; }
+        try
+        {
+            using var response = await Http.GetAsync("api/staff");
+            if (!response.IsSuccessStatusCode)
+            {
+                _staff = [];
+                _error = await ApiErrorFormatter.FormatAsync(response, "The store team could not be loaded.");
+                return;
+            }
+            _staff = await response.Content.ReadFromJsonAsync<List<StaffRow>>() ?? [];
+        }
+        catch (HttpRequestException) { _error = "The staff service could not be reached. Check your connection and retry."; }
+        catch (JsonException) { _error = "The team list returned an invalid response. Refresh and try again."; }
         finally { _loading = false; }
     }
 
@@ -133,10 +154,28 @@
                 if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
                 return;
             }
+
+            var createdOperator = await response.Content.ReadFromJsonAsync<StaffRow>();
+            _createdOperatorName = _newStaff.DisplayName.Trim();
+            _createdOperatorEmail = _newStaff.Email.Trim();
             _newStaff = new();
             _newStaffContext = CreateContext(_newStaff);
-            Toast.ShowSuccess("Operator account created.");
             await Load();
+            if (!string.IsNullOrWhiteSpace(_error))
+            {
+                _error = "The operator account was created, but the team list could not be refreshed. Use Refresh before creating another account.";
+                Toast.ShowSuccess("Operator account created. Team list refresh is still needed.");
+                return;
+            }
+
+            if (createdOperator is null || !_staff.Any(person => person.Id == createdOperator.Id))
+            {
+                _error = "The API accepted the operator account, but the refreshed team list did not return it. Verify the business account before asking the operator to sign in.";
+                Toast.ShowError("Operator account creation could not be verified in the team list.");
+                return;
+            }
+
+            Toast.ShowSuccess("Operator account created and verified. The operator can now sign in with the email and initial password.");
         }
         catch (HttpRequestException) { _error = "The service could not be reached."; }
         finally { _busy = false; }

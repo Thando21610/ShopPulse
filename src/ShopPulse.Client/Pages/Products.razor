@@ -9,21 +9,22 @@
 
 <PageTitle>Manage products | ShopPulse</PageTitle>
 <main class="feature-page">
-    <header class="feature-header"><a href="/" class="brand-lockup"><img class="brand-mark" src="/brand-mark.svg" alt="" aria-hidden="true" /><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Product management</span></header>
+    <ShopPulse.Client.Shared.WorkspaceHeader />
     <ShopPulse.Client.Shared.WorkspaceNav />
-    <section class="feature-heading"><p class="eyebrow">CATALOGUE · OWNER</p><h1>Manage products</h1><p class="muted">Create and maintain product details, selling prices and low-stock thresholds.</p></section>
+    <section class="feature-heading"><p class="eyebrow">CATALOGUE · OWNER</p><h1>Manage products</h1><p class="muted">Add each item once with a unique SKU. Then use Receive stock to record opening quantities and batch expiry dates. Only products with available stock can be sold.</p></section>
     @if (_forbidden) { <div class="inline-alert" role="alert">Your account does not have permission to manage products. Ask the owner to grant access.</div> }
     else
     {
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
+        <div class="management-grid">
         <section class="panel form-panel">
             <div class="panel-heading"><h2>@(_editingId.HasValue ? "Edit product" : "Add a product")</h2>@if (_editingId.HasValue) { <button class="button button-quiet" @onclick="ResetForm">Cancel edit</button> }</div>
             <EditForm EditContext="_editContext" OnValidSubmit="Save">
                 <DataAnnotationsValidator />
                 <div class="form-grid">
-                    <div class="field-group"><label for="sku">SKU</label><InputText id="sku" class="form-control" @bind-Value="_form.Sku" maxlength="64" /><ValidationMessage For="@(() => _form.Sku)" /></div>
+                    <div class="field-group"><label for="sku">SKU</label><InputText id="sku" class="form-control" @bind-Value="_form.Sku" maxlength="64" placeholder="e.g. BREAD-001" /><ValidationMessage For="@(() => _form.Sku)" /></div>
                     <div class="field-group"><label for="name">Product name</label><InputText id="name" class="form-control" @bind-Value="_form.Name" maxlength="200" /><ValidationMessage For="@(() => _form.Name)" /></div>
-                    <div class="field-group"><label for="category">Category</label><InputText id="category" class="form-control" @bind-Value="_form.Category" maxlength="80" /></div>
+                    <div class="field-group"><label for="category">Category</label><InputText id="category" class="form-control" @bind-Value="_form.Category" maxlength="80" placeholder="e.g. Food, Drinks, Household" /></div>
                     <div class="field-group"><label for="price">Selling price (ZAR)</label><InputNumber id="price" class="form-control" @bind-Value="_form.UnitPrice" min="0" step="0.01" /><ValidationMessage For="@(() => _form.UnitPrice)" /></div>
                     <div class="field-group"><label for="minimum">Low-stock threshold</label><InputNumber id="minimum" class="form-control" @bind-Value="_form.MinimumStockLevel" min="0" /><ValidationMessage For="@(() => _form.MinimumStockLevel)" /></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_form.HasExpiry" /> This product has an expiry date</label></div>
@@ -34,7 +35,7 @@
         <section class="panel products-panel">
             <div class="panel-heading"><h2>Product list</h2><button class="button button-quiet" @onclick="Load" disabled="@_busy">Refresh</button></div>
             @if (_loading) { <p class="muted">Loading products…</p> }
-            else if (_products.Count == 0) { <p class="muted">No products have been created yet.</p> }
+            else if (_products.Count == 0) { <p class="muted">Your catalogue is empty. Add a product using the form, then open Receive stock to enter the quantity on hand and any expiry date.</p> }
             else
             {
                 <div class="table-wrap"><table>
@@ -46,13 +47,14 @@
                             <td><strong>@item.Name</strong><small class="table-subtext">@item.Category</small></td>
                             <td>@item.Sku</td><td>@item.Available</td><td>@Money(item.UnitPrice)</td>
                             <td><span class="stock-status @(item.IsActive ? "ok" : "low")">@(item.IsActive ? "Active" : "Inactive")</span></td>
-                            <td><div class="table-actions"><button class="button button-quiet" @onclick="() => Edit(item)">Edit</button>@if (item.IsActive) { <button class="button button-quiet" @onclick="() => Deactivate(item)" disabled="@_busy">Deactivate</button> }</div></td>
+                            <td><div class="table-actions"><button class="button button-quiet" @onclick="() => Edit(item)">Edit</button>@if (item.IsActive) { <button class="button button-quiet" @onclick="() => Deactivate(item)" disabled="@_busy">Deactivate</button> } else { <button class="button button-quiet" @onclick="() => Activate(item)" disabled="@_busy">Reactivate</button> }</div></td>
                         </tr>
                     }
                     </tbody>
                 </table></div>
             }
         </section>
+        </div>
     }
 </main>
 
@@ -80,8 +82,19 @@
     private async Task Load()
     {
         _loading = true; _error = null;
-        try { _products = await Http.GetFromJsonAsync<List<ProductRow>>("api/products/manage") ?? []; }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The product list could not be loaded."; }
+        try
+        {
+            using var response = await Http.GetAsync("api/products/manage");
+            if (!response.IsSuccessStatusCode)
+            {
+                _products = [];
+                _error = await ApiErrorFormatter.FormatAsync(response, "The product catalogue could not be loaded.");
+                return;
+            }
+            _products = await response.Content.ReadFromJsonAsync<List<ProductRow>>() ?? [];
+        }
+        catch (HttpRequestException) { _error = "The product service could not be reached. Check your connection and retry."; }
+        catch (JsonException) { _error = "The product catalogue returned an invalid response. Refresh and try again."; }
         finally { _loading = false; }
     }
 
@@ -104,6 +117,7 @@
     {
         ApiErrorFormatter.ClearServerValidationErrors(_editContext);
         _busy = true; _error = null;
+        var wasEditing = _editingId.HasValue;
         try
         {
             var payload = new { sku = _form.Sku.Trim(), name = _form.Name.Trim(), category = _form.Category, unitPrice = _form.UnitPrice, minimumStockLevel = _form.MinimumStockLevel, hasExpiry = _form.HasExpiry };
@@ -119,9 +133,28 @@
                 if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
                 return;
             }
-            Toast.ShowSuccess(_editingId.HasValue ? "Product updated." : "Product added.");
+            var savedProduct = await response.Content.ReadFromJsonAsync<ProductRow>();
+            if (savedProduct is null)
+            {
+                _error = "The API accepted the product save but returned no product identity. Refresh the product list before continuing.";
+                return;
+            }
+
             ResetForm();
             await Load();
+            if (!string.IsNullOrWhiteSpace(_error))
+            {
+                Toast.ShowError("Product saved, but the catalogue could not be refreshed. Use Refresh before receiving stock or making sales.");
+                return;
+            }
+            if (!_products.Any(item => item.Id == savedProduct.Id))
+            {
+                _error = "The API accepted the save, but the product was not returned by this business catalogue. Refresh and verify the store before receiving stock or making sales.";
+                Toast.ShowError("Product save could not be verified in the catalogue.");
+                return;
+            }
+
+            Toast.ShowSuccess(wasEditing ? "Product updated and verified in the catalogue." : "Product added and verified in the catalogue.");
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
         finally { _busy = false; }
@@ -138,6 +171,25 @@
             await Load();
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
+        finally { _busy = false; }
+    }
+
+    private async Task Activate(ProductRow item)
+    {
+        _busy = true; _error = null;
+        try
+        {
+            using var response = await Http.PostAsync($"api/products/{item.Id}/activate", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                var message = await ApiErrorFormatter.FormatAsync(response, "The product could not be reactivated.");
+                if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
+                return;
+            }
+            await Load();
+            Toast.ShowSuccess("Product reactivated and available in the catalogue.");
+        }
+        catch (HttpRequestException) { _error = "The service could not be reached. Check your connection and retry."; }
         finally { _busy = false; }
     }
 

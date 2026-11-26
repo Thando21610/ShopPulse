@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
 
 namespace ShopPulse.Client.Auth;
@@ -10,15 +9,14 @@ namespace ShopPulse.Client.Auth;
 public sealed class AuthMessageHandler : DelegatingHandler
 {
     private readonly TokenStore _tokens;
-    private readonly NavigationManager _navigation;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private long _refreshAttemptVersion;
+    private int _lastRefreshStatusCode = (int)HttpStatusCode.ServiceUnavailable;
     private readonly Uri _apiBase;
 
-    public AuthMessageHandler(TokenStore tokens, IConfiguration configuration, NavigationManager navigation)
+    public AuthMessageHandler(TokenStore tokens, IConfiguration configuration)
     {
         _tokens = tokens;
-        _navigation = navigation;
         var configured = configuration["ApiBaseUrl"];
         _apiBase = new Uri(string.IsNullOrWhiteSpace(configured) ? "/" : configured.TrimEnd('/') + "/",
             string.IsNullOrWhiteSpace(configured) ? UriKind.RelativeOrAbsolute : UriKind.Absolute);
@@ -44,20 +42,26 @@ public sealed class AuthMessageHandler : DelegatingHandler
         await _refreshLock.WaitAsync(cancellationToken);
         try
         {
-            // Another failed request may already have refreshed the shared token.
-            if (!string.IsNullOrWhiteSpace(_tokens.AccessToken) && _tokens.AccessToken != tokenUsed)
+            var currentToken = _tokens.AccessToken;
+            if (!string.IsNullOrWhiteSpace(currentToken) && currentToken != tokenUsed)
             {
                 response.Dispose();
-                return await RetryWithTokenAsync(request, _tokens.AccessToken!, cancellationToken);
+                return await RetryWithTokenAsync(request, currentToken, cancellationToken);
             }
 
-            // A request waiting behind another failed refresh must not send
-            // a second refresh call for the same burst of concurrent 401 responses.
             if (Volatile.Read(ref _refreshAttemptVersion) != refreshVersionAtSend)
-                return response;
+            {
+                if (_lastRefreshStatusCode == (int)HttpStatusCode.Unauthorized
+                    || _lastRefreshStatusCode == (int)HttpStatusCode.Forbidden)
+                    return response;
+
+                response.Dispose();
+                return CreateUnavailableResponse(request);
+            }
 
             using var refresh = new HttpRequestMessage(HttpMethod.Post, new Uri(_apiBase, "api/auth/refresh"));
             refresh.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+
             HttpResponseMessage refreshResponse;
             try
             {
@@ -65,55 +69,72 @@ public sealed class AuthMessageHandler : DelegatingHandler
             }
             catch (HttpRequestException)
             {
-                _tokens.Clear();
-                _navigation.NavigateTo("/", forceLoad: true);
-                return response;
+                Volatile.Write(ref _lastRefreshStatusCode, (int)HttpStatusCode.ServiceUnavailable);
+                response.Dispose();
+                return CreateUnavailableResponse(request);
             }
             finally
             {
                 Interlocked.Increment(ref _refreshAttemptVersion);
             }
 
-            using (refreshResponse)
+            if (refreshResponse.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
-                if (!refreshResponse.IsSuccessStatusCode)
-                {
-                    _tokens.Clear();
-                    _navigation.NavigateTo("/", forceLoad: true);
-                    return response;
-                }
-
-                string? nextToken;
-                try
-                {
-                    using var payload = await refreshResponse.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
-                    nextToken = payload?.RootElement.TryGetProperty("accessToken", out var value) == true
-                        ? value.GetString() : null;
-                }
-                catch (JsonException)
-                {
-                    _tokens.Clear();
-                    _navigation.NavigateTo("/", forceLoad: true);
-                    return response;
-                }
-
-                if (string.IsNullOrWhiteSpace(nextToken))
-                {
-                    _tokens.Clear();
-                    _navigation.NavigateTo("/", forceLoad: true);
-                    return response;
-                }
-
-                _tokens.Set(nextToken);
-                response.Dispose();
-                return await RetryWithTokenAsync(request, nextToken, cancellationToken);
+                Volatile.Write(ref _lastRefreshStatusCode, (int)refreshResponse.StatusCode);
+                refreshResponse.Dispose();
+                _tokens.Clear();
+                return response;
             }
+
+            if (!refreshResponse.IsSuccessStatusCode)
+            {
+                Volatile.Write(ref _lastRefreshStatusCode, (int)refreshResponse.StatusCode);
+                response.Dispose();
+                return refreshResponse;
+            }
+
+            string? nextToken;
+            try
+            {
+                using var payload = await refreshResponse.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+                nextToken = payload?.RootElement.TryGetProperty("accessToken", out var value) == true
+                    ? value.GetString() : null;
+            }
+            catch (JsonException)
+            {
+                Volatile.Write(ref _lastRefreshStatusCode, (int)HttpStatusCode.BadGateway);
+                refreshResponse.Dispose();
+                response.Dispose();
+                return CreateUnavailableResponse(request, HttpStatusCode.BadGateway);
+            }
+
+            if (string.IsNullOrWhiteSpace(nextToken))
+            {
+                Volatile.Write(ref _lastRefreshStatusCode, (int)HttpStatusCode.BadGateway);
+                refreshResponse.Dispose();
+                response.Dispose();
+                return CreateUnavailableResponse(request, HttpStatusCode.BadGateway);
+            }
+
+            Volatile.Write(ref _lastRefreshStatusCode, (int)HttpStatusCode.OK);
+            refreshResponse.Dispose();
+            _tokens.Set(nextToken);
+            response.Dispose();
+            return await RetryWithTokenAsync(request, nextToken, cancellationToken);
         }
         finally
         {
             _refreshLock.Release();
         }
     }
+
+    private static HttpResponseMessage CreateUnavailableResponse(
+        HttpRequestMessage request, HttpStatusCode statusCode = HttpStatusCode.ServiceUnavailable)
+        => new(statusCode)
+        {
+            RequestMessage = request,
+            ReasonPhrase = "Authentication refresh is temporarily unavailable."
+        };
 
     private async Task<HttpResponseMessage> RetryWithTokenAsync(HttpRequestMessage original, string token, CancellationToken ct)
     {

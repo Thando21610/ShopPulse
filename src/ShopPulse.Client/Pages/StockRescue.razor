@@ -7,7 +7,7 @@
 
 <PageTitle>Stock rescue | ShopPulse</PageTitle>
 <main class="feature-page">
-    <header class="feature-header"><a href="/" class="brand-lockup"><img class="brand-mark" src="/brand-mark.svg" alt="" aria-hidden="true" /><span><strong>ShopPulse</strong><small>RETAIL WORKSPACE</small></span></a><span class="role-chip">Stock rescue</span></header>
+    <ShopPulse.Client.Shared.WorkspaceHeader />
     <ShopPulse.Client.Shared.WorkspaceNav />
     <section class="feature-heading"><p class="eyebrow">LESS WASTE · FEFO</p><h1>Stock rescue</h1><p class="muted">Spot batches that may not sell before expiry and act early.</p></section>
     <div class="toolbar-row"><label for="days">Expiry window</label><select id="days" class="form-control compact-select" @bind="_days" @bind:after="Load"><option value="3">Next 3 days</option><option value="7">Next 7 days</option><option value="14">Next 14 days</option></select><button class="button button-quiet" @onclick="Load">Refresh</button></div>

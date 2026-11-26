@@ -1,21 +1,44 @@
 @inject ShopPulse.Client.Auth.AuthSessionService Session
 
 <nav class="workspace-nav" aria-label="Store operations">
-    <NavLink href="/" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span> Overview</NavLink>
-    <NavLink href="/sales" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">point_of_sale</span> New sale</NavLink>
-    @if (Session.User?.Role == "Owner" || Session.User?.CanRefundSales == true) { <NavLink href="/sales/refunds" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span> Refund a sale</NavLink> }
-    <NavLink href="/inventory" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Inventory</NavLink>
-    @if (Session.User?.Role == "Owner" || Session.User?.CanManageProducts == true) { <NavLink href="/products/manage" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">inventory</span> Manage products</NavLink> }
-    @if (Session.User?.Role == "Owner") { <NavLink href="/staff" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">groups</span> Manage staff</NavLink> }
-    @if (Session.User?.Role == "Owner" || Session.User?.CanReceiveStock == true) { <NavLink href="/stock/receive" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">add_box</span> Receive stock</NavLink> }
-    @if (Session.User?.Role == "Owner" || Session.User?.CanAdjustStock == true) { <NavLink href="/stock/waste" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">delete_sweep</span> Record waste</NavLink> }
-    <NavLink href="/expiry" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">event_busy</span> Expiry</NavLink>
-    <NavLink href="/stock-rescue" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">savings</span> Stock rescue</NavLink>
-    <NavLink href="/cash-shift" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">payments</span> Cash shift</NavLink>
+    <div class="workspace-nav-group">
+        <span class="workspace-nav-label">OPERATIONS</span>
+        <NavLink href="/" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span> Overview</NavLink>
+        <NavLink href="/sales" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">point_of_sale</span> New sale</NavLink>
+        @if (Session.User?.Role == "Owner" || Session.User?.CanRefundSales == true)
+        {
+            <NavLink href="/sales/refunds" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span> Refund a sale</NavLink>
+        }
+        <NavLink href="/cash-shift" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">payments</span> Cash shift</NavLink>
+    </div>
+
+    <div class="workspace-nav-group">
+        <span class="workspace-nav-label">INVENTORY</span>
+        <NavLink href="/inventory" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Inventory</NavLink>
+        @if (Session.User?.Role == "Owner" || Session.User?.CanManageProducts == true)
+        {
+            <NavLink href="/products/manage" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">inventory</span> Manage products</NavLink>
+        }
+        @if (Session.User?.Role == "Owner" || Session.User?.CanReceiveStock == true)
+        {
+            <NavLink href="/stock/receive" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">add_box</span> Receive stock</NavLink>
+        }
+        @if (Session.User?.Role == "Owner" || Session.User?.CanAdjustStock == true)
+        {
+            <NavLink href="/stock/waste" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">delete_sweep</span> Record waste</NavLink>
+        }
+        <NavLink href="/expiry" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">event_busy</span> Expiry</NavLink>
+        <NavLink href="/stock-rescue" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">savings</span> Stock rescue</NavLink>
+    </div>
+
     @if (Session.User?.Role == "Owner")
     {
-        <NavLink href="/reports" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">bar_chart</span> Reports</NavLink>
-        <NavLink href="/audit" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">history</span> Audit history</NavLink>
-        <NavLink href="/settings" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">settings</span> Business settings</NavLink>
+        <div class="workspace-nav-group">
+            <span class="workspace-nav-label">OWNER</span>
+            <NavLink href="/staff" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">groups</span> Manage staff</NavLink>
+            <NavLink href="/reports" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">bar_chart</span> Reports</NavLink>
+            <NavLink href="/audit" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">history</span> Audit history</NavLink>
+            <NavLink href="/settings" Match="NavLinkMatch.All"><span class="material-symbols-outlined" aria-hidden="true">settings</span> Business settings</NavLink>
+        </div>
     }
 </nav>

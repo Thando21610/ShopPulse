@@ -165,24 +165,29 @@ public interface ICurrentBusiness
 
 public class CurrentBusiness : ICurrentBusiness
 {
-    public Guid BusinessId { get; }
-    public string Role { get; }
-    public Guid UserId { get; }
+    private readonly IHttpContextAccessor _accessor;
+
+    // Do not capture claims in the constructor. The scoped AppDbContext may be
+    // first resolved from JwtBearerEvents.OnTokenValidated, before HttpContext.User
+    // has been populated. Reading the principal when a query executes keeps the
+    // tenant filter correct for the authenticated request.
+    private System.Security.Claims.ClaimsPrincipal User
+        => _accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal();
+
+    public Guid BusinessId
+        => Guid.TryParse(User.FindFirst("business_id")?.Value, out var id) ? id : Guid.Empty;
+
+    public string Role => User.FindFirst("role")?.Value ?? "";
+
+    public Guid UserId
+        => Guid.TryParse(
+            User.FindFirst("sub")?.Value
+                ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+            out var id) ? id : Guid.Empty;
 
     public CurrentBusiness(IHttpContextAccessor accessor)
     {
-        var user = accessor.HttpContext?.User
-            ?? throw new UnauthorizedAccessException("No authenticated user.");
-
-        var rawBid = user.FindFirst("business_id")?.Value
-            ?? throw new UnauthorizedAccessException("Missing business_id claim.");
-        var rawUid = user.FindFirst("sub")?.Value
-            ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-            ?? throw new UnauthorizedAccessException("Missing sub claim.");
-
-        BusinessId = Guid.Parse(rawBid);
-        UserId = Guid.Parse(rawUid);
-        Role = user.FindFirst("role")?.Value ?? "Operator";
+        _accessor = accessor;
     }
 }
 
