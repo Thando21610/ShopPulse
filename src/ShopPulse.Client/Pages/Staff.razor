@@ -161,6 +161,12 @@
             _newStaff = new();
             _newStaffContext = CreateContext(_newStaff);
             await Load();
+            if (!string.IsNullOrWhiteSpace(_error))
+            {
+                _error = "The operator account was created, but the team list could not be refreshed. Use Refresh before creating another account.";
+                Toast.ShowSuccess("Operator account created. Team list refresh is still needed.");
+                return;
+            }
 
             if (createdOperator is null || !_staff.Any(person => person.Id == createdOperator.Id))
             {
