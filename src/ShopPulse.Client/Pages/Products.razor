@@ -11,7 +11,7 @@
 <main class="feature-page">
     <ShopPulse.Client.Shared.WorkspaceHeader />
     <ShopPulse.Client.Shared.WorkspaceNav />
-    <section class="feature-heading"><p class="eyebrow">CATALOGUE · OWNER</p><h1>Manage products</h1><p class="muted">Create and maintain product details, selling prices and low-stock thresholds.</p></section>
+    <section class="feature-heading"><p class="eyebrow">CATALOGUE · OWNER</p><h1>Manage products</h1><p class="muted">Add each item once with a unique SKU. Then use Receive stock to record opening quantities and batch expiry dates. Only products with available stock can be sold.</p></section>
     @if (_forbidden) { <div class="inline-alert" role="alert">Your account does not have permission to manage products. Ask the owner to grant access.</div> }
     else
     {
@@ -22,9 +22,9 @@
             <EditForm EditContext="_editContext" OnValidSubmit="Save">
                 <DataAnnotationsValidator />
                 <div class="form-grid">
-                    <div class="field-group"><label for="sku">SKU</label><InputText id="sku" class="form-control" @bind-Value="_form.Sku" maxlength="64" /><ValidationMessage For="@(() => _form.Sku)" /></div>
+                    <div class="field-group"><label for="sku">SKU</label><InputText id="sku" class="form-control" @bind-Value="_form.Sku" maxlength="64" placeholder="e.g. BREAD-001" /><ValidationMessage For="@(() => _form.Sku)" /></div>
                     <div class="field-group"><label for="name">Product name</label><InputText id="name" class="form-control" @bind-Value="_form.Name" maxlength="200" /><ValidationMessage For="@(() => _form.Name)" /></div>
-                    <div class="field-group"><label for="category">Category</label><InputText id="category" class="form-control" @bind-Value="_form.Category" maxlength="80" /></div>
+                    <div class="field-group"><label for="category">Category</label><InputText id="category" class="form-control" @bind-Value="_form.Category" maxlength="80" placeholder="e.g. Food, Drinks, Household" /></div>
                     <div class="field-group"><label for="price">Selling price (ZAR)</label><InputNumber id="price" class="form-control" @bind-Value="_form.UnitPrice" min="0" step="0.01" /><ValidationMessage For="@(() => _form.UnitPrice)" /></div>
                     <div class="field-group"><label for="minimum">Low-stock threshold</label><InputNumber id="minimum" class="form-control" @bind-Value="_form.MinimumStockLevel" min="0" /><ValidationMessage For="@(() => _form.MinimumStockLevel)" /></div>
                     <div class="field-group checkbox-field"><label><InputCheckbox @bind-Value="_form.HasExpiry" /> This product has an expiry date</label></div>
@@ -35,7 +35,7 @@
         <section class="panel products-panel">
             <div class="panel-heading"><h2>Product list</h2><button class="button button-quiet" @onclick="Load" disabled="@_busy">Refresh</button></div>
             @if (_loading) { <p class="muted">Loading products…</p> }
-            else if (_products.Count == 0) { <p class="muted">No products have been created yet.</p> }
+            else if (_products.Count == 0) { <p class="muted">Your catalogue is empty. Add a product using the form, then open Receive stock to enter the quantity on hand and any expiry date.</p> }
             else
             {
                 <div class="table-wrap"><table>
