@@ -68,15 +68,11 @@ else
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
+// Resolve tenant claims lazily. JwtBearer OnTokenValidated can create the scoped
+// DbContext before HttpContext.User is assigned; snapshotting claims here would
+// permanently bind that request's queries to Guid.Empty.
 builder.Services.AddScoped<ICurrentBusiness>(sp =>
-{
-    var accessor = sp.GetRequiredService<IHttpContextAccessor>();
-    var user = accessor.HttpContext?.User;
-    if (user?.Identity?.IsAuthenticated != true)
-        return new NullCurrentBusiness();
-    try { return new CurrentBusiness(accessor); }
-    catch { return new NullCurrentBusiness(); }
-});
+    new CurrentBusiness(sp.GetRequiredService<IHttpContextAccessor>()));
 builder.Services.AddScoped<AuthService>();
 
 builder.Services
