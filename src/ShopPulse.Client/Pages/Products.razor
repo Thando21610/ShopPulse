@@ -47,7 +47,7 @@
                             <td><strong>@item.Name</strong><small class="table-subtext">@item.Category</small></td>
                             <td>@item.Sku</td><td>@item.Available</td><td>@Money(item.UnitPrice)</td>
                             <td><span class="stock-status @(item.IsActive ? "ok" : "low")">@(item.IsActive ? "Active" : "Inactive")</span></td>
-                            <td><div class="table-actions"><button class="button button-quiet" @onclick="() => Edit(item)">Edit</button>@if (item.IsActive) { <button class="button button-quiet" @onclick="() => Deactivate(item)" disabled="@_busy">Deactivate</button> }</div></td>
+                            <td><div class="table-actions"><button class="button button-quiet" @onclick="() => Edit(item)">Edit</button>@if (item.IsActive) { <button class="button button-quiet" @onclick="() => Deactivate(item)" disabled="@_busy">Deactivate</button> } else { <button class="button button-quiet" @onclick="() => Activate(item)" disabled="@_busy">Reactivate</button> }</div></td>
                         </tr>
                     }
                     </tbody>
@@ -155,6 +155,25 @@
             await Load();
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The service could not be reached."; }
+        finally { _busy = false; }
+    }
+
+    private async Task Activate(ProductRow item)
+    {
+        _busy = true; _error = null;
+        try
+        {
+            using var response = await Http.PostAsync($"api/products/{item.Id}/activate", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                var message = await ApiErrorFormatter.FormatAsync(response, "The product could not be reactivated.");
+                if ((int)response.StatusCode >= 500) Toast.ShowError(message); else _error = message;
+                return;
+            }
+            await Load();
+            Toast.ShowSuccess("Product reactivated and available in the catalogue.");
+        }
+        catch (HttpRequestException) { _error = "The service could not be reached. Check your connection and retry."; }
         finally { _busy = false; }
     }
 
