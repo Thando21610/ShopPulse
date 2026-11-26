@@ -681,15 +681,26 @@ public sealed class OperationsController : ControllerBase
         return Ok(new { shift.Id, shift.OpeningFloat, CashSales = cashSales, CashRefunds = cashRefunds, CashIn = cashIn, CashOut = cashOut, shift.ExpectedCash, shift.ActualCash, shift.Variance, shift.VarianceReason, shift.ClosedAtUtc, shift.Status });
     }
 
+    /// <summary>
+    /// Converts a SAST calendar date into a half-open UTC range suitable for
+    /// PostgreSQL timestamptz comparisons.
+    /// </summary>
+    public static (DateTimeOffset StartUtc, DateTimeOffset EndUtc) GetSastReportWindowUtc(DateOnly date)
+    {
+        var sastMidnight = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.FromHours(2));
+        var startUtc = sastMidnight.ToUniversalTime();
+        return (startUtc, startUtc.AddDays(1));
+    }
+
     [HttpGet("reports/summary")]
     [Authorize(Policy = ShopPulsePolicies.ViewFinancialReports)]
     public async Task<IActionResult> ReportSummary([FromQuery] DateOnly? date, CancellationToken ct)
     {
         var selected = date ?? DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
         var shopToday = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2)).Date);
-        // South Africa uses SAST (UTC+02:00) year-round; report dates follow the shop calendar.
-        var start = new DateTimeOffset(selected.ToDateTime(TimeOnly.MinValue), TimeSpan.FromHours(2));
-        var end = start.AddDays(1);
+        // Report dates follow the SAST shop calendar, but PostgreSQL timestamptz
+        // parameters must be UTC (offset zero) when sent through Npgsql.
+        var (start, end) = GetSastReportWindowUtc(selected);
         var sales = _db.Sales.Where(x => x.CreatedAtUtc >= start && x.CreatedAtUtc < end && x.Status != "Voided");
         var count = await sales.CountAsync(ct);
         var grossSales = await sales.SumAsync(x => (decimal?)x.GrandTotal, ct) ?? 0m;
