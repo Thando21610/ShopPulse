@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using ShopPulse.Api.Data;
+using ShopPulse.Api.Controllers;
 using ShopPulse.Api.Domain;
 using Xunit;
 
@@ -69,5 +70,21 @@ public sealed class TenantContextInitializationTests
             Assert.Single(await db.Users.AsNoTracking().ToListAsync());
             Assert.Single(await db.Products.AsNoTracking().ToListAsync());
         }
+    }
+
+    [Theory]
+    [InlineData(2026, 11, 26, 2026, 11, 25, 22)]
+    [InlineData(2026, 1, 1, 2025, 12, 31, 22)]
+    public void SastReportWindow_UsesUtcBoundaries(
+        int year, int month, int day, int utcYear, int utcMonth, int utcDay, int utcHour)
+    {
+        var date = new DateOnly(year, month, day);
+
+        var (startUtc, endUtc) = OperationsController.GetSastReportWindowUtc(date);
+
+        Assert.Equal(TimeSpan.Zero, startUtc.Offset);
+        Assert.Equal(TimeSpan.Zero, endUtc.Offset);
+        Assert.Equal(new DateTimeOffset(utcYear, utcMonth, utcDay, utcHour, 0, 0, TimeSpan.Zero), startUtc);
+        Assert.Equal(startUtc.AddDays(1), endUtc);
     }
 }
