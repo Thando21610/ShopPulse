@@ -18,7 +18,7 @@
         @if (!string.IsNullOrWhiteSpace(_error)) { <div class="inline-alert" role="alert">@_error</div> }
         @if (!string.IsNullOrWhiteSpace(_createdOperatorEmail))
         {
-            <div class="inline-alert" role="status">
+            <div class="toast-inline" role="status">
                 <strong>Operator account created.</strong>
                 @_createdOperatorName can now sign in with <strong>@_createdOperatorEmail</strong> and the initial password you set. Share that password securely; no invitation email is sent.
             </div>
