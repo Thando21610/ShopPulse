@@ -122,8 +122,19 @@
     private async Task Load()
     {
         _loading = true; _error = null;
-        try { _staff = await Http.GetFromJsonAsync<List<StaffRow>>("api/staff") ?? []; }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException) { _error = "The staff list could not be loaded."; }
+        try
+        {
+            using var response = await Http.GetAsync("api/staff");
+            if (!response.IsSuccessStatusCode)
+            {
+                _staff = [];
+                _error = await ApiErrorFormatter.FormatAsync(response, "The store team could not be loaded.");
+                return;
+            }
+            _staff = await response.Content.ReadFromJsonAsync<List<StaffRow>>() ?? [];
+        }
+        catch (HttpRequestException) { _error = "The staff service could not be reached. Check your connection and retry."; }
+        catch (JsonException) { _error = "The team list returned an invalid response. Refresh and try again."; }
         finally { _loading = false; }
     }
 
