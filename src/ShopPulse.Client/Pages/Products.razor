@@ -142,6 +142,11 @@
 
             ResetForm();
             await Load();
+            if (!string.IsNullOrWhiteSpace(_error))
+            {
+                Toast.ShowError("Product saved, but the catalogue could not be refreshed. Use Refresh before receiving stock or making sales.");
+                return;
+            }
             if (!_products.Any(item => item.Id == savedProduct.Id))
             {
                 _error = "The API accepted the save, but the product was not returned by this business catalogue. Refresh and verify the store before receiving stock or making sales.";
