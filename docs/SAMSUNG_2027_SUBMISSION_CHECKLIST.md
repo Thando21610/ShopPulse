@@ -4,7 +4,7 @@
 **Project:** ShopPulse  
 **Target deadline:** 30 November 2026  
 **Status reviewed:** 27 November 2026  
-**Documentation PR:** [#12 — Samsung 2027 submission pack](https://github.com/Thando21610/ShopPulse/pull/12) (draft; not merged)
+**Documentation PR:** [#12 — Samsung 2027 submission pack](https://github.com/Thando21610/ShopPulse/pull/12) (merged into `main` via PR #12; interview-date correction follows)
 
 This checklist records the difference between completed preparation and items that still require a final human/live-system check. A passing automated test run is not treated as proof that every deployed browser workflow works.
 
@@ -16,7 +16,7 @@ This checklist records the difference between completed preparation and items th
 | Full system and role guide | **Prepared** | See [Owner and Operator Quick-Start Guide](OWNER_OPERATOR_QUICK_START.md). |
 | Solution design and technical specification | **Updated in draft PR** | Deployment, discovery findings, scope and access checklist aligned with the current implementation. |
 | README overview and links | **Updated in draft PR** | Includes the two-page brief and owner/operator guide. |
-| Owner interview evidence | **Partially complete** | Direct interview with Lelethu Noqa completed; interview date must be confirmed and recorded. |
+| Owner interview evidence | **Completed** | Direct interview with Lelethu Noqa completed on **26 November 2026**. |
 | Owner phone number / establishment name | **Withheld pending permission** | Do not publish the phone number or an unconfirmed establishment name. |
 | Demo video (optional alternative to the two-page document) | **Not prepared** | The two-page brief is the selected written walkthrough option. A short demo video could strengthen communication but is not a substitute for testing. |
 
@@ -70,7 +70,7 @@ Do not mark a check complete until it has been observed in the live browser. The
 
 ## 6. Before pressing submit
 
-- [ ] Confirm the interview date and add it to the brief and solution design.
+- [x] Confirm the interview date and add it to the brief and solution design (**26 November 2026**).
 - [ ] Confirm what owner/business details Lelethu has consented to share with Samsung reviewers.
 - [ ] Create and verify a separate Operator assessment account.
 - [ ] Complete the deployed-browser acceptance checks above.
