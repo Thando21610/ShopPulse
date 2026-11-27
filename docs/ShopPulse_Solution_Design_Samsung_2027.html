@@ -1372,7 +1372,7 @@ public decimal ChangeAmount { get; set; }</pre>
 <table>
   <thead><tr><th>Component</th><th>Provider</th><th>Current role</th><th>Watch-outs</th></tr></thead>
   <tbody>
-    <tr><td>Blazor WebAssembly frontend</td><td>Cloudflare Pages</td><td>Hosts the static ShopPulse client; diagnostic deployment is used for assessment verification.</td><td>Verify the deployed branch and API proxy configuration before each release.</td></tr>
+    <tr><td>Blazor WebAssembly frontend</td><td>Cloudflare Pages</td><td>Assessment frontend: <a href="https://diagnostics.shoppulse-bpd.pages.dev/">https://diagnostics.shoppulse-bpd.pages.dev/</a> (diagnostic deployment). Do not use the separate shoppulse-bpd.pages.dev hostname as the verified assessment link.</td><td>Verify the deployed branch and API proxy configuration before each release.</td></tr>
     <tr><td>ASP.NET Core API</td><td>Railway</td><td>Hosts the .NET 10 API container.</td><td>Confirm health, readiness, logs and environment variables after deployment.</td></tr>
     <tr><td>PostgreSQL</td><td>Neon</td><td>Managed PostgreSQL database used by the hosted API.</td><td>Backups, restore testing, connection limits and access controls must be reviewed.</td></tr>
     <tr><td>Source control and CI</td><td>GitHub</td><td>Private repository, pull requests and automated build/test workflow.</td><td>A passing CI run does not prove live browser acceptance.</td></tr>
