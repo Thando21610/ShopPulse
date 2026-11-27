@@ -4,9 +4,9 @@
 **Project:** ShopPulse  
 **Target deadline:** 30 November 2026  
 **Status reviewed:** 27 November 2026  
-**Documentation PR:** [#12 — Samsung 2027 submission pack](https://github.com/Thando21610/ShopPulse/pull/12) (merged into `main` via PR #12; interview-date correction follows)
+**Documentation:** PRs [#12](https://github.com/Thando21610/ShopPulse/pull/12), [#13](https://github.com/Thando21610/ShopPulse/pull/13) and [#14](https://github.com/Thando21610/ShopPulse/pull/14) are merged into `main`.
 
-This checklist records the difference between completed preparation and items that still require a final human/live-system check. A passing automated test run is not treated as proof that every deployed browser workflow works.
+This checklist distinguishes applicant-confirmed completion from independent verification. The applicant confirmed on 27 November 2026 that deployed workflows had been tested and were satisfactory. This is not represented as an independent audit or commercial production sign-off.
 
 ## 1. Submission materials
 
@@ -14,11 +14,11 @@ This checklist records the difference between completed preparation and items th
 |---|---|---|
 | Two-page solution / walkthrough document | **Prepared** | Attach `ShopPulse_Samsung_2027_Two_Page_Brief.pdf`. It is a concise assessment brief, not a full user manual. |
 | Full system and role guide | **Prepared** | See [Owner and Operator Quick-Start Guide](OWNER_OPERATOR_QUICK_START.md). |
-| Solution design and technical specification | **Updated in draft PR** | Deployment, discovery findings, scope and access checklist aligned with the current implementation. |
-| README overview and links | **Updated in draft PR** | Includes the two-page brief and owner/operator guide. |
+| Solution design and technical specification | **Merged** | Solution design and deployment details updated in PRs #12–#14. |
+| README overview and links | **Merged** | README links to the brief, quick-start guide and technical documentation. |
 | Owner interview evidence | **Completed** | Direct interview with Lelethu Noqa completed on **26 November 2026**. |
 | Owner phone number / establishment name | **Withheld pending permission** | Do not publish the phone number or an unconfirmed establishment name. |
-| Demo video (optional alternative to the two-page document) | **Not prepared** | The two-page brief is the selected written walkthrough option. A short demo video could strengthen communication but is not a substitute for testing. |
+| Demo video (optional alternative to the two-page document) | **Optional** | The two-page brief is the selected written walkthrough option. |
 
 ## 2. Live application and access
 
@@ -26,31 +26,30 @@ This checklist records the difference between completed preparation and items th
 |---|---|---|
 | Public demo URL | **Available; recheck before submission** | https://diagnostics.shoppulse-bpd.pages.dev/ |
 | API health endpoint | **Available; recheck before submission** | https://shoppulse-production-e6673892.up.railway.app/health |
-| Owner assessment account | **Account details documented** | Sign-in email: `ownerspaza@gmail.com`. Password must be shared privately with assessors, never placed in GitHub or the PDF. |
-| Operator assessment account | **Must be created and verified** | Owner signs in, opens **Manage staff**, creates an Operator with a unique email and initial password (minimum 12 characters), then shares credentials privately. |
-| Operator permissions | **Documented; live verification required** | Test at least one operator with selected permissions and confirm denied actions remain blocked. |
+| Owner assessment account | **Prepared for private handoff** | Sign-in email: `ownerspaza@gmail.com`. Keep the password out of GitHub; provide it only in the private assessor copy/channel as required. |
+| Operator assessment account | **Applicant-confirmed complete** | Applicant reports creating and signing in with an Operator account during deployed testing. |
+| Operator permissions | **Applicant-confirmed complete** | Applicant reports testing the application workflows; this is not an independent authorization audit. |
 | Anonymous guest catalogue / queue | **Not implemented** | Do not list it as an available role or promise this workflow in the submission. |
 
 ## 3. Final deployed-browser acceptance
 
-Run these checks from the deployed diagnostic frontend before submission. Use synthetic data and avoid duplicate writes if an existing record is already present.
+**Applicant-confirmed status: completed 27 November 2026.** The applicant reports testing the deployed workflows and being satisfied with the result. The checkboxes below record that confirmation; they are not an independent audit certificate. Use synthetic data and avoid duplicate writes if repeating any check.
 
-- [ ] Owner login works from a fresh/private browser session.
-- [ ] Session remains authenticated after browser refresh; logout returns to sign-in.
-- [ ] Owner can load the product catalogue and create/edit/deactivate a test product.
-- [ ] Owner can create an Operator and the operator appears in the team list.
-- [ ] Operator can sign in with its own account.
-- [ ] Operator sees only the actions allowed by its assigned permissions.
-- [ ] Operator cannot open Owner-only Reports, Audit, Manage staff or Business settings by direct route/API access.
-- [ ] Product receiving creates a batch and increases stock.
-- [ ] Checkout commits a sale and deducts stock using FEFO.
-- [ ] Expiry and Stock Rescue screens load and show batch/suggestion data.
-- [ ] Waste recording reduces the selected batch and appears in history.
-- [ ] Full refund workflow behaves as documented.
-- [ ] Cash shift opens/closes and owner daily report loads.
-- [ ] No tenant's products, sales, staff or reports are visible to another business.
+- [x] Owner login and authenticated dashboard.
+- [x] Session restoration after browser refresh and logout.
+- [x] Product catalogue and product management.
+- [x] Owner creates an Operator and verifies the team entry.
+- [x] Operator signs in with its own account.
+- [x] Operator permissions and Owner-only navigation.
+- [x] Product receiving and inventory updates.
+- [x] Checkout, receipt and FEFO stock deduction.
+- [x] Expiry and Stock Rescue screens.
+- [x] Batch-specific waste recording.
+- [x] Supported full refund workflow.
+- [x] Cash shift and daily report workflows.
+- [x] Tenant isolation checks, as reported by the applicant.
 
-Do not mark a check complete until it has been observed in the live browser. The backend CI result does not replace this list.
+Automated CI and applicant-confirmed deployed acceptance are separate evidence types. Neither is presented as an independent security audit or commercial POS approval.
 
 ## 4. Engineering evidence already recorded
 
@@ -72,10 +71,10 @@ Do not mark a check complete until it has been observed in the live browser. The
 
 - [x] Confirm the interview date and add it to the brief and solution design (**26 November 2026**).
 - [ ] Confirm what owner/business details Lelethu has consented to share with Samsung reviewers.
-- [ ] Create and verify a separate Operator assessment account.
-- [ ] Complete the deployed-browser acceptance checks above.
+- [x] Create and verify a separate Operator assessment account (applicant-confirmed).
+- [x] Complete deployed-browser acceptance (applicant-confirmed 27 November 2026; not an independent audit).
 - [ ] Confirm the repository visibility/access expected by the Samsung submission process.
 - [ ] Recheck the demo and API links on submission day.
 - [ ] Attach the two-page PDF and include the repository and live demo links.
 - [ ] Share credentials only through the designated private submission channel; rotate/revoke temporary credentials after assessment.
-- [ ] Review and merge documentation PR #12 only after final details and checks are complete.
+- [x] Merge and verify documentation PRs #12, #13 and #14 into `main`.
