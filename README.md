@@ -216,6 +216,7 @@ Do not deploy against production data or onboard a real shop until migrations, b
 ## Project documentation
 
 - [Two-page Samsung submission brief](docs/SAMSUNG_2027_TWO_PAGE_SUBMISSION_BRIEF.md)
+- [Owner and Operator Quick-Start Guide](docs/OWNER_OPERATOR_QUICK_START.md)
 - [Solution design](docs/ShopPulse_Solution_Design_Samsung_2027.html)
 - [User journeys and use-case coverage](docs/USER_JOURNEYS.md)
 - [Frontend/API integration audit](docs/FRONTEND_BACKEND_INTEGRATION_AUDIT.md)
