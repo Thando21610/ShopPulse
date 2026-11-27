@@ -6,7 +6,7 @@
 
 ShopPulse is a .NET 10 retail operations application built around the daily work of a small shop: managing products and stock, completing sales, recording refunds and waste, reconciling cash shifts, and reviewing business activity. Monetary values use South African Rand (ZAR).
 
-**Project status:** the core staff-operated workflows are implemented in the API and Blazor client, and the main-branch CI pipeline is passing. ShopPulse is still a prototype/assessment project, not approved for processing live shop transactions. Production browser acceptance, operational recovery procedures and security review remain required. The public read-only guest experience is not implemented yet; the current home route is staff sign-in. Do not expose tenant inventory or operational data publicly.
+**Project status:** the core staff-operated workflows are implemented in the API and Blazor client, and the main-branch CI pipeline is passing. The applicant reports completing deployed browser acceptance of the workflows on 27 November 2026. This is applicant-confirmed testing, not an independent audit. ShopPulse remains a prototype/assessment project, not approved for live commercial transactions; operational recovery procedures, backup/restore testing and security review remain outstanding. The public read-only guest experience is not implemented yet; the current home route is staff sign-in. Do not expose tenant inventory or operational data publicly.
 
 ## Technology
 
@@ -51,7 +51,7 @@ The following journeys have corresponding client pages and API workflows in the 
 - **Refunds:** full refunds are implemented; partial refunds are not.
 - **Reporting:** the current report is a daily summary. It does not provide historical inventory snapshots.
 - **Idempotency:** checkout uses an idempotency key and supports retry after an uncertain response. Other write workflows do not yet share a uniform idempotency contract; a lost response on receiving, waste, cash movement or refund requires careful reconciliation.
-- **Production readiness:** no live-browser end-to-end acceptance run, backup-restore exercise or commercial POS operational sign-off is claimed.
+- **Production readiness:** applicant-confirmed deployed browser acceptance was completed on 27 November 2026; no independent audit, backup-restore exercise or commercial POS operational sign-off is claimed.
 
 ## Roles and security
 
@@ -199,7 +199,7 @@ The repository includes a .NET 10 API Dockerfile and a Blazor client Dockerfile.
 
 Before deploying the API, verify the Railway root directory, PostgreSQL connection, `UseSqlite=false`, JWT signing secret and exact frontend CORS origin. After deployment, verify both `/health` (liveness) and `/ready` (database connectivity). Then test sign-in, session restoration after browser reload, refresh, logout, permissions and tenant isolation from the real frontend origin.
 
-Do not deploy against production data or onboard a real shop until migrations, backups/restore, monitoring, cross-origin cookie behaviour and all operational workflows have passed acceptance testing. Railway's free tier should be treated as a prototype/demo environment, not a guaranteed always-on POS host.
+Do not deploy against production data or onboard a real shop until migrations, backups/restore, monitoring, cross-origin cookie behaviour and independent operational/security review are complete. Railway's free tier should be treated as a prototype/demo environment, not a guaranteed always-on POS host.
 
 ## Product principles
 
