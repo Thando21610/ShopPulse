@@ -230,5 +230,5 @@ Do not deploy against production data or onboard a real shop until migrations, b
 
 - [GitHub repository](https://github.com/Thando21610/ShopPulse)
 - [GitHub Actions](https://github.com/Thando21610/ShopPulse/actions)
-- [Production frontend](https://shoppulse-bpd.pages.dev/)
+- [Assessment frontend (diagnostic deployment)](https://diagnostics.shoppulse-bpd.pages.dev/)
 - [Production API](https://shoppulse-production-e6673892.up.railway.app/health)
