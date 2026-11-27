@@ -1368,44 +1368,41 @@ public decimal ChangeAmount { get; set; }</pre>
 <!-- ================= 23. DEPLOYMENT ================= -->
 <h2 id="s23"><span class="num">23.</span>Deployment &amp; Free Hosting</h2>
 
-<h3>23.1 Recommended free-tier combination</h3>
+<h3>23.1 Deployed assessment environment</h3>
 <table>
-  <thead><tr><th>Component</th><th>Provider</th><th>Suitability</th><th>Watch-outs</th></tr></thead>
+  <thead><tr><th>Component</th><th>Provider</th><th>Current role</th><th>Watch-outs</th></tr></thead>
   <tbody>
-    <tr><td>Blazor WASM frontend</td><td>Cloudflare Pages</td><td>Free static hosting with global CDN; ideal for WASM assets</td><td>Build output size; caching headers on redeploy</td></tr>
-    <tr><td>ASP.NET Core API</td><td>Google Cloud Run</td><td>Free monthly allowance; containerised, scales to zero</td><td>Cold starts; requires billing account on file; free allowance limits</td></tr>
-    <tr><td>PostgreSQL</td><td>Neon</td><td>Free managed Postgres tier</td><td>Storage and compute limits; connection limits; possible scale-to-zero</td></tr>
-    <tr><td>Source control</td><td>GitHub</td><td>Private repository, progressive commits</td><td>None for this use</td></tr>
+    <tr><td>Blazor WebAssembly frontend</td><td>Cloudflare Pages</td><td>Hosts the static ShopPulse client; diagnostic deployment is used for assessment verification.</td><td>Verify the deployed branch and API proxy configuration before each release.</td></tr>
+    <tr><td>ASP.NET Core API</td><td>Railway</td><td>Hosts the .NET 10 API container.</td><td>Confirm health, readiness, logs and environment variables after deployment.</td></tr>
+    <tr><td>PostgreSQL</td><td>Neon</td><td>Managed PostgreSQL database used by the hosted API.</td><td>Backups, restore testing, connection limits and access controls must be reviewed.</td></tr>
+    <tr><td>Source control and CI</td><td>GitHub</td><td>Private repository, pull requests and automated build/test workflow.</td><td>A passing CI run does not prove live browser acceptance.</td></tr>
   </tbody>
 </table>
 
 <div class="warn">
-  <strong>Free is not a permanent guarantee</strong>
-  Cloud Run, Cloudflare Pages and Neon all have plan-specific limits and may require a billing account to be on file. Before deployment, verify current free-tier limits, storage and connection caps, sleep/scale-to-zero behaviour and public access settings. The demo is designed to fit comfortably within free allowances, but the provider terms must be checked at deployment time.
+  <strong>Prototype and assessment environment</strong>
+  The hosted environment is for demonstration and controlled testing. It is not approved for live commercial transactions. Confirm provider plan limits, availability, database backups, monitoring and a tested restore procedure before onboarding a real shop.
 </div>
 
-<h3>23.2 Deployment sequence</h3>
+<h3>23.2 Current deployment sequence</h3>
 <ol>
-  <li>Create the private GitHub repository.</li>
-  <li>Configure the API project and EF Core migrations.</li>
-  <li>Provision the Neon PostgreSQL database; store the connection string as a Cloud Run environment variable / secret.</li>
-  <li>Apply migrations; seed synthetic test data.</li>
-  <li>Containerise and deploy the API to Cloud Run; verify health endpoint.</li>
-  <li>Configure the Blazor WASM build to point at the Cloud Run API URL.</li>
-  <li>Deploy the static WASM output to Cloudflare Pages.</li>
-  <li>Set restrictive CORS on the API to the Cloudflare Pages origin.</li>
-  <li>Test the public URL in an incognito browser.</li>
-  <li>Test every role and every critical workflow.</li>
-  <li>Confirm data persists after a restart/redeploy.</li>
-  <li>Record the walkthrough using the deployed application.</li>
+  <li>Merge reviewed and tested API/client changes to the production source branch.</li>
+  <li>Railway builds and deploys the API from the configured API root directory.</li>
+  <li>Verify the API health endpoint and database readiness endpoint; inspect deployment logs.</li>
+  <li>Deploy the Blazor WebAssembly static output to the Cloudflare Pages diagnostic project.</li>
+  <li>Verify the Pages API proxy targets the intended Railway API origin.</li>
+  <li>Test sign-in, session restoration after reload, refresh, logout and Owner/Operator permissions from the deployed browser origin.</li>
+  <li>Verify tenant isolation, product catalogue, staff list, sales, stock, expiry, waste, cash shifts and daily reports using synthetic or owner-approved test data.</li>
+  <li>Record the deployed commit, test results and any known limitations for the assessment.</li>
 </ol>
 
-<h3>23.3 What not to do</h3>
+<h3>23.3 Production safeguards</h3>
 <ul>
-  <li>Do not put the PostgreSQL connection string in the Blazor WASM app or any client-visible configuration.</li>
-  <li>Do not enable public access to the database.</li>
-  <li>Do not commit secrets, tokens or real data to Git.</li>
-  <li>Do not introduce Redis or other infrastructure unless a measured problem justifies it.</li>
+  <li>Keep PostgreSQL connection strings, JWT signing keys and other secrets in the hosting provider's private environment-variable manager.</li>
+  <li>Do not expose the database publicly or commit credentials, tokens or real customer data to Git.</li>
+  <li>Keep CORS restricted to trusted HTTPS frontend origins and verify cookie behaviour from the deployed origin.</li>
+  <li>Use synthetic data for demonstrations unless the shop owner has explicitly approved a controlled pilot.</li>
+  <li>Do not call the system production-ready until browser acceptance, security review, monitoring and backup/restore testing are complete.</li>
 </ul>
 
 <!-- ================= 24. ROADMAP ================= -->
