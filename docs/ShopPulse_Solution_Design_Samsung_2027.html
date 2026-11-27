@@ -216,7 +216,7 @@
 
   <div class="meta">
     <div><strong>Project</strong>ShopPulse (working name)</div>
-    <div><strong>Pilot establishment</strong>Thandabantu Spaza Shop</div>
+    <div><strong>Discovery</strong>Direct shop-owner interview completed; establishment name withheld pending confirmation</div>
     <div><strong>Route</strong>Route A — Real establishment</div>
     <div><strong>Currency</strong>South African Rand (ZAR)</div>
     <div><strong>Deadline</strong>30 November 2026</div>
@@ -224,8 +224,8 @@
   </div>
 
   <div class="status-note">
-    <strong>Document status: proposed solution — pending establishment discovery and validation.</strong>
-    The operational observations recorded in this document are hypotheses based on initial informal observation. They must be confirmed through a direct interview with the owner or staff of Thandabantu Spaza Shop before they are presented as confirmed problems. Business name, owner name and contact details will only be included in the final submission with the owner's explicit permission.
+    <strong>Document status: updated after direct owner interview; interview date to be confirmed.</strong>
+    Shop owner Lelethu Noqa identified food expiry/wastage and limited visibility of customer experience as concerns. The shop name, owner phone number and interview date are not published here. The two-day expiry review is documented as a proposed pilot operating practice, not a verified automated alert threshold.
   </div>
 </header>
 
@@ -306,9 +306,9 @@
 <table>
   <thead><tr><th>#</th><th>Requirement</th><th>Plan</th></tr></thead>
   <tbody>
-    <tr><td>01</td><td>Live, publicly reachable link</td><td>Blazor WASM on Cloudflare Pages + API on Google Cloud Run (see §23)</td></tr>
-    <tr><td>02</td><td>Test access for every role</td><td>Owner, operator and (if implemented) anonymous queue access — credentials and setup steps documented</td></tr>
-    <tr><td>03</td><td>Code in a Git repository</td><td>Private GitHub repository, progressive commits; read access within 48 hours of request</td></tr>
+    <tr><td>01</td><td>Live demonstration link</td><td>Blazor WebAssembly on Cloudflare Pages; ASP.NET Core API on Railway; PostgreSQL on Neon (see §23). Verify availability before submission.</td></tr>
+    <tr><td>02</td><td>Test access for implemented roles</td><td>Owner and Operator accounts; setup and permission guide in docs/OWNER_OPERATOR_QUICK_START.md. Anonymous queue access is not implemented.</td></tr>
+    <tr><td>03</td><td>Code in a Git repository</td><td>GitHub repository: https://github.com/Thando21610/ShopPulse. Confirm repository visibility and assessor access in the submission instructions.</td></tr>
     <tr><td>04</td><td>Walkthrough</td><td>≤5-minute video or ≤2-page written document covering who, what, why, evidence and next steps</td></tr>
   </tbody>
 </table>
@@ -327,27 +327,25 @@
 <h3>3.1 Business context</h3>
 <p>Small spaza shops frequently operate with limited staff, limited technology and heavy dependence on manual processes. One operator may simultaneously be responsible for serving customers, handling cash, locating products, monitoring stock, receiving deliveries, checking expiry dates and closing the day's books. When these responsibilities overlap, service slows and errors become more likely.</p>
 
-<h3>3.2 Initial observations (hypotheses)</h3>
+<h3>3.2 Owner interview findings</h3>
 <table>
   <thead><tr><th>Observation</th><th>Potential business impact</th><th>Must be validated by</th></tr></thead>
   <tbody>
-    <tr><td>The shop becomes congested during busy periods.</td><td>Longer waiting times; customers may leave without buying.</td><td>Owner interview + observation of a peak period</td></tr>
-    <tr><td>One person manages several activities at once.</td><td>Sales and admin tasks compete for attention; errors.</td><td>Observation of daily workflow</td></tr>
-    <tr><td>Bread and other perishables can expire before selling.</td><td>Direct, avoidable stock losses.</td><td>Owner confirmation of frequency and value</td></tr>
-    <tr><td>Stock monitoring is not structured.</td><td>Difficulty spotting low or excess stock before it matters.</td><td>Walkthrough of current stock method</td></tr>
-    <tr><td>No central daily management process.</td><td>Limited visibility into performance and staff activity.</td><td>Owner review of current records (if any)</td></tr>
+    <tr><td>Food products can expire before sale.</td><td>Wastage, financial loss and risk to product quality.</td><td>Raised directly by shop owner Lelethu Noqa; frequency/value not yet quantified.</td></tr>
+    <tr><td>Limited visibility of customer experience.</td><td>Owner has little structured evidence of customer satisfaction.</td><td>Raised directly by shop owner Lelethu Noqa; no satisfaction metric has yet been collected.</td></tr>
+    <tr><td>Busy-period congestion and one-person workload.</td><td>Potential waiting time and service pressure.</td><td>Not confirmed by the interview notes currently available; retain as a hypothesis until further observation.</td></tr>
   </tbody>
 </table>
 
-<div class="warn">
-  <strong>Validation rule</strong>
-  None of the above will be presented to Samsung as a confirmed problem until the owner interview has taken place and notes have been recorded. The final walkthrough will clearly separate "observed" from "confirmed by the owner".
+<div class="note">
+  <strong>Discovery record</strong>
+  A direct interview with shop owner Lelethu Noqa has been completed. The interview date is to be confirmed and added before final submission. The owner highlighted food expiry/wastage and limited customer-experience visibility. No quantified waste baseline or customer-satisfaction score has been supplied, so none is claimed.
 </div>
 
 <h3>3.3 Problem statement</h3>
 <p>Small retail establishments with limited staff may struggle to manage customer service, sales transactions and inventory simultaneously. Without an integrated management process, the business can experience unnecessary waiting times, inconsistent stock monitoring, expired products, avoidable financial losses and limited visibility into daily operations.</p>
 
-<h3>3.4 Discovery questions for the owner</h3>
+<h3>3.4 Follow-up discovery questions</h3>
 <ol>
   <li>What happens when several customers arrive at the same time?</li>
   <li>How do you currently record daily sales?</li>
@@ -359,6 +357,8 @@
   <li>How do you reconcile cash at the end of the day?</li>
   <li>Which daily activity consumes the most time?</li>
   <li>Would a phone-based tool fit how you already work?</li>
+  <li>What expiry review interval is practical, and how should staff handle products approaching expiry?</li>
+  <li>What simple, voluntary customer feedback would be useful without collecting unnecessary personal information?</li>
 </ol>
 
 <h3>3.5 Discovery outputs</h3>
@@ -1420,7 +1420,7 @@ public decimal ChangeAmount { get; set; }</pre>
     <tr><td>6</td><td>Security</td><td>Permissions, audit trail, POPIA checks</td></tr>
     <tr><td>7</td><td>UX/UI</td><td>Responsive screens, Rush Mode polish, error states</td></tr>
     <tr><td>8</td><td>Testing</td><td>Automated tests, manual end-to-end script</td></tr>
-    <tr><td>9</td><td>Deployment</td><td>Public Cloudflare Pages + Cloud Run + Neon</td></tr>
+    <tr><td>9</td><td>Deployment</td><td>Cloudflare Pages frontend + Railway API + Neon PostgreSQL</td></tr>
     <tr><td>10</td><td>Submission</td><td>Walkthrough, test accounts, checklist complete</td></tr>
   </tbody>
 </table>
@@ -1481,12 +1481,13 @@ public decimal ChangeAmount { get; set; }</pre>
   <li>No real customer personal information anywhere</li>
 </ul>
 
-<h3>Access</h3>
+<h3>Access and role guide</h3>
 <ul class="check">
-  <li>Owner test account (username and password)</li>
-  <li>Operator test account (username and password)</li>
-  <li>Optional customer queue access, if implemented</li>
-  <li>Setup steps documented</li>
+  <li>Owner demo account: ownerspaza@gmail.com (password supplied privately; never committed to Git)</li>
+  <li>Create a separate Operator account from Manage staff; initial password must be at least 12 characters</li>
+  <li>Grant only the required operator permissions: waste, refunds, product management and/or stock receiving</li>
+  <li>Owner/operator quick-start guide included in docs/OWNER_OPERATOR_QUICK_START.md</li>
+  <li>Anonymous queue access is not implemented and must not be listed as an available role</li>
 </ul>
 
 <h3>Source code</h3>
@@ -1501,10 +1502,11 @@ public decimal ChangeAmount { get; set; }</pre>
 
 <h3>Discovery evidence</h3>
 <ul class="check">
-  <li>Owner permission obtained</li>
-  <li>Interview completed and notes captured</li>
-  <li>Feedback and quotes recorded</li>
-  <li>Establishment name and contact included only with consent</li>
+  <li>Direct interview completed with shop owner Lelethu Noqa</li>
+  <li>Interview date to be confirmed and recorded before final submission</li>
+  <li>Owner feedback captured: food expiry/wastage and limited customer-experience visibility</li>
+  <li>Do not publish the owner's phone number or establishment name until the required permission is confirmed</li>
+  <li>No quantified waste reduction or customer satisfaction result claimed</li>
 </ul>
 
 <h3>Walkthrough</h3>
@@ -1523,14 +1525,14 @@ public decimal ChangeAmount { get; set; }</pre>
 
 <p>Its central idea is integration over accumulation. One committed sale updates the transaction record, stock levels, batch allocation, expiry exposure, daily financials and the audit trail — so the operator does not repeat work the system can do once.</p>
 
-<p>The architecture uses Clean Architecture, SOLID principles and ACID transactions to keep that promise reliable. Financial operations use ZAR with decimal precision and server-side validation. Security is enforced on the backend, with tenant isolation and a POPIA-conscious approach that avoids collecting customer personal data entirely.</p>
+<p>The implementation uses a two-project .NET solution (ASP.NET Core API and Blazor WebAssembly client), Entity Framework Core, PostgreSQL in the hosted environment, server-side authorization and database transactions for critical workflows. The repository is not yet a fully separated Clean Architecture solution. Financial operations use ZAR with decimal precision and server-side validation. Security is enforced on the backend, with tenant isolation and a POPIA-conscious approach that avoids collecting customer personal data in the core retail workflow.</p>
 
-<p>Most importantly, the final product will be shaped by what the owner of Thandabantu Spaza Shop confirms is genuinely useful. The queue, expiry and management features are prioritised only according to that feedback.</p>
+<p>Most importantly, the product priorities now reflect the completed direct interview with shop owner Lelethu Noqa: expiry/wastage visibility and better understanding of customer experience. The two-day expiry review is a proposed pilot procedure. Queue management remains deferred because it has not been validated as a priority.</p>
 
 <p><strong>The objective is not to build the biggest application. It is to build a solution that solves a real problem, works reliably, and can be demonstrated with confidence.</strong></p>
 
 <footer>
-  ShopPulse — Solution Design &amp; Technical Specification · Samsung Innovation Internship 2027 · Stage 1 Entry Assignment · Document status: proposed, pending establishment validation.
+  ShopPulse — Solution Design &amp; Technical Specification · Samsung Innovation Internship 2027 · Stage 1 Entry Assignment · Document status: owner interview completed; interview date to be confirmed.
 </footer>
 
 </div>
