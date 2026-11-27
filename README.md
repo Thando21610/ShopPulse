@@ -187,7 +187,7 @@ GitHub Actions runs on pushes to `main` and `fix/**`, and pull requests targetin
 
 The test project currently contains ten authorization/permission tests and one PostgreSQL migration/refresh-token integration test. The PostgreSQL test is skipped when `SHOPPULSE_TEST_POSTGRES_CONNECTION` is not supplied; CI supplies it. This is useful backend coverage, but there is no browser-driven end-to-end test suite in the repository yet.
 
-**Latest verified main CI:** commit `ee01d8fd5bd144fbe2c7fde455b01cc4b0928c41` completed successfully on 24 November 2026, including restore, build, tests, API/client publish and both container builds. [View the run](https://github.com/Thando21610/ShopPulse/actions/runs/45413767191). This verifies that commit's CI pipeline only; it does not verify a live deployment.
+**Latest verified PR CI:** commit `bc20c5439f1435df7eb18164c77af2bebbc3af7e` completed successfully on 26 November 2026 (GitHub Actions run `45763994739`). The developer also confirmed `dotnet test ShopPulse.slnx --configuration Release` passed locally after syncing that commit. This verifies automated build/test coverage only; it does not verify every live browser workflow.
 
 ## Deployment direction
 
@@ -215,6 +215,7 @@ Do not deploy against production data or onboard a real shop until migrations, b
 
 ## Project documentation
 
+- [Two-page Samsung submission brief](docs/SAMSUNG_2027_TWO_PAGE_SUBMISSION_BRIEF.md)
 - [Solution design](docs/ShopPulse_Solution_Design_Samsung_2027.html)
 - [User journeys and use-case coverage](docs/USER_JOURNEYS.md)
 - [Frontend/API integration audit](docs/FRONTEND_BACKEND_INTEGRATION_AUDIT.md)
