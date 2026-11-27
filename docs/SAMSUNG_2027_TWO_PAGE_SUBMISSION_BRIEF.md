@@ -7,7 +7,7 @@
 **Source code:** https://github.com/Thando21610/ShopPulse  
 **API health:** https://shoppulse-production-e6673892.up.railway.app/health  
 **Interview contact:** Lelethu Noqa, shop owner (interview completed; interview date to be recorded).  
-**Document status:** Submission draft. Owner contact number is intentionally omitted until explicit permission to publish it is confirmed.
+**Document status:** Submission draft. Interview date is to be confirmed. Owner phone number is omitted pending confirmation of permission to share it with assessors. A separate owner/operator quick-start guide is included in the repository; credentials are shared privately, never in source control.
 
 ---
 
@@ -53,7 +53,11 @@ A future scanning workflow could identify a product and its specific batch using
 
 At **receiving or stock inspection**, scanning should create or update the correct product/batch and capture expiry details; it must not reduce on-hand quantity merely because an item was scanned. At **checkout**, scanning an item should add it to the sale, and the successfully committed sale should automatically reduce the correct batch quantity using FEFO rules. This separation prevents accidental stock deductions during expiry checks and receiving.
 
-## 5. Responsible scope and current limitations
+## 5. Owner and operator access
+
+The assessment environment uses an Owner account (`ownerspaza@gmail.com`). The password is supplied separately and securely; it is intentionally not printed in this brief or stored in GitHub. The Owner creates Operator accounts from **Manage staff**, sets an initial password of at least 12 characters and grants only the required permissions (record waste, refund sales, manage products and/or receive stock). Operators use their own login and can open/close their own cash shift; reports, audit history, staff management and business settings remain Owner-only. See [Owner and Operator Quick-Start Guide](OWNER_OPERATOR_QUICK_START.md) for the end-to-end workflow and permission matrix.
+
+## 6. Responsible scope and current limitations
 
 ShopPulse is an assessment prototype, not yet approved for processing a shop's live commercial transactions. The README documents the implemented journeys and scope boundaries. The current home route is staff sign-in; a separate anonymous guest catalogue is not implemented. Card payments are recorded as operator-confirmed external-terminal payments; there is no payment-gateway integration. Full refunds are implemented; partial refunds are not. The current reporting is a daily summary, not a complete historical inventory analytics suite.
 
