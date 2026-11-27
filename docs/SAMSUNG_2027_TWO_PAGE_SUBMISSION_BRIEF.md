@@ -6,8 +6,8 @@
 **Live demonstration:** https://diagnostics.shoppulse-bpd.pages.dev/  
 **Source code:** https://github.com/Thando21610/ShopPulse  
 **API health:** https://shoppulse-production-e6673892.up.railway.app/health  
-**Interview contact:** Lelethu Noqa, shop owner (interview completed; interview date to be recorded).  
-**Document status:** Submission draft. Interview date is to be confirmed. Owner phone number is omitted pending confirmation of permission to share it with assessors. A separate owner/operator quick-start guide is included in the repository; credentials are shared privately, never in source control.
+**Interview:** Lelethu Noqa, shop owner — **26 November 2026**.  
+**Document status:** Submission draft. Owner phone number is omitted pending confirmation of permission to share it with assessors. A separate owner/operator quick-start guide is included in the repository; credentials are shared privately, never in source control.
 
 ---
 
@@ -15,7 +15,7 @@
 
 ShopPulse is designed around the day-to-day realities of a small South African spaza shop where one person may need to serve customers, handle payments, monitor stock and keep products safe for sale.
 
-In a direct discussion, shop owner **Lelethu Noqa** highlighted two practical concerns:
+In the interview with shop owner **Lelethu Noqa on 26 November 2026**, two practical concerns were highlighted:
 
 - **Food expiry and wastage:** food products can expire before they are sold. This creates avoidable losses and risks customers receiving products that are no longer good quality.
 - **Limited visibility of customer experience:** the owner does not have a clear, structured view of whether customers are happy with the service and quality of products.
